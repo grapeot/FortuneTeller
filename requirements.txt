@@ -4,3 +4,5 @@ httpx
 python-dotenv
 Pillow
 firebase-admin
+resend
+requests

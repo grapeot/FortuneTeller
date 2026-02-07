@@ -4,6 +4,7 @@ Thin FastAPI backend for AI Fortune Teller.
 - POST /api/pixelate   → generates pixelated cartoon avatar via AI Builder Space
 - POST /api/share      → saves fortune to Firestore and returns share URL
 - GET  /api/share/{id} → retrieves a shared fortune
+- POST /api/subscribe  → email subscription: Circle invite + deep analysis + Resend email
 - GET  /*              → serves the Vite-built static files (SPA fallback)
 """
 
@@ -11,11 +12,12 @@ import asyncio
 import base64
 import io
 import json
+import logging
 import os
 import uuid
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import httpx
@@ -36,6 +38,16 @@ MODELS = {
 
 PIXEL_SIZE = 64      # downscale target for pixel art
 PIXEL_DISPLAY = 384  # upscale back with nearest-neighbor
+
+# ── Email / Circle / Resend config ─────────────────────────────────────────
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+CIRCLE_V2_TOKEN = os.getenv("CIRCLE_V2_TOKEN", "")
+CIRCLE_SPACE_IDS = [
+    int(s.strip()) for s in os.getenv("CIRCLE_SPACE_IDS", "").split(",") if s.strip()
+]
+COMMUNITY_URL = "https://www.superlinear.academy"
+
+logger = logging.getLogger("fortune-teller")
 
 # ── Firebase / Firestore ────────────────────────────────────────────────────
 _firestore_db = None
@@ -167,6 +179,13 @@ class ShareRequest(BaseModel):
     pixelated_image: str | None = None
     fortunes: dict | None = None  # {gemini: {face, career, blessing}, grok: {...}}
     fortune: dict | None = None   # legacy single-model format
+
+
+class SubscribeRequest(BaseModel):
+    """Request body for /api/subscribe."""
+    email: str
+    name: str = ""
+    share_id: str
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -392,6 +411,373 @@ async def get_share(share_id: str):
     }
 
 
+# ── Email subscription pipeline ──────────────────────────────────────────────
+
+DEEP_ANALYSIS_PROMPT = """你是一位精通中国传统面相学的资深相面先生，学贯古今，尤其擅长将面相学与现代职场发展融会贯通。
+
+现在，一位来访者此前已经做过一次简要的面相分析。你将收到那次分析的结果作为参考。请你在此基础上，进行一次详细而深入的全面分析报告。
+
+## 面相学知识体系
+
+### 五官
+- 采听官（耳）：轮廓分明、耳垂厚实→福气深厚。耳高与眉齐→聪慧。贴面→内敛稳重。
+- 保寿官（眉）：浓密清晰→决断力强、贵人缘旺。眉长过目→重义气。眉侵印堂→思虑深重。
+- 监察官（眼）：大而有神→情感丰沛。黑白分明→心正。细长→冷静理性。卧蚕饱满→人缘极佳。
+- 审辨官（鼻）：鼻梁挺直→自信果敢。山根高→意志坚定。准头有肉→正财运旺。鼻翼丰满→善聚财。
+- 出纳官（口）：唇厚→重情义。嘴角上翘→天性乐观。人中深长→元气充沛。
+
+### 三停
+- 上停（发际→眉）：饱满高广→少年得志、智慧高。
+- 中停（眉→鼻准头）：丰隆端正→中年事业有成。
+- 下停（鼻下→下巴）：圆实丰厚→晚年安乐。
+
+### 十二宫位
+- 命宫（印堂）、财帛宫（准头）、官禄宫（额头正中）、夫妻宫（眼尾）、田宅宫（眉眼之间）等。
+
+## 输出要求
+
+请以分析报告的形式输出纯中文文本（不要JSON），包含以下章节，每个章节用「## 章节名」标记：
+
+## 五官详解
+详细分析五官各个部位的特征及其面相学含义（300-400字）
+
+## 三停分析
+分析上中下三停的比例与特征（200-300字）
+
+## 十二宫位解读
+重点解读命宫、财帛宫、官禄宫等关键宫位（200-300字）
+
+## 事业与发展
+基于面相特质给出具体的职场发展建议，包括适合的方向、需要注意的短板、如何扬长避短（300-400字）
+
+## 人际与感情
+从面相分析社交风格和感情运势（150-200字）
+
+## 健康提示
+基于面相提示需要关注的健康方面（100-150字）
+
+## 马年运势综述
+结合丙午马年的运势总结和新春祝语（150-200字）
+
+## 原则
+- 全文1500-2000字
+- 语气沉稳专业，如同一份详细的面相分析报告
+- 以褒为主，建议要具体可行
+- 每个章节之间自然衔接
+- 新春氛围下以鼓励和祝福为主"""
+
+
+def _build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | None = None) -> str:
+    """Build Outlook-compatible HTML email with harmonious palette."""
+    greeting = f"{name}，您好！" if name else "您好！"
+
+    # Optionally embed the pixelated avatar
+    avatar_html = ""
+    if pixelated_image:
+        avatar_html = f"""
+        <tr><td align="center" style="padding:20px 0 10px;">
+          <img src="{pixelated_image}" alt="像素画像" width="96" height="96"
+               style="width:96px;height:96px;border-radius:8px;image-rendering:pixelated;border:2px solid #c9b99a;" />
+        </td></tr>"""
+
+    # Convert section headers in the analysis to styled HTML
+    sections_html = ""
+    for line in deep_analysis.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("## "):
+            heading = line[3:].strip()
+            sections_html += f"""
+          <h3 style="font-size:17px;color:#5c4a32;margin:24px 0 8px;padding-bottom:6px;border-bottom:1px solid #e0d5c3;">{heading}</h3>"""
+        else:
+            sections_html += f"""
+          <p style="font-size:14px;color:#4a3c2e;line-height:1.9;margin:0 0 12px;">{line}</p>"""
+
+    return f"""<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style>
+    :root {{ color-scheme: light dark; supported-color-schemes: light dark; }}
+    @media (prefers-color-scheme: dark) {{
+      .email-bg {{ background-color: #1c1914 !important; }}
+      .email-card {{ background-color: #2a2520 !important; border-color: #4a4035 !important; }}
+      .email-header {{ background-color: #2e2318 !important; }}
+      .email-title {{ color: #e8d5b0 !important; }}
+      .email-subtitle {{ color: #a89878 !important; }}
+      .email-body {{ color: #d4c8b0 !important; }}
+      .email-heading {{ color: #d4b896 !important; border-color: #4a4035 !important; }}
+      .email-accent {{ background-color: #8a7a5a !important; }}
+      .email-cta {{ background-color: #5c4a32 !important; color: #f0e6d2 !important; }}
+      .email-footer {{ background-color: #221e18 !important; border-color: #3a3428 !important; }}
+      .email-footer-text {{ color: #7a7060 !important; }}
+      .email-link {{ color: #d4a868 !important; }}
+    }}
+    [data-ogsc] .email-bg {{ background-color: #1c1914 !important; }}
+    [data-ogsc] .email-card {{ background-color: #2a2520 !important; border-color: #4a4035 !important; }}
+    [data-ogsc] .email-header {{ background-color: #2e2318 !important; }}
+    [data-ogsc] .email-title {{ color: #e8d5b0 !important; }}
+    [data-ogsc] .email-subtitle {{ color: #a89878 !important; }}
+    [data-ogsc] .email-body {{ color: #d4c8b0 !important; }}
+    [data-ogsc] .email-heading {{ color: #d4b896 !important; border-color: #4a4035 !important; }}
+    [data-ogsc] .email-accent {{ background-color: #8a7a5a !important; }}
+    [data-ogsc] .email-cta {{ background-color: #5c4a32 !important; color: #f0e6d2 !important; }}
+    [data-ogsc] .email-footer {{ background-color: #221e18 !important; border-color: #3a3428 !important; }}
+    [data-ogsc] .email-footer-text {{ color: #7a7060 !important; }}
+    [data-ogsc] .email-link {{ color: #d4a868 !important; }}
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f0ebe3;font-family:Georgia,'Songti SC','STSongti-SC','Noto Serif SC',serif;">
+  <table class="email-bg" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f0ebe3;padding:32px 16px;">
+    <tr><td align="center">
+      <table class="email-card" width="600" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#faf6ef;border:1px solid #d8ccb8;border-radius:8px;overflow:hidden;">
+
+        <!-- Header: warm brown tone -->
+        <tr><td class="email-header" style="background-color:#3d3028;padding:28px 30px 24px;text-align:center;">
+          <h1 class="email-title" style="font-size:28px;color:#e8d5b0;margin:0 0 4px;letter-spacing:6px;font-weight:bold;">相面先生</h1>
+          <p class="email-subtitle" style="font-size:12px;color:#a89878;margin:0;letter-spacing:2px;">Superlinear Academy · 丙午马年新春</p>
+        </td></tr>
+
+        <!-- Warm accent line -->
+        <tr><td class="email-accent" style="height:2px;background-color:#c9b99a;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Avatar -->
+        {avatar_html}
+
+        <!-- Body -->
+        <tr><td style="padding:24px 32px 28px;">
+          <p class="email-body" style="font-size:15px;color:#4a3c2e;line-height:1.9;margin:0 0 16px;">{greeting}</p>
+          <p class="email-body" style="font-size:15px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">以下是为您准备的 AI 面相深度分析报告。这份报告综合了多维度的面相学知识，从五官、三停、十二宫位等多个角度为您进行了全面解读。</p>
+
+          {sections_html}
+
+        </td></tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 32px;"><div style="height:1px;background-color:#d8ccb8;"></div></td></tr>
+
+        <!-- Community section -->
+        <tr><td style="padding:20px 32px;">
+          <p class="email-body" style="font-size:14px;color:#6b5d4d;line-height:1.8;margin:0 0 8px;">
+            我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
+          </p>
+          <p class="email-body" style="font-size:14px;color:#6b5d4d;line-height:1.8;margin:0 0 16px;">
+            首次访问社区请前往 <a class="email-link" href="{COMMUNITY_URL}" style="color:#7a5c3a;text-decoration:underline;">{COMMUNITY_URL}</a>，点击「找回密码」设置您的登录密码。
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr><td align="center" style="padding:4px 0 8px;">
+              <!--[if mso]>
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{COMMUNITY_URL}" style="height:44px;v-text-anchor:middle;width:240px;" arcsize="18%" stroke="f" fillcolor="#5c4a32">
+                <w:anchorlock/><center>
+              <![endif]-->
+              <a class="email-cta" href="{COMMUNITY_URL}" style="display:inline-block;padding:12px 32px;background-color:#5c4a32;color:#f0e6d2;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;letter-spacing:1px;">
+                访问 Superlinear Academy
+              </a>
+              <!--[if mso]></center></v:roundrect><![endif]-->
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td class="email-footer" style="background-color:#f0ebe3;padding:18px 32px;border-top:1px solid #d8ccb8;">
+          <p class="email-footer-text" style="font-size:11px;color:#a09888;text-align:center;margin:0;line-height:1.7;">
+            此邮件由 Superlinear Academy 发送 · 社区动态可随时在 Circle 设置中退订<br>&copy; 2026 Superlinear Academy
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
+def _circle_create_member(email: str, name: str = "") -> None:
+    """Create Circle community member (sync, for background task)."""
+    import requests as req
+
+    headers = {
+        "Authorization": f"Token {CIRCLE_V2_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "email": email,
+        "skip_invitation": True,
+        "space_ids": CIRCLE_SPACE_IDS,
+        "email_notifications_enabled": True,
+    }
+    if name:
+        data["name"] = name
+
+    resp = req.post(
+        "https://app.circle.so/api/admin/v2/community_members",
+        headers=headers, json=data, timeout=30,
+    )
+
+    # 200/201 = success, 201 "already a member" = also fine
+    if resp.status_code in (200, 201):
+        result = resp.json()
+        msg = result.get("message", "")
+        if "already a member" in msg.lower():
+            # Explicitly add to spaces
+            for space_id in CIRCLE_SPACE_IDS:
+                req.post(
+                    "https://app.circle.so/api/admin/v2/space_members",
+                    headers=headers,
+                    json={"email": email, "space_id": space_id},
+                    timeout=30,
+                )
+            logger.info(f"Circle: existing member {email} added to spaces")
+        else:
+            logger.info(f"Circle: new member created for {email}")
+    elif resp.status_code == 422:
+        # Already exists — add to spaces
+        for space_id in CIRCLE_SPACE_IDS:
+            req.post(
+                "https://app.circle.so/api/admin/v2/space_members",
+                headers=headers,
+                json={"email": email, "space_id": space_id},
+                timeout=30,
+            )
+        logger.info(f"Circle: 422 existing member {email}, added to spaces")
+    else:
+        logger.warning(f"Circle: unexpected status {resp.status_code}: {resp.text[:200]}")
+
+
+async def _generate_deep_analysis(fortunes: dict) -> str:
+    """Call Gemini to generate a deep face reading analysis."""
+    # Build context from the quick fortunes
+    context_parts = []
+    for model_name in ("grok", "gemini"):
+        f = fortunes.get(model_name)
+        if f:
+            context_parts.append(
+                f"【{model_name}模型的快速分析】\n"
+                f"面相：{f.get('face', '')}\n"
+                f"事业：{f.get('career', '')}\n"
+                f"祝语：{f.get('blessing', '')}"
+            )
+
+    context = "\n\n".join(context_parts) if context_parts else "（无前次分析结果）"
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            f"{AI_API_BASE}/chat/completions",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {AI_TOKEN}",
+            },
+            json={
+                "model": MODELS["gemini"],
+                "messages": [
+                    {"role": "system", "content": DEEP_ANALYSIS_PROMPT},
+                    {
+                        "role": "user",
+                        "content": f"以下是此前为这位来访者做的快速面相分析结果，请在此基础上展开深度分析：\n\n{context}",
+                    },
+                ],
+                "temperature": 0.9,
+                "max_tokens": 4000,
+            },
+        )
+        resp.raise_for_status()
+
+    data = resp.json()
+    text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+    return text or "深度分析生成失败，请稍后重试。"
+
+
+def _send_resend_email(email: str, html: str) -> str | None:
+    """Send HTML email via Resend. Returns email ID or None."""
+    import resend
+
+    resend.api_key = RESEND_API_KEY
+    try:
+        result = resend.Emails.send({
+            "from": "Superlinear Academy <no-reply@ai-builders.com>",
+            "to": [email],
+            "subject": "您的AI面相深度分析 - Superlinear Academy",
+            "html": html,
+        })
+        logger.info(f"Resend: email sent to {email}, id={result.get('id', 'unknown')}")
+        return result.get("id")
+    except Exception as e:
+        logger.error(f"Resend: failed to send to {email}: {e}")
+        return None
+
+
+async def _subscribe_background(email: str, name: str, share_id: str):
+    """Background task: Circle invite → Gemini deep analysis → Resend email."""
+    try:
+        # Step 1: Circle membership (sync, run in thread)
+        if CIRCLE_V2_TOKEN:
+            await asyncio.to_thread(_circle_create_member, email, name)
+        else:
+            logger.warning("Circle: CIRCLE_V2_TOKEN not set, skipping")
+
+        # Step 2: Fetch share data from Firestore
+        fortunes = {}
+        pixelated_image = None
+        if _firestore_db:
+            doc = await asyncio.to_thread(
+                _firestore_db.collection("fortunes").document(share_id).get
+            )
+            if doc.exists:
+                share_data = doc.to_dict()
+                fortunes = share_data.get("fortunes") or {}
+                pixelated_image = share_data.get("pixelated_image")
+
+        # Step 3: Generate deep analysis via Gemini
+        deep_analysis = await _generate_deep_analysis(fortunes)
+
+        # Step 4: Build and send email
+        html = _build_email_html(deep_analysis, name, pixelated_image)
+        email_id = await asyncio.to_thread(_send_resend_email, email, html)
+
+        # Step 5: Update Firestore with subscription info
+        if _firestore_db and email_id:
+            update_data = {
+                "subscribed_email": email,
+                "email_sent_at": _firestore_mod.SERVER_TIMESTAMP,
+            }
+            if name:
+                update_data["subscribed_name"] = name
+            await asyncio.to_thread(
+                _firestore_db.collection("fortunes").document(share_id).update,
+                update_data,
+            )
+
+        logger.info(f"Subscribe pipeline complete for {email} (share={share_id})")
+
+    except Exception as e:
+        logger.error(f"Subscribe pipeline failed for {email}: {e}")
+
+
+@app.post("/api/subscribe")
+async def subscribe(req: SubscribeRequest, background_tasks: BackgroundTasks):
+    """Accept email subscription and process in background."""
+    if not req.email or "@" not in req.email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    if not RESEND_API_KEY:
+        raise HTTPException(status_code=503, detail="Email service not configured")
+
+    background_tasks.add_task(_subscribe_background, req.email, req.name, req.share_id)
+
+    return {
+        "status": "accepted",
+        "message": "Analysis will be sent to your email",
+    }
+
+
 @app.get("/api/health")
 async def health():
     return {
@@ -399,6 +785,8 @@ async def health():
         "models": MODELS,
         "token_configured": bool(AI_TOKEN),
         "firestore_configured": _firestore_db is not None,
+        "email_configured": bool(RESEND_API_KEY),
+        "circle_configured": bool(CIRCLE_V2_TOKEN),
     }
 
 

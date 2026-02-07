@@ -1,0 +1,204 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import SharePage from '../SharePage'
+
+// Mock framer-motion
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => <div {...props}>{children}</div>,
+    h2: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
+    h3: ({ children, ...props }) => <h3 {...props}>{children}</h3>,
+    p: ({ children, ...props }) => <p {...props}>{children}</p>,
+    button: ({ children, ...props }) => <button {...props}>{children}</button>,
+  },
+  AnimatePresence: ({ children }) => <>{children}</>,
+}))
+
+const mockShareData = {
+  pixelated_image: 'data:image/png;base64,px123',
+  fortunes: {
+    gemini: {
+      face: '天庭饱满——',
+      career: '印堂开阔，适合承担决断角色。',
+      blessing: '马到成功！',
+    },
+    grok: {
+      face: '山根高耸——',
+      career: '颧骨有力，适合带队攻坚。',
+      blessing: '一马当先！',
+    },
+  },
+}
+
+let mockFetch
+
+beforeEach(() => {
+  mockFetch = vi.fn()
+  vi.stubGlobal('fetch', mockFetch)
+})
+
+describe('SharePage', () => {
+  it('shows loading state initially', () => {
+    mockFetch.mockReturnValue(new Promise(() => {})) // never resolves
+    render(<SharePage shareId="test123" />)
+    expect(screen.getByText('正在加载...')).toBeInTheDocument()
+  })
+
+  it('shows error on 404', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
+    render(<SharePage shareId="nonexistent" />)
+    await waitFor(() => {
+      expect(screen.getByText('分享链接已失效或不存在')).toBeInTheDocument()
+    })
+  })
+
+  it('renders fortune data with grok as default tab', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      expect(screen.getByText('山根高耸——')).toBeInTheDocument()
+    })
+  })
+
+  it('renders pixelated avatar', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      const img = screen.getByAltText('像素画像')
+      expect(img).toBeInTheDocument()
+      expect(img.src).toBe(mockShareData.pixelated_image)
+    })
+  })
+
+  it('switches model tabs', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      expect(screen.getByText('Gemini')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText('Gemini'))
+    expect(screen.getByText('天庭饱满——')).toBeInTheDocument()
+  })
+
+  it('renders the email subscription form', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
+    })
+    expect(screen.getByPlaceholderText('姓名/昵称（选填）')).toBeInTheDocument()
+    // h3 heading + button both have the text
+    const matches = screen.getAllByText('接收 AI 深度面相分析')
+    expect(matches.length).toBe(2) // heading + button
+  })
+
+  it('submits the subscription form and shows success', async () => {
+    // First call: fetch share data
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
+    })
+
+    // Fill the form
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+      target: { value: 'test@example.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('姓名/昵称（选填）'), {
+      target: { value: '张三' },
+    })
+
+    // Mock the subscribe API call
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'accepted' }),
+    })
+
+    // Submit
+    const buttons = screen.getAllByText('接收 AI 深度面相分析')
+    const submitButton = buttons.find((el) => el.tagName === 'BUTTON')
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/分析已提交/)).toBeInTheDocument()
+    })
+
+    // Verify the API call
+    const subscribeCall = mockFetch.mock.calls[1]
+    expect(subscribeCall[0]).toBe('/api/subscribe')
+    const body = JSON.parse(subscribeCall[1].body)
+    expect(body.email).toBe('test@example.com')
+    expect(body.name).toBe('张三')
+    expect(body.share_id).toBe('test123')
+  })
+
+  it('shows error state on subscription failure', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+      target: { value: 'test@example.com' },
+    })
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+
+    const buttons = screen.getAllByText('接收 AI 深度面相分析')
+    const submitButton = buttons.find((el) => el.tagName === 'BUTTON')
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('提交失败，请稍后重试')).toBeInTheDocument()
+    })
+  })
+
+  it('falls back to gemini when grok is null', async () => {
+    const geminiOnly = {
+      ...mockShareData,
+      fortunes: { gemini: mockShareData.fortunes.gemini, grok: null },
+    }
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => geminiOnly,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      expect(screen.getByText('天庭饱满——')).toBeInTheDocument()
+    })
+  })
+
+  it('shows CTA link to homepage', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockShareData,
+    })
+    render(<SharePage shareId="test123" />)
+    await waitFor(() => {
+      expect(screen.getByText('我也要相面 →')).toBeInTheDocument()
+    })
+  })
+})

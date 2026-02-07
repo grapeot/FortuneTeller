@@ -9,12 +9,18 @@ const MODEL_TABS = [
 /**
  * SharePage - displays a shared fortune result with tabs for multi-model support.
  * Accessed via /share/{id} URL.
+ * Includes an email subscription form for deep analysis + community access.
  */
 export default function SharePage({ shareId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('grok')
+
+  // Email subscription form state
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [subscribeStatus, setSubscribeStatus] = useState('idle') // idle | submitting | success | error
 
   useEffect(() => {
     async function fetchShare() {
@@ -26,7 +32,6 @@ export default function SharePage({ shareId }) {
         }
         const result = await resp.json()
         setData(result)
-        // If grok is null but gemini exists, fall back to gemini
         if (result.fortunes) {
           if (!result.fortunes.grok && result.fortunes.gemini) {
             setActiveTab('gemini')
@@ -40,6 +45,26 @@ export default function SharePage({ shareId }) {
     }
     fetchShare()
   }, [shareId])
+
+  async function handleSubscribe(e) {
+    e.preventDefault()
+    if (!email || !email.includes('@')) return
+    setSubscribeStatus('submitting')
+    try {
+      const resp = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, share_id: shareId }),
+      })
+      if (resp.ok) {
+        setSubscribeStatus('success')
+      } else {
+        setSubscribeStatus('error')
+      }
+    } catch {
+      setSubscribeStatus('error')
+    }
+  }
 
   if (loading) {
     return (
@@ -64,7 +89,6 @@ export default function SharePage({ shareId }) {
   }
 
   const fortunes = data?.fortunes || {}
-  // Legacy support: if only fortune (not fortunes) exists
   const activeFortune = fortunes[activeTab] || null
   const availableTabs = MODEL_TABS.filter((t) => fortunes[t.key])
 
@@ -120,6 +144,57 @@ export default function SharePage({ shareId }) {
         ) : (
           <p className="font-serif-cn text-gray-400 text-center">该模型暂无结果</p>
         )}
+
+        {/* Decorative divider before form */}
+        <div className="w-64 h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent mt-2" />
+
+        {/* Email subscription form */}
+        <div className="w-full max-w-md">
+          {subscribeStatus === 'success' ? (
+            <div className="text-center py-6 px-4 bg-white/5 rounded-xl border border-yellow-400/10">
+              <p className="font-serif-cn text-yellow-100 text-base leading-relaxed">
+                分析已提交，结果将在数分钟内发送至您的邮箱。
+              </p>
+              <p className="font-serif-cn text-yellow-100/60 text-sm mt-2">
+                与此同时，您也会收到社区学员分享的项目更新。
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
+              <h3 className="font-calligraphy text-lg text-yellow-400/80 tracking-wide">
+                接收 AI 深度面相分析
+              </h3>
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-yellow-100 placeholder-gray-500 text-sm font-serif-cn focus:outline-none focus:border-yellow-400/40 transition-colors"
+              />
+              <input
+                type="text"
+                placeholder="姓名/昵称（选填）"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-yellow-100 placeholder-gray-500 text-sm font-serif-cn focus:outline-none focus:border-yellow-400/40 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={subscribeStatus === 'submitting' || !email.includes('@')}
+                className="w-full py-2.5 bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/20 text-yellow-400 font-serif-cn text-sm rounded-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {subscribeStatus === 'submitting' ? '提交中...' : '接收 AI 深度面相分析'}
+              </button>
+              {subscribeStatus === 'error' && (
+                <p className="text-red-400 text-xs font-serif-cn">提交失败，请稍后重试</p>
+              )}
+              <p className="text-xs text-gray-500 font-serif-cn text-center leading-relaxed px-2">
+                输入邮箱获取详细分析报告，并加入 Superlinear Academy AI 社区接收学员实战项目更新。社区邮件可随时退订。
+              </p>
+            </form>
+          )}
+        </div>
 
         {/* CTA */}
         <a
