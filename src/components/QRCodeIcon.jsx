@@ -48,8 +48,8 @@ export default function QRCodeIcon() {
           <img
             src={qrDataUrl}
             alt="QR Code"
-            className="w-48 h-48 block object-contain"
-            style={{ aspectRatio: '1 / 1' }}
+            className="block"
+            style={{ width: '192px', height: '192px', minWidth: '192px', minHeight: '192px' }}
           />
           <p className="text-xs text-gray-600 mt-2 text-center">扫码访问</p>
         </div>
