@@ -12,7 +12,7 @@ describe('formatMeasurements', () => {
 
   it('should format measurements as readable text', () => {
     const measurements = {
-      三停比例: { 上停: 33, 中停: 34, 下停: 33 },
+      三停比例: { 上庭: 33, 中庭: 34, 下庭: 33 },
       脸型: '椭圆形',
       面部宽高比: 0.72,
       印堂宽度: '开阔',
@@ -25,9 +25,9 @@ describe('formatMeasurements', () => {
     const result = formatMeasurements(measurements)
 
     expect(result).toContain('面部测量数据')
-    expect(result).toContain('上停33%')
-    expect(result).toContain('中停34%')
-    expect(result).toContain('下停33%')
+    expect(result).toContain('上庭33%')
+    expect(result).toContain('中庭34%')
+    expect(result).toContain('下庭33%')
     expect(result).toContain('椭圆形')
     expect(result).toContain('0.72')
     expect(result).toContain('开阔')
@@ -38,7 +38,7 @@ describe('formatMeasurements', () => {
 
   it('should include all required measurement fields', () => {
     const measurements = {
-      三停比例: { 上停: 30, 中停: 40, 下停: 30 },
+      三停比例: { 上庭: 30, 中庭: 40, 下庭: 30 },
       脸型: '方形',
       面部宽高比: 0.88,
       印堂宽度: '较窄',

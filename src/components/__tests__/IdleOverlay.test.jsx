@@ -13,7 +13,7 @@ vi.mock('framer-motion', () => ({
 describe('IdleOverlay', () => {
   it('renders the title', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
-    expect(screen.getByText('相面先生')).toBeInTheDocument()
+    expect(screen.getByText('AI相面')).toBeInTheDocument()
   })
 
   it('renders the subtitle', () => {

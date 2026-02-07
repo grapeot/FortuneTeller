@@ -17,11 +17,11 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
       <div className="text-center flex flex-col items-center">
         <img
           src="/assets/fortune-teller.jpg"
-          alt="AI相面先生"
+          alt="AI相面"
           className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 sm:border-4 border-yellow-400/50 shadow-lg shadow-yellow-400/20 mb-2 sm:mb-3 md:mb-4 object-cover"
         />
         <h1 className="font-calligraphy text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-yellow-400 text-glow-warm tracking-widest">
-          相面先生
+          AI相面
         </h1>
         <p className="font-serif-cn text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200/70 mt-2 sm:mt-3 tracking-wide">{BRAND.tagline}</p>
       </div>

@@ -20,7 +20,7 @@ vi.mock('./config', () => ({
 
 // Mock face-annotator (formatMeasurements)
 vi.mock('./face-annotator', () => ({
-  formatMeasurements: (m) => m ? '【面部测量数据】\n三停比例：上停33% / 中停34% / 下停33%' : '',
+  formatMeasurements: (m) => m ? '【面部测量数据】\n三停比例：上庭33% / 中庭34% / 下庭33%' : '',
 }))
 
 describe('generateAIFortune (multi-model)', () => {
@@ -57,7 +57,7 @@ describe('generateAIFortune (multi-model)', () => {
     })
 
     const fakeOriginal = 'data:image/jpeg;base64,original'
-    const fakeMeasurements = { 三停比例: { 上停: 33, 中停: 34, 下停: 33 } }
+    const fakeMeasurements = { 三停比例: { 上庭: 33, 中庭: 34, 下庭: 33 } }
 
     const result = await generateAIFortune(fakeOriginal, fakeMeasurements)
     expect(result.gemini).toBeTruthy()
@@ -113,7 +113,7 @@ describe('generateAIFortune (multi-model)', () => {
     })
 
     const fakeOriginal = 'data:image/jpeg;base64,orig'
-    const fakeMeasurements = { 三停比例: { 上停: 33, 中停: 34, 下停: 33 } }
+    const fakeMeasurements = { 三停比例: { 上庭: 33, 中庭: 34, 下庭: 33 } }
     await generateAIFortune(fakeOriginal, fakeMeasurements)
 
     const directCallBody = JSON.parse(mockFetch.mock.calls[1][1].body)

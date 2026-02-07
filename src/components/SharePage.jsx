@@ -177,7 +177,7 @@ export default function SharePage({ shareId }) {
         {/* CTA */}
         <a
           href="/"
-          className="mt-4 px-6 py-3 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white text-lg font-calligraphy rounded-xl shadow-xl transition-all duration-200 hover:scale-105 tracking-wider"
+          className="mt-4 px-6 py-3 bg-white/10 hover:bg-white/15 border border-white/20 text-yellow-200/80 hover:text-yellow-200 text-lg font-calligraphy rounded-xl transition-all duration-200 hover:scale-105 tracking-wider"
         >
           我也要相面 →
         </a>

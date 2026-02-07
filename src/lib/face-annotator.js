@@ -233,9 +233,9 @@ function drawAnnotations(sourceCanvas, landmarks, w, h) {
   const fontSize = Math.max(11, Math.round(w * 0.02))
   ctx.font = `bold ${fontSize}px "PingFang SC", "Microsoft YaHei", sans-serif`
 
-  drawBadge(ctx, `上停 ${upperPct}%`, w - 8, (foreheadY + browY) / 2, 'right', fontSize)
-  drawBadge(ctx, `中停 ${middlePct}%`, w - 8, (browY + noseBottomY) / 2, 'right', fontSize)
-  drawBadge(ctx, `下停 ${lowerPct}%`, w - 8, (noseBottomY + chinY) / 2, 'right', fontSize)
+  drawBadge(ctx, `上庭 ${upperPct}%`, w - 8, (foreheadY + browY) / 2, 'right', fontSize)
+  drawBadge(ctx, `中庭 ${middlePct}%`, w - 8, (browY + noseBottomY) / 2, 'right', fontSize)
+  drawBadge(ctx, `下庭 ${lowerPct}%`, w - 8, (noseBottomY + chinY) / 2, 'right', fontSize)
 
   // ── Feature markers with labels ──
   // Format: [name, landmark point, label side ('left'|'right'), y-offset for label stacking]
@@ -434,9 +434,9 @@ function calculateMeasurements(landmarks, w, h) {
 
   return {
     三停比例: {
-      上停: Math.round((upper / total) * 100),
-      中停: Math.round((middle / total) * 100),
-      下停: 100 - Math.round((upper / total) * 100) - Math.round((middle / total) * 100),
+      上庭: Math.round((upper / total) * 100),
+      中庭: Math.round((middle / total) * 100),
+      下庭: 100 - Math.round((upper / total) * 100) - Math.round((middle / total) * 100),
     },
     脸型: faceShape,
     面部宽高比: Math.round(widthRatio * 100) / 100,
@@ -455,7 +455,7 @@ export function formatMeasurements(m) {
   if (!m) return ''
   return [
     `【面部测量数据】`,
-    `三停比例：上停${m.三停比例.上停}% / 中停${m.三停比例.中停}% / 下停${m.三停比例.下停}%`,
+    `三停比例：上庭${m.三停比例.上庭}% / 中庭${m.三停比例.中庭}% / 下庭${m.三停比例.下庭}%`,
     `脸型：${m.脸型}`,
     `面部宽高比：${m.面部宽高比}`,
     `印堂：${m.印堂宽度}`,
