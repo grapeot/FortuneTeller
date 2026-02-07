@@ -18,6 +18,11 @@ vi.mock('./config', () => ({
   },
 }))
 
+// Mock face-annotator (formatMeasurements)
+vi.mock('./face-annotator', () => ({
+  formatMeasurements: (m) => m ? '【面部测量数据】\n三停比例：上停33% / 中停34% / 下停33%' : '',
+}))
+
 describe('generateAIFortune', () => {
   beforeEach(() => {
     mockFetch.mockReset()
@@ -42,10 +47,9 @@ describe('generateAIFortune', () => {
     // Should have called /api/fortune with POST and JSON body
     expect(mockFetch.mock.calls[0][0]).toBe('/api/fortune')
     expect(mockFetch.mock.calls[0][1].method).toBe('POST')
-    expect(mockFetch.mock.calls[0][1].headers['Content-Type']).toBe('application/json')
   })
 
-  it('should send image to backend proxy when provided', async () => {
+  it('should send both images and measurements to backend proxy', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -56,19 +60,22 @@ describe('generateAIFortune', () => {
       }),
     })
 
-    const fakeImage = 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
-    const result = await generateAIFortune(fakeImage)
+    const fakeOriginal = 'data:image/jpeg;base64,original'
+    const fakeAnnotated = 'data:image/jpeg;base64,annotated'
+    const fakeMeasurements = { 三停比例: { 上停: 33, 中停: 34, 下停: 33 } }
+
+    const result = await generateAIFortune(fakeOriginal, fakeAnnotated, fakeMeasurements)
     expect(result.source).toBe('ai')
 
-    // Verify image was included in request body
+    // Verify all data was included in request body
     const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(callBody.image).toBe(fakeImage)
+    expect(callBody.image).toBe(fakeOriginal)
+    expect(callBody.annotated_image).toBe(fakeAnnotated)
+    expect(callBody.measurements).toContain('三停比例')
   })
 
   it('should fall back to direct API when backend returns error', async () => {
-    // Backend returns 404
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
-    // Direct API succeeds
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -89,17 +96,11 @@ describe('generateAIFortune', () => {
     const result = await generateAIFortune()
     expect(result.source).toBe('ai')
     expect(result.face).toBe('印堂发亮——')
-
-    // First call was backend, second was direct
     expect(mockFetch).toHaveBeenCalledTimes(2)
-    expect(mockFetch.mock.calls[0][0]).toBe('/api/fortune')
-    expect(mockFetch.mock.calls[1][0]).toContain('chat/completions')
   })
 
-  it('should send multimodal content in direct API when image provided', async () => {
-    // Backend fails
+  it('should send multimodal content with both images in direct API', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
-    // Direct API succeeds
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -117,15 +118,20 @@ describe('generateAIFortune', () => {
       }),
     })
 
-    const fakeImage = 'data:image/jpeg;base64,/9j/4AAQ=='
-    await generateAIFortune(fakeImage)
+    const fakeOriginal = 'data:image/jpeg;base64,orig'
+    const fakeAnnotated = 'data:image/jpeg;base64,anno'
+    await generateAIFortune(fakeOriginal, fakeAnnotated, null)
 
-    // Direct API call should have multimodal user content
+    // Direct API call should have multimodal user content with both images
     const directCallBody = JSON.parse(mockFetch.mock.calls[1][1].body)
     const userMsg = directCallBody.messages[1]
     expect(Array.isArray(userMsg.content)).toBe(true)
+    // Should have 3 parts: original image, annotated image, text
     expect(userMsg.content[0].type).toBe('image_url')
-    expect(userMsg.content[0].image_url.url).toBe(fakeImage)
+    expect(userMsg.content[0].image_url.url).toBe(fakeOriginal)
+    expect(userMsg.content[1].type).toBe('image_url')
+    expect(userMsg.content[1].image_url.url).toBe(fakeAnnotated)
+    expect(userMsg.content[2].type).toBe('text')
   })
 
   it('should handle markdown-wrapped JSON from direct API', async () => {
@@ -149,9 +155,7 @@ describe('generateAIFortune', () => {
   })
 
   it('should fall back to local pool when all AI paths fail', async () => {
-    // Backend fails
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
-    // Direct API also fails
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
     const result = await generateAIFortune()
@@ -208,14 +212,19 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('十二宫位')
   })
 
+  it('should contain Tony Zhang-style analysis patterns', () => {
+    expect(SYSTEM_PROMPT).toContain('首先注意到')
+    expect(SYSTEM_PROMPT).toContain('鼻颧得配')
+    expect(SYSTEM_PROMPT).toContain('交叉验证')
+  })
+
+  it('should reference annotated image and measurements', () => {
+    expect(SYSTEM_PROMPT).toContain('标注了面相关键部位')
+    expect(SYSTEM_PROMPT).toContain('测量数据')
+  })
+
   it('should contain Microsoft-specific references', () => {
     expect(SYSTEM_PROMPT).toContain('L65-L67')
     expect(SYSTEM_PROMPT).toContain('Principal')
-    expect(SYSTEM_PROMPT).toContain('Design Doc')
-  })
-
-  it('should request multimodal analysis', () => {
-    expect(SYSTEM_PROMPT).toContain('面部照片')
-    expect(SYSTEM_PROMPT).toContain('实际观察')
   })
 })

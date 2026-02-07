@@ -57,4 +57,17 @@ describe('ResultOverlay', () => {
     render(<ResultOverlay fortune={mockFortune} onDismiss={() => {}} />)
     expect(screen.getByText(/Superlinear Academy/)).toBeInTheDocument()
   })
+
+  it('renders annotated image when provided', () => {
+    const fakeImage = 'data:image/jpeg;base64,abc123'
+    render(<ResultOverlay fortune={mockFortune} annotatedImage={fakeImage} onDismiss={() => {}} />)
+    const img = screen.getByAltText('面相分析')
+    expect(img).toBeInTheDocument()
+    expect(img.src).toBe(fakeImage)
+  })
+
+  it('does not render image when annotatedImage is null', () => {
+    render(<ResultOverlay fortune={mockFortune} annotatedImage={null} onDismiss={() => {}} />)
+    expect(screen.queryByAltText('面相分析')).not.toBeInTheDocument()
+  })
 })

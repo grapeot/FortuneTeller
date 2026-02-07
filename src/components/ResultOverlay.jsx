@@ -1,73 +1,79 @@
 import { motion } from 'framer-motion'
 
 /**
- * ResultOverlay - displays the fortune result with animations.
+ * ResultOverlay - displays the fortune result with the annotated face image.
  * Dismissed manually by pressing Space/Enter or clicking the dismiss hint.
  */
-export default function ResultOverlay({ fortune, onDismiss }) {
+export default function ResultOverlay({ fortune, annotatedImage, onDismiss }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8"
+      className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-y-auto"
     >
-      {/* Decorative top - horse icon - mobile responsive */}
-      <motion.div
-        initial={{ scale: 0, rotate: -20 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="mb-2 md:mb-4"
-      >
-        <img
-          src="/assets/horse.jpg"
-          alt=""
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 border-yellow-400/30 object-cover"
-        />
-      </motion.div>
-
       {/* Title - mobile responsive */}
       <motion.h2
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold mb-4 md:mb-8"
+        transition={{ delay: 0.2 }}
+        className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold mb-3 md:mb-4 shrink-0"
       >
         ✨ 您的算命结果 ✨
       </motion.h2>
 
-      {/* Fortune text - three sections - mobile responsive */}
-      <div className="max-w-4xl text-center space-y-3 md:space-y-4 px-4">
-        {/* Face reading */}
-        <motion.p
-          initial={{ x: -40, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-yellow-200 font-bold leading-relaxed"
-        >
-          {fortune.face}
-        </motion.p>
+      {/* Main content: annotated image + fortune text */}
+      <div className="max-w-5xl w-full flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8">
 
-        {/* Career reading */}
-        <motion.p
-          initial={{ x: 40, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white font-bold leading-relaxed text-glow"
-        >
-          {fortune.career}
-        </motion.p>
+        {/* Annotated face image (left on desktop, top on mobile) */}
+        {annotatedImage && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+            className="shrink-0"
+          >
+            <img
+              src={annotatedImage}
+              alt="面相分析"
+              className="w-48 sm:w-56 md:w-64 lg:w-72 rounded-lg border-2 border-yellow-400/30 shadow-2xl"
+            />
+          </motion.div>
+        )}
 
-        {/* Blessing */}
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-red-400 font-bold leading-relaxed"
-        >
-          🎊 {fortune.blessing} 🎊
-        </motion.p>
+        {/* Fortune text - three sections */}
+        <div className="text-center md:text-left space-y-3 md:space-y-4 flex-1 min-w-0">
+          {/* Face reading */}
+          <motion.p
+            initial={{ x: -30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-yellow-200 font-bold leading-relaxed"
+          >
+            {fortune.face}
+          </motion.p>
+
+          {/* Career reading */}
+          <motion.p
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold leading-relaxed text-glow"
+          >
+            {fortune.career}
+          </motion.p>
+
+          {/* Blessing */}
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.1 }}
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-red-400 font-bold leading-relaxed"
+          >
+            🎊 {fortune.blessing} 🎊
+          </motion.p>
+        </div>
       </div>
 
       {/* Dismiss hint */}
@@ -76,7 +82,7 @@ export default function ResultOverlay({ fortune, onDismiss }) {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5 }}
         onClick={onDismiss}
-        className="mt-12 text-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
+        className="mt-6 md:mt-10 text-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer shrink-0"
       >
         按 空格键 继续下一位 →
       </motion.button>
@@ -86,7 +92,7 @@ export default function ResultOverlay({ fortune, onDismiss }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
         transition={{ delay: 1.5 }}
-        className="absolute bottom-6 text-sm text-gray-500"
+        className="absolute bottom-4 text-sm text-gray-500"
       >
         Powered by Superlinear Academy · 马年大吉
       </motion.p>

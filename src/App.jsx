@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
 import { generateAIFortune } from './lib/ai-fortune'
-import { captureVideoFrame } from './lib/capture-face'
+import { captureAndAnnotate } from './lib/face-annotator'
 import { TIMING, BRAND } from './lib/config'
 import CameraView from './components/CameraView'
 import IdleOverlay from './components/IdleOverlay'
@@ -23,6 +23,7 @@ export default function App() {
 
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortune, setFortune] = useState(null)
+  const [annotatedImage, setAnnotatedImage] = useState(null)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
@@ -34,20 +35,25 @@ export default function App() {
     if (phase !== PHASE.RESULT) return
     setPhase(PHASE.IDLE)
     setFortune(null)
+    setAnnotatedImage(null)
   }, [phase])
 
-  // Start fortune telling — capture face, then AI call runs in parallel with animation
+  // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
     if (phase !== PHASE.IDLE) return
 
-    // Capture face image BEFORE switching phase (video is still active)
-    const imageDataUrl = captureVideoFrame(videoRef.current)
+    // Capture face image + generate annotated image BEFORE switching phase (video is still active)
+    const captureResult = await captureAndAnnotate(videoRef.current)
+    const originalImage = captureResult?.originalDataUrl || null
+    const annotatedImg = captureResult?.annotatedDataUrl || null
+    const measurements = captureResult?.measurements || null
 
+    setAnnotatedImage(annotatedImg)
     setPhase(PHASE.ANALYZING)
 
-    // Run AI generation (with face image) and minimum animation timer in parallel
+    // Run AI generation (with both images + measurements) and minimum animation timer in parallel
     const [generatedFortune] = await Promise.all([
-      generateAIFortune(imageDataUrl),
+      generateAIFortune(originalImage, annotatedImg, measurements),
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
 
@@ -118,6 +124,7 @@ export default function App() {
           <ResultOverlay
             key="result"
             fortune={fortune}
+            annotatedImage={annotatedImage}
             onDismiss={dismissResult}
           />
         )}
