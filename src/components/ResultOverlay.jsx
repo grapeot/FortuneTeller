@@ -18,13 +18,13 @@ export default function ResultOverlay({
   pixelatedImage,
   onDismiss,
 }) {
-  const [activeTab, setActiveTab] = useState('gemini')
+  const [activeTab, setActiveTab] = useState('grok')
   const [shareQr, setShareQr] = useState(null)
 
-  // If gemini is null but grok exists, default to grok
+  // If grok is null but gemini exists, fall back to gemini
   useEffect(() => {
-    if (!fortunes?.gemini && fortunes?.grok) {
-      setActiveTab('grok')
+    if (!fortunes?.grok && fortunes?.gemini) {
+      setActiveTab('gemini')
     }
   }, [fortunes])
 
@@ -118,7 +118,7 @@ export default function ResultOverlay({
                     className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg"
                   />
                 </div>
-                <span className="text-xs text-yellow-400/50 font-serif-cn">扫码分享</span>
+                <span className="text-xs text-yellow-400/50 font-serif-cn">扫码收藏</span>
               </div>
             )}
           </motion.div>

@@ -14,7 +14,7 @@ export default function SharePage({ shareId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('gemini')
+  const [activeTab, setActiveTab] = useState('grok')
 
   useEffect(() => {
     async function fetchShare() {
@@ -26,10 +26,10 @@ export default function SharePage({ shareId }) {
         }
         const result = await resp.json()
         setData(result)
-        // Default to first available model
+        // If grok is null but gemini exists, fall back to gemini
         if (result.fortunes) {
-          if (!result.fortunes.gemini && result.fortunes.grok) {
-            setActiveTab('grok')
+          if (!result.fortunes.grok && result.fortunes.gemini) {
+            setActiveTab('gemini')
           }
         }
       } catch {

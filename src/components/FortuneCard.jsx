@@ -44,14 +44,14 @@ export default function FortuneCard({ fortune }) {
 
         {/* Section 3: Blessing (祝语) */}
         <div className="space-y-1.5">
-          <h3 className="font-calligraphy text-lg sm:text-xl text-red-400/80 tracking-wide">赠言</h3>
-          <p className="font-calligraphy text-base sm:text-lg md:text-xl text-red-300/90 leading-relaxed text-glow-warm">
+          <h3 className="font-calligraphy text-lg sm:text-xl text-yellow-400/70 tracking-wide">赠言</h3>
+          <p className="font-calligraphy text-base sm:text-lg md:text-xl text-yellow-100/90 leading-relaxed text-ink">
             {fortune.blessing}
           </p>
         </div>
 
         {/* Decorative bottom line */}
-        <div className="absolute bottom-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-red-400/30 to-transparent" />
+        <div className="absolute bottom-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent" />
       </div>
     </motion.div>
   )
