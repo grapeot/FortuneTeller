@@ -70,7 +70,7 @@ def _init_firestore():
 _init_firestore()
 
 # ── System prompt (shared with frontend fallback) ──────────────────────────
-SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
+SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
 
 ## 面相学知识体系
 
@@ -121,9 +121,8 @@ SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI相面大师，�
 # ── Request/Response models ─────────────────────────────────────────────────
 
 class FortuneRequest(BaseModel):
-    """Request body for /api/fortune — images and measurements are optional."""
+    """Request body for /api/fortune — image and measurements are optional."""
     image: str | None = None            # base64 data URI of the raw face
-    annotated_image: str | None = None  # base64 data URI of the annotated face
     measurements: str | None = None     # formatted measurement text
 
 
@@ -135,7 +134,6 @@ class PixelateRequest(BaseModel):
 class ShareRequest(BaseModel):
     """Request body for /api/share."""
     pixelated_image: str | None = None
-    annotated_image: str | None = None
     fortune: dict  # {face, career, blessing}
 
 
@@ -159,15 +157,10 @@ async def generate_fortune(req: FortuneRequest = None):
             "type": "image_url",
             "image_url": {"url": req.image},
         })
-        if req.annotated_image:
-            user_content.append({
-                "type": "image_url",
-                "image_url": {"url": req.annotated_image},
-            })
         measure_text = f"\n\n{req.measurements}" if req.measurements else ""
         user_content.append({
             "type": "text",
-            "text": f"请仔细观察这位贵客的面相。第一张是原始照片，第二张是标注了面相学关键部位的参考图。{measure_text}\n\n请根据你的面相学知识和实际观察给出具体的论断。",
+            "text": f"请仔细观察这位贵客的面相。{measure_text}\n\n请根据你的面相学知识和实际观察给出具体的论断。",
         })
     else:
         user_content.append({
@@ -300,7 +293,6 @@ async def create_share(req: ShareRequest):
     share_id = uuid.uuid4().hex[:8]
     doc = {
         "pixelated_image": req.pixelated_image,
-        "annotated_image": req.annotated_image,
         "fortune": req.fortune,
         "created_at": _firestore_mod.SERVER_TIMESTAMP,
     }
@@ -327,7 +319,6 @@ async def get_share(share_id: str):
     data = doc.to_dict()
     return {
         "pixelated_image": data.get("pixelated_image"),
-        "annotated_image": data.get("annotated_image"),
         "fortune": data.get("fortune"),
     }
 

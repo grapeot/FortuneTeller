@@ -50,7 +50,6 @@ export default function SharePage({ shareId }) {
   }
 
   const fortune = data?.fortune || {}
-  const hasImages = data?.pixelated_image || data?.annotated_image
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] flex flex-col items-center p-4 sm:p-6 md:p-8">
@@ -60,30 +59,16 @@ export default function SharePage({ shareId }) {
           ✨ 相面结果 ✨
         </h1>
 
-        {/* Images */}
-        {hasImages && (
-          <div className="flex flex-row items-center gap-3 md:gap-5">
-            {data.pixelated_image && (
-              <div className="flex flex-col items-center gap-1">
-                <img
-                  src={data.pixelated_image}
-                  alt="像素画像"
-                  className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <span className="text-xs text-gray-500">像素画像</span>
-              </div>
-            )}
-            {data.annotated_image && (
-              <div className="flex flex-col items-center gap-1">
-                <img
-                  src={data.annotated_image}
-                  alt="面相标注"
-                  className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg border-2 border-yellow-400/20 shadow-2xl object-cover"
-                />
-                <span className="text-xs text-gray-500">面相标注</span>
-              </div>
-            )}
+        {/* Pixelated avatar */}
+        {data?.pixelated_image && (
+          <div className="flex flex-col items-center gap-1">
+            <img
+              src={data.pixelated_image}
+              alt="像素画像"
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-xs text-gray-500">像素画像</span>
           </div>
         )}
 

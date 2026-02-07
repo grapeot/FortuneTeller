@@ -49,7 +49,7 @@ describe('generateAIFortune', () => {
     expect(mockFetch.mock.calls[0][1].method).toBe('POST')
   })
 
-  it('should send both images and measurements to backend proxy', async () => {
+  it('should send image and measurements to backend proxy', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -61,17 +61,16 @@ describe('generateAIFortune', () => {
     })
 
     const fakeOriginal = 'data:image/jpeg;base64,original'
-    const fakeAnnotated = 'data:image/jpeg;base64,annotated'
     const fakeMeasurements = { 三停比例: { 上停: 33, 中停: 34, 下停: 33 } }
 
-    const result = await generateAIFortune(fakeOriginal, fakeAnnotated, fakeMeasurements)
+    const result = await generateAIFortune(fakeOriginal, fakeMeasurements)
     expect(result.source).toBe('ai')
 
     // Verify all data was included in request body
     const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(callBody.image).toBe(fakeOriginal)
-    expect(callBody.annotated_image).toBe(fakeAnnotated)
     expect(callBody.measurements).toContain('三停比例')
+    expect(callBody.annotated_image).toBeUndefined()
   })
 
   it('should fall back to direct API when backend returns error', async () => {
@@ -99,7 +98,7 @@ describe('generateAIFortune', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 
-  it('should send multimodal content with both images in direct API', async () => {
+  it('should send multimodal content with image and measurements in direct API', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -119,19 +118,18 @@ describe('generateAIFortune', () => {
     })
 
     const fakeOriginal = 'data:image/jpeg;base64,orig'
-    const fakeAnnotated = 'data:image/jpeg;base64,anno'
-    await generateAIFortune(fakeOriginal, fakeAnnotated, null)
+    const fakeMeasurements = { 三停比例: { 上停: 33, 中停: 34, 下停: 33 } }
+    await generateAIFortune(fakeOriginal, fakeMeasurements)
 
-    // Direct API call should have multimodal user content with both images
+    // Direct API call should have multimodal user content with image and text (including measurements)
     const directCallBody = JSON.parse(mockFetch.mock.calls[1][1].body)
     const userMsg = directCallBody.messages[1]
     expect(Array.isArray(userMsg.content)).toBe(true)
-    // Should have 3 parts: original image, annotated image, text
+    // Should have 2 parts: original image, text (with measurements)
     expect(userMsg.content[0].type).toBe('image_url')
     expect(userMsg.content[0].image_url.url).toBe(fakeOriginal)
-    expect(userMsg.content[1].type).toBe('image_url')
-    expect(userMsg.content[1].image_url.url).toBe(fakeAnnotated)
-    expect(userMsg.content[2].type).toBe('text')
+    expect(userMsg.content[1].type).toBe('text')
+    expect(userMsg.content[1].text).toContain('三停比例')
   })
 
   it('should handle markdown-wrapped JSON from direct API', async () => {
@@ -227,9 +225,9 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('mentor')
   })
 
-  it('should reference annotated image and measurements', () => {
-    expect(SYSTEM_PROMPT).toContain('标注了面相关键部位')
+  it('should reference measurements', () => {
     expect(SYSTEM_PROMPT).toContain('测量数据')
+    expect(SYSTEM_PROMPT).not.toContain('标注了面相关键部位')
   })
 
   it('should contain tech company career context', () => {

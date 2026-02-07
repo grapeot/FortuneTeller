@@ -23,7 +23,6 @@ export default function App() {
 
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortune, setFortune] = useState(null)
-  const [annotatedImage, setAnnotatedImage] = useState(null)
   const [pixelatedImage, setPixelatedImage] = useState(null)
 
   // Face detection is active only during IDLE phase
@@ -36,7 +35,6 @@ export default function App() {
     if (phase !== PHASE.RESULT) return
     setPhase(PHASE.IDLE)
     setFortune(null)
-    setAnnotatedImage(null)
     setPixelatedImage(null)
   }, [phase])
 
@@ -44,13 +42,11 @@ export default function App() {
   const startFortune = useCallback(async () => {
     if (phase !== PHASE.IDLE) return
 
-    // Capture face image + generate annotated image BEFORE switching phase (video is still active)
+    // Capture face image and measurements BEFORE switching phase (video is still active)
     const captureResult = await captureAndAnnotate(videoRef.current)
     const originalImage = captureResult?.originalDataUrl || null
-    const annotatedImg = captureResult?.annotatedDataUrl || null
     const measurements = captureResult?.measurements || null
 
-    setAnnotatedImage(annotatedImg)
     setPhase(PHASE.ANALYZING)
 
     // Run AI fortune, pixelated avatar, and minimum animation timer all in parallel
@@ -66,7 +62,7 @@ export default function App() {
       : Promise.resolve(null)
 
     const [generatedFortune, pixelated] = await Promise.all([
-      generateAIFortune(originalImage, annotatedImg, measurements),
+      generateAIFortune(originalImage, measurements),
       pixelatePromise,
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
@@ -139,7 +135,6 @@ export default function App() {
           <ResultOverlay
             key="result"
             fortune={fortune}
-            annotatedImage={annotatedImage}
             pixelatedImage={pixelatedImage}
             onDismiss={dismissResult}
           />

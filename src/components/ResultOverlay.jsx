@@ -3,16 +3,15 @@ import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 
 /**
- * ResultOverlay - displays the fortune result with pixelated avatar + annotated face.
+ * ResultOverlay - displays the fortune result with pixelated avatar.
  * Auto-shares to backend and shows QR code. Dismissed by Space/Enter or click.
  */
 export default function ResultOverlay({
   fortune,
-  annotatedImage,
   pixelatedImage,
   onDismiss,
 }) {
-  const hasImages = pixelatedImage || annotatedImage
+  const hasImages = pixelatedImage
   const [shareQr, setShareQr] = useState(null)
 
   // Auto-share: POST to /api/share and generate QR code for the share URL
@@ -27,7 +26,6 @@ export default function ResultOverlay({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             pixelated_image: pixelatedImage || null,
-            annotated_image: annotatedImage || null,
             fortune: { face: fortune.face, career: fortune.career, blessing: fortune.blessing },
           }),
         })
@@ -43,7 +41,7 @@ export default function ResultOverlay({
 
     autoShare()
     return () => { cancelled = true }
-  }, [fortune, pixelatedImage, annotatedImage])
+  }, [fortune, pixelatedImage])
 
   return (
     <motion.div
@@ -66,37 +64,21 @@ export default function ResultOverlay({
           ✨ 您的相面结果 ✨
         </motion.h2>
 
-        {/* Images row: pixelated avatar + annotated face */}
-        {hasImages && (
+        {/* Pixelated avatar */}
+        {pixelatedImage && (
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            className="flex flex-row items-center gap-3 md:gap-5 shrink-0"
+            className="flex flex-col items-center gap-1 shrink-0"
           >
-            {/* Pixelated avatar */}
-            {pixelatedImage && (
-              <div className="flex flex-col items-center gap-1">
-                <img
-                  src={pixelatedImage}
-                  alt="像素头像"
-                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <span className="text-xs text-gray-500">像素画像</span>
-              </div>
-            )}
-            {/* Annotated face */}
-            {annotatedImage && (
-              <div className="flex flex-col items-center gap-1">
-                <img
-                  src={annotatedImage}
-                  alt="面相分析"
-                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/20 shadow-2xl object-cover"
-                />
-                <span className="text-xs text-gray-500">面相标注</span>
-              </div>
-            )}
+            <img
+              src={pixelatedImage}
+              alt="像素头像"
+              className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-xs text-gray-500">像素画像</span>
           </motion.div>
         )}
 

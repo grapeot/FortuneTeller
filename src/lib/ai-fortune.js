@@ -37,12 +37,11 @@ function parseAIResponse(data) {
 /**
  * Strategy 1: Call the backend proxy /api/fortune.
  * Token stays server-side — this is the production path.
- * Sends the face images (original + annotated) and measurements for multimodal analysis.
+ * Sends the face image and measurements for multimodal analysis.
  */
-async function callBackendProxy(signal, originalImage, annotatedImage, measurements) {
+async function callBackendProxy(signal, originalImage, measurements) {
   const body = {}
   if (originalImage) body.image = originalImage
-  if (annotatedImage) body.annotated_image = annotatedImage
   if (measurements) body.measurements = formatMeasurements(measurements)
 
   const resp = await fetch('/api/fortune', {
@@ -69,35 +68,27 @@ async function callBackendProxy(signal, originalImage, annotatedImage, measureme
  * Strategy 2: Direct API call (only for local dev when backend isn't running).
  * Requires VITE_AI_API_TOKEN to be set in .env.
  */
-async function callDirectAPI(signal, originalImage, annotatedImage, measurements) {
+async function callDirectAPI(signal, originalImage, measurements) {
   if (!AI_CONFIG.apiToken) {
     throw new Error('No VITE_AI_API_TOKEN for direct call')
   }
 
-  // Build user message content - multimodal if images available
+  // Build user message content - multimodal if image available
   const userContent = []
+  const measureText = measurements ? formatMeasurements(measurements) : ''
   if (originalImage) {
     userContent.push({
       type: 'image_url',
       image_url: { url: originalImage },
     })
-  }
-  if (annotatedImage) {
-    userContent.push({
-      type: 'image_url',
-      image_url: { url: annotatedImage },
-    })
-  }
-  const measureText = measurements ? formatMeasurements(measurements) : ''
-  if (originalImage) {
     userContent.push({
       type: 'text',
-      text: `请仔细观察这位贵客的面相。第一张是原始照片，第二张是标注了面相学关键部位的参考图。${measureText ? '\n\n' + measureText : ''}\n\n请根据你的面相学知识和实际观察给出具体的论断。`,
+      text: `请仔细观察这位贵客的面相。${measureText ? '\n\n' + measureText + '\n\n' : ''}请根据你的面相学知识和实际观察给出具体的论断。`,
     })
   } else {
     userContent.push({
       type: 'text',
-      text: '请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）',
+      text: `请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）${measureText ? '\n\n' + measureText : ''}`,
     })
   }
 
@@ -126,18 +117,17 @@ async function callDirectAPI(signal, originalImage, annotatedImage, measurements
 /**
  * Generate an AI fortune using the best available method.
  * @param {string|null} originalImage - base64 data URI of the raw face
- * @param {string|null} annotatedImage - base64 data URI of the annotated face
  * @param {object|null} measurements - facial measurements from landmark detection
  * @returns {Promise<{face: string, career: string, blessing: string, full: string, source: string}>}
  */
-export async function generateAIFortune(originalImage = null, annotatedImage = null, measurements = null) {
+export async function generateAIFortune(originalImage = null, measurements = null) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), TIMING.aiTimeout)
 
   try {
     // Try backend proxy first (production path)
     try {
-      const result = await callBackendProxy(controller.signal, originalImage, annotatedImage, measurements)
+      const result = await callBackendProxy(controller.signal, originalImage, measurements)
       clearTimeout(timeoutId)
       return result
     } catch (backendErr) {
@@ -146,7 +136,7 @@ export async function generateAIFortune(originalImage = null, annotatedImage = n
 
     // Try direct API call (local dev path)
     try {
-      const result = await callDirectAPI(controller.signal, originalImage, annotatedImage, measurements)
+      const result = await callDirectAPI(controller.signal, originalImage, measurements)
       clearTimeout(timeoutId)
       return result
     } catch (directErr) {
@@ -165,7 +155,7 @@ export async function generateAIFortune(originalImage = null, annotatedImage = n
 /**
  * System prompt - exported for testing purposes only
  */
-export const SYSTEM_PROMPT = `你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
+export const SYSTEM_PROMPT = `你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
 
 ## 你的面相学知识体系
 

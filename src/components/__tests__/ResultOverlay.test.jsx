@@ -70,19 +70,6 @@ describe('ResultOverlay', () => {
     expect(screen.getByText(/Superlinear Academy/)).toBeInTheDocument()
   })
 
-  it('renders annotated image when provided', () => {
-    const fakeImage = 'data:image/jpeg;base64,abc123'
-    render(<ResultOverlay fortune={mockFortune} annotatedImage={fakeImage} onDismiss={() => {}} />)
-    const img = screen.getByAltText('面相分析')
-    expect(img).toBeInTheDocument()
-    expect(img.src).toBe(fakeImage)
-  })
-
-  it('does not render image when annotatedImage is null', () => {
-    render(<ResultOverlay fortune={mockFortune} annotatedImage={null} onDismiss={() => {}} />)
-    expect(screen.queryByAltText('面相分析')).not.toBeInTheDocument()
-  })
-
   it('renders pixelated image when provided', () => {
     const fakePixel = 'data:image/png;base64,pixel123'
     render(<ResultOverlay fortune={mockFortune} pixelatedImage={fakePixel} onDismiss={() => {}} />)
@@ -91,18 +78,8 @@ describe('ResultOverlay', () => {
     expect(img.src).toBe(fakePixel)
   })
 
-  it('renders both images side by side', () => {
-    const fakeAnnotated = 'data:image/jpeg;base64,ann'
-    const fakePixel = 'data:image/png;base64,pix'
-    render(
-      <ResultOverlay
-        fortune={mockFortune}
-        annotatedImage={fakeAnnotated}
-        pixelatedImage={fakePixel}
-        onDismiss={() => {}}
-      />,
-    )
-    expect(screen.getByAltText('面相分析')).toBeInTheDocument()
-    expect(screen.getByAltText('像素头像')).toBeInTheDocument()
+  it('does not render pixelated image when not provided', () => {
+    render(<ResultOverlay fortune={mockFortune} pixelatedImage={null} onDismiss={() => {}} />)
+    expect(screen.queryByAltText('像素头像')).not.toBeInTheDocument()
   })
 })
