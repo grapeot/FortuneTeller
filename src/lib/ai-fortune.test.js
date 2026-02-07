@@ -88,9 +88,9 @@ describe('generateAIFortune (multi-model)', () => {
     })
 
     const result = await generateAIFortune()
-    expect(result.gemini).toBeTruthy()
-    expect(result.gemini.face).toBe('印堂发亮——')
-    expect(result.grok).toBeNull()
+    expect(result.grok).toBeTruthy()
+    expect(result.grok.face).toBe('印堂发亮——')
+    expect(result.gemini).toBeNull()
   })
 
   it('should send multimodal content in direct API', async () => {
@@ -141,7 +141,7 @@ describe('generateAIFortune (multi-model)', () => {
     })
 
     const result = await generateAIFortune()
-    expect(result.gemini.face).toBe('a——')
+    expect(result.grok.face).toBe('a——')
   })
 
   it('should fall back to local pool when all AI paths fail', async () => {
@@ -149,8 +149,8 @@ describe('generateAIFortune (multi-model)', () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
     const result = await generateAIFortune()
-    expect(result.gemini.source).toBe('fallback')
-    expect(result.gemini.face).toBeTruthy()
+    expect(result.grok.source).toBe('fallback')
+    expect(result.grok.face).toBeTruthy()
   })
 
   it('should fall back on network error', async () => {
@@ -158,7 +158,7 @@ describe('generateAIFortune (multi-model)', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
     const result = await generateAIFortune()
-    expect(result.gemini.source).toBe('fallback')
+    expect(result.grok.source).toBe('fallback')
   })
 
   it('should fall back when direct API returns invalid JSON', async () => {
@@ -171,7 +171,7 @@ describe('generateAIFortune (multi-model)', () => {
     })
 
     const result = await generateAIFortune()
-    expect(result.gemini.source).toBe('fallback')
+    expect(result.grok.source).toBe('fallback')
   })
 })
 

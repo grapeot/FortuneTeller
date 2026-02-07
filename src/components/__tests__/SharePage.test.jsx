@@ -17,11 +17,7 @@ vi.mock('framer-motion', () => ({
 const mockShareData = {
   pixelated_image: 'data:image/png;base64,px123',
   fortunes: {
-    gemini: {
-      face: '天庭饱满——',
-      career: '印堂开阔，适合承担决断角色。',
-      blessing: '马到成功！',
-    },
+    gemini: null,
     grok: {
       face: '山根高耸——',
       career: '颧骨有力，适合带队攻坚。',
@@ -52,7 +48,7 @@ describe('SharePage', () => {
     })
   })
 
-  it('renders fortune data with grok as default tab', async () => {
+  it('renders fortune data from grok', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockShareData,
@@ -74,19 +70,6 @@ describe('SharePage', () => {
       expect(img).toBeInTheDocument()
       expect(img.src).toBe(mockShareData.pixelated_image)
     })
-  })
-
-  it('switches model tabs', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockShareData,
-    })
-    render(<SharePage shareId="test123" />)
-    await waitFor(() => {
-      expect(screen.getByText('Gemini')).toBeInTheDocument()
-    })
-    fireEvent.click(screen.getByText('Gemini'))
-    expect(screen.getByText('天庭饱满——')).toBeInTheDocument()
   })
 
   it('renders the email subscription form', async () => {
@@ -176,18 +159,18 @@ describe('SharePage', () => {
     })
   })
 
-  it('falls back to gemini when grok is null', async () => {
-    const geminiOnly = {
+  it('shows no result message when grok is null', async () => {
+    const noGrok = {
       ...mockShareData,
-      fortunes: { gemini: mockShareData.fortunes.gemini, grok: null },
+      fortunes: { gemini: null, grok: null },
     }
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => geminiOnly,
+      json: async () => noGrok,
     })
     render(<SharePage shareId="test123" />)
     await waitFor(() => {
-      expect(screen.getByText('天庭饱满——')).toBeInTheDocument()
+      expect(screen.getByText('该模型暂无结果')).toBeInTheDocument()
     })
   })
 

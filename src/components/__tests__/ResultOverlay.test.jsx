@@ -27,11 +27,7 @@ const mockFetch = vi.fn().mockResolvedValue({
 vi.stubGlobal('fetch', mockFetch)
 
 const mockFortunes = {
-  gemini: {
-    face: '天庭饱满，眉宇开阔——',
-    career: '印堂开阔、眼神有力，适合承担需要决断力的角色。',
-    blessing: '马到成功！',
-  },
+  gemini: null,
   grok: {
     face: '山根高耸，鼻梁挺直——',
     career: '颧骨有力，适合带队攻坚。',
@@ -45,21 +41,9 @@ describe('ResultOverlay', () => {
     expect(screen.getByText(/相面结果/)).toBeInTheDocument()
   })
 
-  it('renders the default (grok) face reading', () => {
+  it('renders the grok face reading', () => {
     render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
     expect(screen.getByText(mockFortunes.grok.face)).toBeInTheDocument()
-  })
-
-  it('renders model tabs when both models available', () => {
-    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
-    expect(screen.getByText('Gemini')).toBeInTheDocument()
-    expect(screen.getByText('Grok')).toBeInTheDocument()
-  })
-
-  it('switches to gemini tab on click', () => {
-    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
-    fireEvent.click(screen.getByText('Gemini'))
-    expect(screen.getByText(mockFortunes.gemini.face)).toBeInTheDocument()
   })
 
   it('shows the dismiss hint', () => {
@@ -90,17 +74,5 @@ describe('ResultOverlay', () => {
   it('does not render pixelated image when not provided', () => {
     render(<ResultOverlay fortunes={mockFortunes} pixelatedImage={null} onDismiss={() => {}} />)
     expect(screen.queryByAltText('像素画像')).not.toBeInTheDocument()
-  })
-
-  it('does not show tabs when only one model has results', () => {
-    const singleModel = { gemini: mockFortunes.gemini, grok: null }
-    render(<ResultOverlay fortunes={singleModel} onDismiss={() => {}} />)
-    expect(screen.queryByText('Grok')).not.toBeInTheDocument()
-  })
-
-  it('falls back to gemini when grok is null', () => {
-    const geminiOnly = { gemini: mockFortunes.gemini, grok: null }
-    render(<ResultOverlay fortunes={geminiOnly} onDismiss={() => {}} />)
-    expect(screen.getByText(mockFortunes.gemini.face)).toBeInTheDocument()
   })
 })
