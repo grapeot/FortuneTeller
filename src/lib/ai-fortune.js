@@ -97,7 +97,7 @@ async function callDirectAPI(signal, originalImage, annotatedImage, measurements
   } else {
     userContent.push({
       type: 'text',
-      text: '请给这位贵客算一卦。（无法获取面部图像，请基于随机面相特征生成具体论断）',
+      text: '请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）',
     })
   }
 
@@ -165,7 +165,7 @@ export async function generateAIFortune(originalImage = null, annotatedImage = n
 /**
  * System prompt - exported for testing purposes only
  */
-export const SYSTEM_PROMPT = `你是一位精通中国传统面相学的AI算命大师，在微软2026年春节庙会（马年）上给员工看面相算命。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
+export const SYSTEM_PROMPT = `你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
 
 ## 你的面相学知识体系
 
@@ -217,7 +217,7 @@ export const SYSTEM_PROMPT = `你是一位精通中国传统面相学的AI算命
 
 ## 输出要求
 
-算命结果分为三部分，都要详细具体：
+相面结果分为三部分，都要详细具体：
 
 1. **face**（面相观察，3-5句话）：
    - 必须基于你在照片中实际观察到的面部特征

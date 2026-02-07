@@ -204,12 +204,15 @@ describe('generateAIFortune', () => {
 })
 
 describe('SYSTEM_PROMPT', () => {
-  it('should contain face reading knowledge', () => {
+  it('should contain face reading knowledge and use 相面 terminology', () => {
     expect(SYSTEM_PROMPT).toContain('面相学')
+    expect(SYSTEM_PROMPT).toContain('相面大师')
     expect(SYSTEM_PROMPT).toContain('天庭')
     expect(SYSTEM_PROMPT).toContain('印堂')
     expect(SYSTEM_PROMPT).toContain('三停')
     expect(SYSTEM_PROMPT).toContain('十二宫位')
+    expect(SYSTEM_PROMPT).toContain('相面结果')
+    expect(SYSTEM_PROMPT).not.toContain('算命')
   })
 
   it('should contain Tony Zhang-style analysis patterns', () => {

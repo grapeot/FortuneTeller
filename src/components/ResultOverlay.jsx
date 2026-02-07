@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 
 /**
  * ResultOverlay - displays the fortune result with pixelated avatar + annotated face.
- * Dismissed manually by pressing Space/Enter or clicking the dismiss hint.
+ * Auto-shares to backend and shows QR code. Dismissed by Space/Enter or click.
  */
 export default function ResultOverlay({
   fortune,
@@ -11,6 +13,37 @@ export default function ResultOverlay({
   onDismiss,
 }) {
   const hasImages = pixelatedImage || annotatedImage
+  const [shareQr, setShareQr] = useState(null)
+
+  // Auto-share: POST to /api/share and generate QR code for the share URL
+  useEffect(() => {
+    if (!fortune) return
+    let cancelled = false
+
+    async function autoShare() {
+      try {
+        const resp = await fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pixelated_image: pixelatedImage || null,
+            annotated_image: annotatedImage || null,
+            fortune: { face: fortune.face, career: fortune.career, blessing: fortune.blessing },
+          }),
+        })
+        if (!resp.ok) return
+        const data = await resp.json()
+        const shareUrl = `${window.location.origin}/share/${data.id}`
+        const qrDataUrl = await QRCode.toDataURL(shareUrl, { width: 200, margin: 2 })
+        if (!cancelled) setShareQr(qrDataUrl)
+      } catch {
+        // Share is best-effort; don't break the experience
+      }
+    }
+
+    autoShare()
+    return () => { cancelled = true }
+  }, [fortune, pixelatedImage, annotatedImage])
 
   return (
     <motion.div
@@ -30,7 +63,7 @@ export default function ResultOverlay({
           transition={{ delay: 0.2 }}
           className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold shrink-0"
         >
-          ✨ 您的算命结果 ✨
+          ✨ 您的相面结果 ✨
         </motion.h2>
 
         {/* Images row: pixelated avatar + annotated face */}
@@ -99,6 +132,23 @@ export default function ResultOverlay({
             🎊 {fortune.blessing} 🎊
           </motion.p>
         </div>
+
+        {/* Share QR code */}
+        {shareQr && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.3 }}
+            className="flex flex-col items-center gap-1"
+          >
+            <img
+              src={shareQr}
+              alt="分享二维码"
+              className="w-24 h-24 rounded-lg"
+            />
+            <span className="text-xs text-gray-500">扫码分享结果</span>
+          </motion.div>
+        )}
 
         {/* Dismiss hint */}
         <motion.button

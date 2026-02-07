@@ -13,7 +13,7 @@ vi.mock('framer-motion', () => ({
 describe('IdleOverlay', () => {
   it('renders the title', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
-    expect(screen.getByText('AI 算命师')).toBeInTheDocument()
+    expect(screen.getByText('AI 相面师')).toBeInTheDocument()
   })
 
   it('renders the subtitle', () => {
@@ -38,20 +38,20 @@ describe('IdleOverlay', () => {
 
   it('disables start button when not ready', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
-    const button = screen.getByText('开始算命')
+    const button = screen.getByText('开始相面')
     expect(button).toBeDisabled()
   })
 
   it('enables start button when ready', () => {
     render(<IdleOverlay faceCount={1} isReady={true} onStart={() => {}} />)
-    const button = screen.getByText('开始算命')
+    const button = screen.getByText('开始相面')
     expect(button).not.toBeDisabled()
   })
 
   it('calls onStart when button is clicked', () => {
     const onStart = vi.fn()
     render(<IdleOverlay faceCount={1} isReady={true} onStart={onStart} />)
-    fireEvent.click(screen.getByText('开始算命'))
+    fireEvent.click(screen.getByText('开始相面'))
     expect(onStart).toHaveBeenCalledTimes(1)
   })
 })

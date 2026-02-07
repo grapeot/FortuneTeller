@@ -31,7 +31,7 @@ export async function initLandmarker() {
       landmarkerInstance = await FaceLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath:
-            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.tflite',
+            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
           delegate: 'GPU',
         },
         runningMode: 'IMAGE',
@@ -150,6 +150,18 @@ export async function captureAndAnnotate(videoEl, options = {}) {
   return { originalDataUrl, annotatedDataUrl, measurements }
 }
 
+// ── Face wireframe landmark sequences ─────────────────────────────────────
+
+const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109]
+const LEFT_EYE = [33,160,159,158,157,173,133,155,154,153,145,144,163,7]
+const RIGHT_EYE = [362,385,386,387,388,466,263,249,390,373,374,380,381,382]
+const LEFT_BROW = [70,63,105,66,107]
+const RIGHT_BROW = [300,293,334,296,336]
+const UPPER_LIP = [61,185,40,39,37,0,267,269,270,409,291]
+const LOWER_LIP = [61,146,91,181,84,17,314,405,321,375,291]
+const NOSE_BRIDGE = [6,197,195,5,4,1]
+const NOSE_BOTTOM = [48,4,278]
+
 // ── Annotation drawing ────────────────────────────────────────────────────
 
 const GOLD = '#ffd700'
@@ -157,7 +169,8 @@ const GOLD_DIM = 'rgba(255, 215, 0, 0.5)'
 const LABEL_BG = 'rgba(0, 0, 0, 0.65)'
 
 /**
- * Draw face-reading annotations on a copy of the source canvas.
+ * Draw face-reading annotations on a privacy-safe dark background.
+ * Only a wireframe silhouette of the face is shown – no real face pixels.
  */
 function drawAnnotations(sourceCanvas, landmarks, w, h) {
   const canvas = document.createElement('canvas')
@@ -165,16 +178,32 @@ function drawAnnotations(sourceCanvas, landmarks, w, h) {
   canvas.height = h
   const ctx = canvas.getContext('2d')
 
-  // Draw original image
-  ctx.drawImage(sourceCanvas, 0, 0)
+  // Dark gradient background instead of real face
+  const grad = ctx.createLinearGradient(0, 0, 0, h)
+  grad.addColorStop(0, '#0f0f23')
+  grad.addColorStop(1, '#1a1a2e')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, w, h)
 
-  // Convert normalized landmarks to pixel coords
-  const px = (idx) => ({
-    x: landmarks[idx].x * w,
-    y: landmarks[idx].y * h,
-  })
+  // Draw face wireframe
+  const px = (idx) => ({ x: landmarks[idx].x * w, y: landmarks[idx].y * h })
+  const mapPx = (arr) => arr.map(i => px(i))
 
-  // Key points
+  ctx.strokeStyle = 'rgba(255, 215, 0, 0.25)'
+  ctx.lineWidth = 1.2
+  drawPath(ctx, mapPx(FACE_OVAL), true)
+
+  ctx.lineWidth = 0.8
+  drawPath(ctx, mapPx(LEFT_EYE), true)
+  drawPath(ctx, mapPx(RIGHT_EYE), true)
+  drawPath(ctx, mapPx(LEFT_BROW))
+  drawPath(ctx, mapPx(RIGHT_BROW))
+  drawPath(ctx, mapPx(NOSE_BRIDGE))
+  drawPath(ctx, mapPx(NOSE_BOTTOM))
+  drawPath(ctx, mapPx(UPPER_LIP))
+  drawPath(ctx, mapPx(LOWER_LIP))
+
+  // Key points (reuse px helper from wireframe above)
   const browY = (px(LM.leftBrowPeak).y + px(LM.rightBrowPeak).y) / 2
   const noseBottomY = px(LM.noseBottom).y
   const chinY = px(LM.chin).y
@@ -272,6 +301,17 @@ function drawAnnotations(sourceCanvas, landmarks, w, h) {
 }
 
 // ── Drawing helpers ───────────────────────────────────────────────────────
+
+function drawPath(ctx, points, close = false) {
+  if (points.length < 2) return
+  ctx.beginPath()
+  ctx.moveTo(points[0].x, points[0].y)
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y)
+  }
+  if (close) ctx.closePath()
+  ctx.stroke()
+}
 
 function drawHLine(ctx, x1, x2, y) {
   ctx.beginPath()

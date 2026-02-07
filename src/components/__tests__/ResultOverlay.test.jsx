@@ -13,17 +13,29 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }) => <>{children}</>,
 }))
 
+// Mock qrcode
+vi.mock('qrcode', () => ({
+  default: { toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,mockqr') },
+}))
+
+// Mock fetch for auto-share
+const mockFetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: async () => ({ id: 'abc123', url: '/share/abc123' }),
+})
+vi.stubGlobal('fetch', mockFetch)
+
 const mockFortune = {
   face: '天庭饱满，眉宇开阔——',
-  career: '必是L65以上的Principal！这骨相，Connect评分想低都难。',
+  career: '印堂开阔、眼神有力，建议多承担architect角色。',
   blessing: '马到成功，新Feature一次上线！',
-  full: '天庭饱满，眉宇开阔——必是L65以上的Principal！这骨相，Connect评分想低都难。马到成功，新Feature一次上线！',
+  full: '天庭饱满，眉宇开阔——印堂开阔、眼神有力，建议多承担architect角色。马到成功，新Feature一次上线！',
 }
 
 describe('ResultOverlay', () => {
   it('renders the result title', () => {
     render(<ResultOverlay fortune={mockFortune} onDismiss={() => {}} />)
-    expect(screen.getByText(/您的算命结果/)).toBeInTheDocument()
+    expect(screen.getByText(/您的相面结果/)).toBeInTheDocument()
   })
 
   it('renders the face reading', () => {

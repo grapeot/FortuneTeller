@@ -1,8 +1,10 @@
 """
 Thin FastAPI backend for AI Fortune Teller.
-- POST /api/fortune   → proxies the AI call with optional face image (token stays server-side)
-- POST /api/pixelate  → calls Gemini to generate a pixelated cartoon avatar
-- GET  /*             → serves the Vite-built static files
+- POST /api/fortune    → proxies the AI call with optional face image (token stays server-side)
+- POST /api/pixelate   → generates pixelated cartoon avatar via AI Builder Space
+- POST /api/share      → saves fortune to Firestore and returns share URL
+- GET  /api/share/{id} → retrieves a shared fortune
+- GET  /*              → serves the Vite-built static files (SPA fallback)
 """
 
 import asyncio
@@ -10,10 +12,11 @@ import base64
 import io
 import json
 import os
+import uuid
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import httpx
 
@@ -26,7 +29,48 @@ AI_API_BASE = os.getenv("AI_API_BASE_URL", "https://space.ai-builders.com/backen
 AI_TOKEN = os.getenv("AI_BUILDER_TOKEN") or os.getenv("VITE_AI_API_TOKEN", "")
 AI_MODEL = os.getenv("AI_MODEL") or os.getenv("VITE_AI_MODEL", "grok-4-fast")
 
-SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI算命大师，在微软2026年春节庙会（马年）上给员工看面相算命。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
+PIXEL_SIZE = 64      # downscale target for pixel art
+PIXEL_DISPLAY = 384  # upscale back with nearest-neighbor
+
+# ── Firebase / Firestore ────────────────────────────────────────────────────
+_firestore_db = None
+_firestore_mod = None  # lazy reference to firestore module
+
+
+def _init_firestore():
+    global _firestore_db, _firestore_mod
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, firestore as _fs
+
+        _firestore_mod = _fs
+
+        cred_json = os.getenv("FIREBASE_CREDENTIALS")
+        cred_path = os.getenv(
+            "FIREBASE_CREDENTIALS_PATH", "config/firebase-credentials.json"
+        )
+
+        if cred_json:
+            cred_obj = credentials.Certificate(json.loads(cred_json))
+        elif os.path.exists(cred_path):
+            cred_obj = credentials.Certificate(cred_path)
+        else:
+            print("⚠ No Firebase credentials found, share feature disabled")
+            return
+
+        firebase_admin.initialize_app(cred_obj)
+        _firestore_db = _fs.client()
+        print("✓ Firestore initialized")
+    except ImportError:
+        print("⚠ firebase-admin not installed, share feature disabled")
+    except Exception as e:
+        print(f"⚠ Firebase init error: {e}")
+
+
+_init_firestore()
+
+# ── System prompt (shared with frontend fallback) ──────────────────────────
+SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI相面大师，在微软2026年春节庙会（马年）上给员工相面。你会收到来访者的面部照片（原始照片+标注了面相关键部位的参考图），以及面部测量数据。请根据你实际观察到的面部特征，给出专业、具体、有趣的面相分析。
 
 ## 面相学知识体系
 
@@ -74,12 +118,28 @@ SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI算命大师，�
 {"face": "面相观察段——", "career": "职场建议段。", "blessing": "马年祝福段！"}"""
 
 
+# ── Request/Response models ─────────────────────────────────────────────────
+
 class FortuneRequest(BaseModel):
     """Request body for /api/fortune — images and measurements are optional."""
     image: str | None = None            # base64 data URI of the raw face
     annotated_image: str | None = None  # base64 data URI of the annotated face
     measurements: str | None = None     # formatted measurement text
 
+
+class PixelateRequest(BaseModel):
+    """Request body for /api/pixelate."""
+    image: str  # base64 data URI of the face
+
+
+class ShareRequest(BaseModel):
+    """Request body for /api/share."""
+    pixelated_image: str | None = None
+    annotated_image: str | None = None
+    fortune: dict  # {face, career, blessing}
+
+
+# ── API endpoints ───────────────────────────────────────────────────────────
 
 @app.post("/api/fortune")
 async def generate_fortune(req: FortuneRequest = None):
@@ -112,7 +172,7 @@ async def generate_fortune(req: FortuneRequest = None):
     else:
         user_content.append({
             "type": "text",
-            "text": "请给这位贵客算一卦。（无法获取面部图像，请基于随机面相特征生成具体论断）",
+            "text": "请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）",
         })
 
     async with httpx.AsyncClient(timeout=20.0) as client:
@@ -160,104 +220,116 @@ async def generate_fortune(req: FortuneRequest = None):
     }
 
 
-# ── Gemini config (for pixelated avatar generation) ──────────────────────
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-3-pro-image-preview"
-PIXEL_SIZE = 64      # downscale target (small enough to be "pixel art")
-PIXEL_DISPLAY = 384  # upscale back for display (nearest-neighbor → sharp pixels)
-
-
-class PixelateRequest(BaseModel):
-    """Request body for /api/pixelate."""
-    image: str  # base64 data URI of the face
-
-
-def _generate_pixel_avatar(face_b64: str) -> str:
-    """Sync helper: call Gemini to generate pixel art, then downsample + NN upsample.
-
-    Returns a base64 data URI of the final pixelated image.
-    """
-    from google import genai
-    from google.genai import types
-    from PIL import Image
-
-    if not GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY not configured")
-
-    client = genai.Client(api_key=GEMINI_API_KEY)
-
-    # Strip data URI prefix to get raw base64
-    raw_b64 = face_b64.split(",", 1)[-1] if "," in face_b64 else face_b64
-    image_bytes = base64.b64decode(raw_b64)
-
-    # Build Gemini request
-    parts = [
-        types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-        types.Part.from_text(
-            text=(
-                "Based on this face photo, generate a pixel art style cartoon portrait of this person. "
-                "The portrait should capture the person's key facial features (face shape, hairstyle, "
-                "skin tone, glasses if any, facial hair if any) so that people who know them can "
-                "recognize them instantly. Use a clean, colorful pixel art aesthetic with a simple "
-                "solid-color background. The style should be cute but recognizable — like a retro "
-                "game character portrait. Do NOT include any text or labels."
-            )
-        ),
-    ]
-
-    config = types.GenerateContentConfig(
-        response_modalities=["IMAGE", "TEXT"],
-        image_config=types.ImageConfig(aspect_ratio="1:1"),
-    )
-
-    # Call Gemini (streaming to collect image parts)
-    generated_image_data = None
-    for chunk in client.models.generate_content_stream(
-        model=GEMINI_MODEL,
-        contents=[types.Content(role="user", parts=parts)],
-        config=config,
-    ):
-        if not chunk.candidates or not chunk.candidates[0].content:
-            continue
-        for part in chunk.candidates[0].content.parts:
-            if getattr(part, "inline_data", None) and part.inline_data.data:
-                generated_image_data = part.inline_data.data
-                break
-        if generated_image_data:
-            break
-
-    if not generated_image_data:
-        raise RuntimeError("Gemini returned no image data")
-
-    # Pixelation: downscale → nearest-neighbor upscale
-    img = Image.open(io.BytesIO(generated_image_data))
-    img = img.convert("RGB")
-
-    # Downscale to PIXEL_SIZE x PIXEL_SIZE
-    small = img.resize((PIXEL_SIZE, PIXEL_SIZE), Image.LANCZOS)
-    # Upscale back with nearest-neighbor for sharp pixel art look
-    pixelated = small.resize((PIXEL_DISPLAY, PIXEL_DISPLAY), Image.NEAREST)
-
-    # Encode as PNG (better for pixel art)
-    buf = io.BytesIO()
-    pixelated.save(buf, format="PNG")
-    result_b64 = base64.b64encode(buf.getvalue()).decode()
-
-    return f"data:image/png;base64,{result_b64}"
-
-
 @app.post("/api/pixelate")
 async def pixelate_avatar(req: PixelateRequest):
-    """Generate a pixelated cartoon avatar from a face photo using Gemini."""
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
+    """Generate a pixelated cartoon avatar via AI Builder Space image edit API."""
+    if not AI_TOKEN:
+        raise HTTPException(status_code=503, detail="AI_BUILDER_TOKEN not configured")
 
     try:
-        # Run sync Gemini call in thread pool to avoid blocking
-        result = await asyncio.to_thread(_generate_pixel_avatar, req.image)
-        return {"pixelated_image": result}
+        raw_b64 = req.image.split(",", 1)[-1] if "," in req.image else req.image
+        image_bytes = base64.b64decode(raw_b64)
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{AI_API_BASE}/images/edits",
+                headers={"Authorization": f"Bearer {AI_TOKEN}"},
+                files=[("image", ("face.jpg", io.BytesIO(image_bytes), "image/jpeg"))],
+                data={
+                    "prompt": (
+                        "Based on this face photo, generate a pixel art style cartoon portrait. "
+                        "Capture key facial features (face shape, hairstyle, skin tone, glasses if any, "
+                        "facial hair if any) so people who know them can recognize them instantly. "
+                        "Use a clean, colorful pixel art aesthetic with a simple solid-color background. "
+                        "Cute but recognizable — like a retro game character portrait. No text or labels."
+                    ),
+                    "size": "1024x1024",
+                },
+            )
+            resp.raise_for_status()
+
+        data = resp.json()
+        img_item = (data.get("data") or [{}])[0]
+
+        # Handle b64_json, data URI, or URL response
+        if img_item.get("b64_json"):
+            img_bytes = base64.b64decode(img_item["b64_json"])
+        elif img_item.get("url"):
+            url = img_item["url"]
+            if url.startswith("data:"):
+                img_bytes = base64.b64decode(url.split(",", 1)[-1])
+            else:
+                async with httpx.AsyncClient(timeout=30.0) as dl:
+                    dl_resp = await dl.get(url)
+                    dl_resp.raise_for_status()
+                    img_bytes = dl_resp.content
+        else:
+            raise RuntimeError("No image data in AI response")
+
+        # Pixelation: downscale → nearest-neighbor upscale
+        result_b64 = await asyncio.to_thread(_pixelate_image, img_bytes)
+        return {"pixelated_image": f"data:image/png;base64,{result_b64}"}
+
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"AI image API error: {e}")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Pixelation failed: {e}")
+
+
+def _pixelate_image(img_bytes: bytes) -> str:
+    """Sync helper: downscale + nearest-neighbor upscale for pixel art look."""
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    small = img.resize((PIXEL_SIZE, PIXEL_SIZE), Image.LANCZOS)
+    pixelated = small.resize((PIXEL_DISPLAY, PIXEL_DISPLAY), Image.NEAREST)
+
+    buf = io.BytesIO()
+    pixelated.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+@app.post("/api/share")
+async def create_share(req: ShareRequest):
+    """Save fortune to Firestore and return a share URL."""
+    if not _firestore_db:
+        raise HTTPException(
+            status_code=503, detail="Share feature not available (Firestore not configured)"
+        )
+
+    share_id = uuid.uuid4().hex[:8]
+    doc = {
+        "pixelated_image": req.pixelated_image,
+        "annotated_image": req.annotated_image,
+        "fortune": req.fortune,
+        "created_at": _firestore_mod.SERVER_TIMESTAMP,
+    }
+
+    await asyncio.to_thread(
+        _firestore_db.collection("fortunes").document(share_id).set, doc
+    )
+
+    return {"id": share_id, "url": f"/share/{share_id}"}
+
+
+@app.get("/api/share/{share_id}")
+async def get_share(share_id: str):
+    """Retrieve a shared fortune from Firestore."""
+    if not _firestore_db:
+        raise HTTPException(status_code=503, detail="Share feature not available")
+
+    doc = await asyncio.to_thread(
+        _firestore_db.collection("fortunes").document(share_id).get
+    )
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    data = doc.to_dict()
+    return {
+        "pixelated_image": data.get("pixelated_image"),
+        "annotated_image": data.get("annotated_image"),
+        "fortune": data.get("fortune"),
+    }
 
 
 @app.get("/api/health")
@@ -266,14 +338,26 @@ async def health():
         "status": "ok",
         "model": AI_MODEL,
         "token_configured": bool(AI_TOKEN),
-        "gemini_configured": bool(GEMINI_API_KEY),
+        "firestore_configured": _firestore_db is not None,
     }
 
 
-# ── Serve static files (must be LAST) ──────────────────────────────────────
+# ── Serve static files + SPA fallback (must be LAST) ──────────────────────
 dist_dir = os.path.join(os.path.dirname(__file__), "dist")
+
+
 if os.path.isdir(dist_dir):
-    app.mount("/", StaticFiles(directory=dist_dir, html=True), name="static")
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str = ""):
+        """Serve static files from dist/, fall back to index.html for SPA routing."""
+        if full_path:
+            file_path = os.path.join(dist_dir, full_path)
+            if os.path.isfile(file_path):
+                return FileResponse(file_path)
+        index_path = os.path.join(dist_dir, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path)
+        raise HTTPException(status_code=404)
 
 
 if __name__ == "__main__":

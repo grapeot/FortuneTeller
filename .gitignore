@@ -45,3 +45,7 @@ env/
 *.tmp
 *.temp
 .cache/
+
+# Firebase credentials
+config/
+*firebase-adminsdk*
