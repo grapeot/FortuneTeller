@@ -8,7 +8,7 @@ import mistune
 
 from . import config
 from .firebase import get_db, get_mod
-from .ai import generate_deep_analysis
+from .ai import generate_deep_analysis, generate_multi_model_analysis
 
 
 # ── Email-compatible Markdown renderer ───────────────────────────────────────
@@ -77,8 +77,17 @@ def markdown_to_email_html(text: str) -> str:
 
 # ── Email builder ────────────────────────────────────────────────────────────
 
-def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | None = None) -> str:
-    """Build Outlook-compatible HTML email with harmonious palette."""
+def build_email_html(
+    deep_analysis: str | None = None,
+    name: str = "",
+    pixelated_image: str | None = None,
+    multi_model_results: dict[str, str] | None = None,
+) -> str:
+    """Build Outlook-compatible HTML email with harmonious palette.
+
+    Accepts either a single deep_analysis string (legacy) or a dict of
+    multi_model_results mapping display_name → analysis_text.
+    """
     greeting = f"{name}，您好！" if name else "您好！"
     community_url = config.COMMUNITY_URL
 
@@ -90,7 +99,17 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
                style="width:96px;height:96px;border-radius:8px;image-rendering:pixelated;border:2px solid #c9b99a;" />
         </td></tr>"""
 
-    sections_html = markdown_to_email_html(deep_analysis)
+    if multi_model_results:
+        # Multi-model: render each model's analysis as a labeled section
+        parts = []
+        for model_name, analysis in multi_model_results.items():
+            header = f'<h2 style="font-size:20px;color:#3d2e1c;margin:32px 0 12px;padding:10px 0 8px;border-bottom:2px solid #c9b99a;letter-spacing:2px;">🤖 {model_name} 的解读</h2>'
+            parts.append(header + markdown_to_email_html(analysis))
+        sections_html = "\n".join(parts)
+    elif deep_analysis:
+        sections_html = markdown_to_email_html(deep_analysis)
+    else:
+        sections_html = "<p>深度分析生成失败，请稍后重试。</p>"
 
     return f"""<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
@@ -170,7 +189,7 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
         <!-- Body -->
         <tr><td class="email-body-cell" style="padding:24px 32px 28px;">
           <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 16px;">{greeting}</p>
-          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">刚才的速览只是冰山一角。我们调用了多个不同AI，为您生成了一份涵盖五官、三停、十二宫位的多维度深度面相报告，包含事业、财运、感情等多方面个性化建议。</p>
+          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">{"我们咨询了多个 AI 模型，为您生成了这份多维度深度面相报告。即使是同样的提示词，每个模型也有自己鲜明的解读风格和性格——希望不同视角的碰撞能带给您更多启发。" if multi_model_results else "以下是为您准备的 AI 面相深度分析报告。这份报告综合了多维度的面相学知识，从五官、三停、十二宫位等多个角度为您进行了全面解读。"}</p>
 
           {sections_html}
 
@@ -181,8 +200,11 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
 
         <!-- Community section -->
         <tr><td class="email-community-cell" style="padding:20px 32px;">
+          <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 8px;">
+            我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
+          </p>
           <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 16px;">
-            同时加入 <strong style="color:#5c4a32;">Superlinear AI</strong> 社区，免费接受深度AI咨询和实战心得。
+            首次访问请点击下方按钮设置登录密码，即可进入社区。
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -306,11 +328,20 @@ async def subscribe_background(email: str, name: str, share_id: str):
                 fortunes = share_data.get("fortunes") or {}
                 pixelated_image = share_data.get("pixelated_image")
 
-        # Step 3: Generate deep analysis via Gemini
-        deep_analysis = await generate_deep_analysis(fortunes)
+        # Step 3: Generate deep analysis via multiple models in parallel
+        multi_results = await generate_multi_model_analysis(fortunes)
 
         # Step 4: Build and send email
-        html = build_email_html(deep_analysis, name, pixelated_image)
+        if multi_results:
+            html = build_email_html(
+                name=name,
+                pixelated_image=pixelated_image,
+                multi_model_results=multi_results,
+            )
+        else:
+            # Fallback: if all models failed, try single-model
+            deep_analysis = await generate_deep_analysis(fortunes)
+            html = build_email_html(deep_analysis, name, pixelated_image)
         email_id = await asyncio.to_thread(send_resend_email, email, html)
 
         # Step 5: Update Firestore with subscription info

@@ -31,15 +31,4 @@ describe('AnalyzingOverlay', () => {
     render(<AnalyzingOverlay />)
     expect(screen.getByText('观天庭...')).toBeInTheDocument()
   })
-
-  it('does not render progress bar', () => {
-    const { container } = render(<AnalyzingOverlay />)
-    // Progress bar should not exist (removed in recent changes)
-    const progressBars = container.querySelectorAll('[class*="progress"], [style*="width"]')
-    const hasProgressBar = Array.from(progressBars).some(el => {
-      const style = el.getAttribute('style') || ''
-      return style.includes('width') && style.includes('%')
-    })
-    expect(hasProgressBar).toBe(false)
-  })
 })

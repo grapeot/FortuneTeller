@@ -118,8 +118,7 @@ class TestBuildEmailHtml:
 
     def test_community_section(self):
         html = build_email_html("内容")
-        assert "Superlinear AI" in html
-        assert "免费接受深度AI咨询和实战心得" in html
+        assert "设置登录密码" in html
         assert "login.circle.so" in html
 
     def test_dark_mode_css(self):
@@ -279,6 +278,6 @@ class TestPrompts:
 
     def test_deep_analysis_prompt_content(self):
         assert "面相学" in DEEP_ANALYSIS_PROMPT
-        assert "1500-2000" in DEEP_ANALYSIS_PROMPT
-        assert "五官详解" in DEEP_ANALYSIS_PROMPT
-        assert "马年运势" in DEEP_ANALYSIS_PROMPT
+        assert "500-700" in DEEP_ANALYSIS_PROMPT
+        assert "五官与三停" in DEEP_ANALYSIS_PROMPT
+        assert "马年寄语" in DEEP_ANALYSIS_PROMPT

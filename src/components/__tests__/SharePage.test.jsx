@@ -82,9 +82,9 @@ describe('SharePage', () => {
       expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
     })
     expect(screen.getByPlaceholderText('姓名/昵称（选填）')).toBeInTheDocument()
-    // h3 heading is now "免费获取深度分析报告"
-    expect(screen.getByRole('heading', { name: '免费获取深度分析报告' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '免费获取深度分析报告' })).toBeInTheDocument()
+    // h3 heading and button have different text (AI wrapped in span)
+    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('免费获取深度分析报告'))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: (name) => name.includes('免费获取') && name.includes('AI') })).toBeInTheDocument()
   })
 
   it('submits the subscription form and shows success', async () => {
@@ -115,7 +115,7 @@ describe('SharePage', () => {
     })
 
     // Submit
-    const submitButton = screen.getByRole('button', { name: '免费获取深度分析报告' })
+    const submitButton = screen.getByRole('button', { name: /免费获取.*AI.*深度分析报告/ })
     fireEvent.click(submitButton)
 
     await waitFor(() => {
@@ -149,7 +149,7 @@ describe('SharePage', () => {
 
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-    const submitButton = screen.getByRole('button', { name: '免费获取深度分析报告' })
+    const submitButton = screen.getByRole('button', { name: /免费获取.*AI.*深度分析报告/ })
     fireEvent.click(submitButton)
 
     await waitFor(() => {

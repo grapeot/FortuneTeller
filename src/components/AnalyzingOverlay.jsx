@@ -17,12 +17,12 @@ const ANALYSIS_TERMS = [
 
 /**
  * AnalyzingOverlay - shown during the analysis animation.
- * Shows scrolling face-reading terms with Chinese styling.
+ * Shows scrolling face-reading terms and a progress bar, with Chinese styling.
  */
 export default function AnalyzingOverlay() {
   const [currentTermIndex, setCurrentTermIndex] = useState(0)
 
-  // Cycle through terms - slowed down by 100% (interval doubled from 1500ms to 3000ms)
+  // Cycle through terms — interval doubled (1500ms → 3000ms) for slower pace
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTermIndex((prev) => (prev + 1) % ANALYSIS_TERMS.length)

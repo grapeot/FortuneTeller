@@ -81,65 +81,73 @@ async def call_model(model_name: str, model_id: str, user_content: list) -> dict
         return None
 
 
-async def generate_deep_analysis(fortunes: dict) -> str:
-    """Call multiple AI models in parallel to generate deep face reading analysis."""
-    context_parts = []
-    for model_name in ("grok", "gemini"):
-        f = fortunes.get(model_name)
-        if f:
-            context_parts.append(
-                f"【{model_name}模型的快速分析】\n"
-                f"面相：{f.get('face', '')}\n"
-                f"事业：{f.get('career', '')}\n"
-                f"祝语：{f.get('blessing', '')}"
+def _build_deep_context(fortunes: dict) -> str:
+    """Build context string from previous quick analysis results (Grok only)."""
+    f = fortunes.get("grok")
+    if f:
+        return (
+            f"【快速面相分析结果】\n"
+            f"面相：{f.get('face', '')}\n"
+            f"事业：{f.get('career', '')}\n"
+            f"祝语：{f.get('blessing', '')}"
+        )
+    return "（无前次分析结果）"
+
+
+async def _call_deep_model(display_name: str, model_id: str, user_msg: str) -> tuple[str, str | None]:
+    """Call one model for deep analysis. Returns (display_name, text_or_None)."""
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{config.AI_API_BASE}/chat/completions",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {config.AI_TOKEN}",
+                },
+                json={
+                    "model": model_id,
+                    "messages": [
+                        {"role": "system", "content": DEEP_ANALYSIS_PROMPT},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "temperature": 1.0,
+                    "max_tokens": 2000,
+                },
             )
+            resp.raise_for_status()
 
-    context = "\n\n".join(context_parts) if context_parts else "（无前次分析结果）"
-    user_content = f"以下是此前为这位来访者做的快速面相分析结果，请在此基础上展开深度分析：\n\n{context}"
+        data = resp.json()
+        text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+        if text:
+            return (display_name, text)
+        print(f"⚠ Deep analysis {display_name}: empty response")
+        return (display_name, None)
+    except Exception as e:
+        print(f"⚠ Deep analysis {display_name} ({model_id}) failed: {e}")
+        return (display_name, None)
 
-    # Call multiple models in parallel
-    models_to_call = [
-        ("Gemini 3 Flash", config.MODELS["gemini"]),
-        ("DeepSeek R1", config.MODELS["deepseek"]),
-        ("Kimi K2.5", config.MODELS["kimi"]),
+
+async def generate_deep_analysis(fortunes: dict) -> str:
+    """Call Gemini to generate a deep face reading analysis (legacy single-model)."""
+    context = _build_deep_context(fortunes)
+    user_msg = f"以下是此前为这位来访者做的快速面相分析结果，请在此基础上展开深度分析：\n\n{context}"
+    _, text = await _call_deep_model("Gemini", config.MODELS["gemini"], user_msg)
+    return text or "深度分析生成失败，请稍后重试。"
+
+
+async def generate_multi_model_analysis(fortunes: dict) -> dict[str, str]:
+    """Call multiple AI models in parallel for deep analysis.
+
+    Returns an ordered dict of {display_name: analysis_text} for models that succeeded.
+    """
+    context = _build_deep_context(fortunes)
+    user_msg = f"以下是此前为这位来访者做的快速面相分析结果，请在此基础上展开深度分析：\n\n{context}"
+
+    tasks = [
+        _call_deep_model(name, model_id, user_msg)
+        for name, model_id in config.DEEP_MODELS.items()
     ]
+    results = await asyncio.gather(*tasks)
 
-    async def call_single_model(model_name: str, model_id: str) -> tuple[str, str]:
-        """Call a single model and return (model_name, analysis_text)."""
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(
-                    f"{config.AI_API_BASE}/chat/completions",
-                    headers={
-                        "Content-Type": "application/json",
-                        "Authorization": f"Bearer {config.AI_TOKEN}",
-                    },
-                    json={
-                        "model": model_id,
-                        "messages": [
-                            {"role": "system", "content": DEEP_ANALYSIS_PROMPT},
-                            {"role": "user", "content": user_content},
-                        ],
-                        "temperature": 0.9,
-                        "max_tokens": 4000,
-                    },
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
-                return (model_name, text or f"{model_name}分析生成失败")
-        except Exception as e:
-            config.logger.warning(f"Model {model_name} failed: {e}")
-            return (model_name, f"{model_name}分析生成失败：{str(e)}")
-
-    # Run all models in parallel
-    results = await asyncio.gather(*[call_single_model(name, model_id) for name, model_id in models_to_call])
-
-    # Organize results into a unified email
-    sections = []
-    sections.append("我们咨询了多个AI模型，想给大家展示即使同样的提示词也会出现每个模型也有自己鲜明的解读风格和性格。\n\n")
-
-    for model_name, analysis_text in results:
-        sections.append(f"## {model_name}的解读\n\n{analysis_text}\n\n")
-
-    return "\n".join(sections)
+    # Preserve order, skip failures
+    return {name: text for name, text in results if text}

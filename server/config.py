@@ -16,8 +16,13 @@ AI_TOKEN = os.getenv("AI_BUILDER_TOKEN") or os.getenv("VITE_AI_API_TOKEN", "")
 MODELS = {
     "gemini": os.getenv("AI_MODEL_GEMINI", "gemini-3-flash-preview"),
     "grok": os.getenv("AI_MODEL_GROK", "grok-4-fast"),
-    "deepseek": os.getenv("AI_MODEL_DEEPSEEK", "deepseek-r1"),
-    "kimi": os.getenv("AI_MODEL_KIMI", "kimi-k2.5"),
+}
+
+# Models used for deep analysis email (parallel multi-model)
+DEEP_MODELS = {
+    "Gemini 3 Flash": os.getenv("AI_MODEL_GEMINI", "gemini-3-flash-preview"),
+    "DeepSeek": os.getenv("AI_MODEL_DEEPSEEK", "deepseek"),
+    "Kimi K2.5": os.getenv("AI_MODEL_KIMI", "kimi-k2.5"),
 }
 
 # ── Pixelation ──────────────────────────────────────────────────────────────
