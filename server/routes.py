@@ -101,8 +101,8 @@ async def pixelate_avatar(req: PixelateRequest):
 # ── POST /api/share ──────────────────────────────────────────────────────────
 
 @app.post("/api/share")
-async def create_share(req: ShareRequest):
-    """Save fortune to Firestore and return a share URL."""
+async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
+    """Save fortune to Firestore (async) and return a share URL immediately."""
     db = get_db()
     mod = get_mod()
     if not db:
@@ -122,12 +122,14 @@ async def create_share(req: ShareRequest):
         "created_at": mod.SERVER_TIMESTAMP,
     }
 
-    try:
-        await asyncio.to_thread(
-            db.collection("fortunes").document(share_id).set, doc
-        )
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Firestore write failed: {e}")
+    # Write to Firestore in background so the QR code appears instantly
+    def _write_to_firestore():
+        try:
+            db.collection("fortunes").document(share_id).set(doc)
+        except Exception as e:
+            config.logger.error(f"Firestore background write failed for {share_id}: {e}")
+
+    background_tasks.add_task(asyncio.to_thread, _write_to_firestore)
 
     return {"id": share_id, "url": f"/share/{share_id}"}
 
