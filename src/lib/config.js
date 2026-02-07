@@ -14,9 +14,9 @@ export const AI_CONFIG = {
 
 export const TIMING = {
   /** Minimum duration of the analyzing animation (ms) */
-  analyzeDuration: 2500,
-  /** Max time to wait for AI response before falling back (ms) */
-  aiTimeout: 8000,
+  analyzeDuration: 3000,
+  /** Max time to wait for AI response before falling back (ms) — increased for multimodal */
+  aiTimeout: 15000,
 }
 
 export const BRAND = {

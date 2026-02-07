@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
 import { generateAIFortune } from './lib/ai-fortune'
+import { captureVideoFrame } from './lib/capture-face'
 import { TIMING, BRAND } from './lib/config'
 import CameraView from './components/CameraView'
 import IdleOverlay from './components/IdleOverlay'
@@ -35,15 +36,18 @@ export default function App() {
     setFortune(null)
   }, [phase])
 
-  // Start fortune telling — AI call runs in parallel with animation
+  // Start fortune telling — capture face, then AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
     if (phase !== PHASE.IDLE) return
 
+    // Capture face image BEFORE switching phase (video is still active)
+    const imageDataUrl = captureVideoFrame(videoRef.current)
+
     setPhase(PHASE.ANALYZING)
 
-    // Run AI generation and minimum animation timer in parallel
+    // Run AI generation (with face image) and minimum animation timer in parallel
     const [generatedFortune] = await Promise.all([
-      generateAIFortune(),
+      generateAIFortune(imageDataUrl),
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
 
