@@ -60,6 +60,7 @@ async def pixelate_avatar(req: PixelateRequest):
                 headers={"Authorization": f"Bearer {config.AI_TOKEN}"},
                 files=[("image", ("face.jpg", io.BytesIO(image_bytes), "image/jpeg"))],
                 data={
+                    "model": "gemini-2.5-flash-image",
                     "prompt": (
                         "Based on this face photo, generate a pixel art style cartoon portrait. "
                         "Capture key facial features (face shape, hairstyle, skin tone, glasses if any, "
