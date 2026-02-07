@@ -71,14 +71,14 @@ class TestPixelateImage:
         result_b64 = pixelate_image(img_bytes)
         result_bytes = base64.b64decode(result_b64)
         img = Image.open(io.BytesIO(result_bytes))
-        assert img.size == (config.PIXEL_DISPLAY, config.PIXEL_DISPLAY)
+        assert img.size == (config.PIXEL_SIZE, config.PIXEL_SIZE)
 
     def test_handles_non_square_input(self):
         img_bytes = self._make_test_image(width=300, height=100)
         result_b64 = pixelate_image(img_bytes)
         result_bytes = base64.b64decode(result_b64)
         img = Image.open(io.BytesIO(result_bytes))
-        assert img.size == (config.PIXEL_DISPLAY, config.PIXEL_DISPLAY)
+        assert img.size == (config.PIXEL_SIZE, config.PIXEL_SIZE)
 
 
 # ── build_email_html ─────────────────────────────────────────────────────────

@@ -19,8 +19,7 @@ MODELS = {
 }
 
 # ── Pixelation ──────────────────────────────────────────────────────────────
-PIXEL_SIZE = 64      # downscale target for pixel art
-PIXEL_DISPLAY = 384  # upscale back with nearest-neighbor
+PIXEL_SIZE = 64      # downscale target for pixel art (frontend upscales via CSS)
 
 # ── Email / Circle / Resend ────────────────────────────────────────────────
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")

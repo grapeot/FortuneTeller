@@ -129,9 +129,12 @@ async def create_share(req: ShareRequest):
         "created_at": mod.SERVER_TIMESTAMP,
     }
 
-    await asyncio.to_thread(
-        db.collection("fortunes").document(share_id).set, doc
-    )
+    try:
+        await asyncio.to_thread(
+            db.collection("fortunes").document(share_id).set, doc
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Firestore write failed: {e}")
 
     return {"id": share_id, "url": f"/share/{share_id}"}
 

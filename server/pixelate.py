@@ -1,5 +1,6 @@
 """
-Image pixelation: downscale + nearest-neighbor upscale for pixel art look.
+Image pixelation: downscale to small pixel art.
+The frontend displays it at a larger size via CSS image-rendering: pixelated.
 """
 
 import base64
@@ -9,13 +10,12 @@ from . import config
 
 
 def pixelate_image(img_bytes: bytes) -> str:
-    """Sync helper: downscale + nearest-neighbor upscale. Returns base64 PNG string."""
+    """Sync helper: downscale to PIXEL_SIZE. Returns base64 PNG string (~3-5 KB)."""
     from PIL import Image
 
     img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     small = img.resize((config.PIXEL_SIZE, config.PIXEL_SIZE), Image.LANCZOS)
-    pixelated = small.resize((config.PIXEL_DISPLAY, config.PIXEL_DISPLAY), Image.NEAREST)
 
     buf = io.BytesIO()
-    pixelated.save(buf, format="PNG")
+    small.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
