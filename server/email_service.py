@@ -30,10 +30,10 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
         if line.startswith("## "):
             heading = line[3:].strip()
             sections_html += f"""
-          <h3 style="font-size:17px;color:#5c4a32;margin:24px 0 8px;padding-bottom:6px;border-bottom:1px solid #e0d5c3;">{heading}</h3>"""
+          <h3 class="email-heading" style="font-size:19px;color:#5c4a32;margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid #e0d5c3;">{heading}</h3>"""
         else:
             sections_html += f"""
-          <p style="font-size:14px;color:#4a3c2e;line-height:1.9;margin:0 0 12px;">{line}</p>"""
+          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 14px;">{line}</p>"""
 
     return f"""<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
@@ -47,6 +47,22 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
   <![endif]-->
   <style>
     :root {{ color-scheme: light dark; supported-color-schemes: light dark; }}
+    /* ── Mobile-first responsive ── */
+    @media only screen and (max-width: 620px) {{
+      .email-outer-pad {{ padding: 12px 6px !important; }}
+      .email-card {{ border-radius: 0 !important; border-left: none !important; border-right: none !important; }}
+      .email-header {{ padding: 24px 20px 20px !important; }}
+      .email-title {{ font-size: 26px !important; letter-spacing: 4px !important; }}
+      .email-subtitle {{ font-size: 13px !important; }}
+      .email-body-cell {{ padding: 20px 18px 24px !important; }}
+      .email-body {{ font-size: 17px !important; line-height: 1.85 !important; }}
+      .email-heading {{ font-size: 20px !important; margin: 28px 0 10px !important; }}
+      .email-community-cell {{ padding: 18px 18px !important; }}
+      .email-divider-cell {{ padding: 0 18px !important; }}
+      .email-footer {{ padding: 16px 18px !important; }}
+      .email-footer-text {{ font-size: 12px !important; }}
+      .email-cta {{ padding: 14px 28px !important; font-size: 15px !important; }}
+    }}
     @media (prefers-color-scheme: dark) {{
       .email-bg {{ background-color: #1c1914 !important; }}
       .email-card {{ background-color: #2a2520 !important; border-color: #4a4035 !important; }}
@@ -75,15 +91,17 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
     [data-ogsc] .email-link {{ color: #d4a868 !important; }}
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#f0ebe3;font-family:Georgia,'Songti SC','STSongti-SC','Noto Serif SC',serif;">
-  <table class="email-bg" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f0ebe3;padding:32px 16px;">
-    <tr><td align="center">
-      <table class="email-card" width="600" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#faf6ef;border:1px solid #d8ccb8;border-radius:8px;overflow:hidden;">
+<body style="margin:0;padding:0;background-color:#f0ebe3;font-family:Georgia,'Songti SC','STSongti-SC','Noto Serif SC',serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <table class="email-bg" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f0ebe3;">
+    <tr><td class="email-outer-pad" align="center" style="padding:32px 16px;">
+
+      <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" role="presentation"><tr><td><![endif]-->
+      <table class="email-card" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#faf6ef;border:1px solid #d8ccb8;border-radius:8px;overflow:hidden;width:100%;max-width:600px;">
 
         <!-- Header: warm brown tone -->
         <tr><td class="email-header" style="background-color:#3d3028;padding:28px 30px 24px;text-align:center;">
           <h1 class="email-title" style="font-size:28px;color:#e8d5b0;margin:0 0 4px;letter-spacing:6px;font-weight:bold;">相面先生</h1>
-          <p class="email-subtitle" style="font-size:12px;color:#a89878;margin:0;letter-spacing:2px;">Superlinear Academy · 丙午马年新春</p>
+          <p class="email-subtitle" style="font-size:13px;color:#a89878;margin:0;letter-spacing:2px;">Superlinear Academy · 丙午马年新春</p>
         </td></tr>
 
         <!-- Warm accent line -->
@@ -93,33 +111,33 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
         {avatar_html}
 
         <!-- Body -->
-        <tr><td style="padding:24px 32px 28px;">
-          <p class="email-body" style="font-size:15px;color:#4a3c2e;line-height:1.9;margin:0 0 16px;">{greeting}</p>
-          <p class="email-body" style="font-size:15px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">以下是为您准备的 AI 面相深度分析报告。这份报告综合了多维度的面相学知识，从五官、三停、十二宫位等多个角度为您进行了全面解读。</p>
+        <tr><td class="email-body-cell" style="padding:24px 32px 28px;">
+          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 16px;">{greeting}</p>
+          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">以下是为您准备的 AI 面相深度分析报告。这份报告综合了多维度的面相学知识，从五官、三停、十二宫位等多个角度为您进行了全面解读。</p>
 
           {sections_html}
 
         </td></tr>
 
         <!-- Divider -->
-        <tr><td style="padding:0 32px;"><div style="height:1px;background-color:#d8ccb8;"></div></td></tr>
+        <tr><td class="email-divider-cell" style="padding:0 32px;"><div style="height:1px;background-color:#d8ccb8;"></div></td></tr>
 
         <!-- Community section -->
-        <tr><td style="padding:20px 32px;">
-          <p class="email-body" style="font-size:14px;color:#6b5d4d;line-height:1.8;margin:0 0 8px;">
+        <tr><td class="email-community-cell" style="padding:20px 32px;">
+          <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 8px;">
             我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
           </p>
-          <p class="email-body" style="font-size:14px;color:#6b5d4d;line-height:1.8;margin:0 0 16px;">
-            首次访问社区请前往 <a class="email-link" href="{community_url}" style="color:#7a5c3a;text-decoration:underline;">{community_url}</a>，点击「找回密码」设置您的登录密码。
+          <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 16px;">
+            首次访问社区请前往 <a class="email-link" href="{community_url}" style="color:#7a5c3a;text-decoration:underline;word-break:break-all;">{community_url}</a>，点击「找回密码」设置您的登录密码。
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr><td align="center" style="padding:4px 0 8px;">
               <!--[if mso]>
-              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{community_url}" style="height:44px;v-text-anchor:middle;width:240px;" arcsize="18%" stroke="f" fillcolor="#5c4a32">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{community_url}" style="height:48px;v-text-anchor:middle;width:260px;" arcsize="18%" stroke="f" fillcolor="#5c4a32">
                 <w:anchorlock/><center>
               <![endif]-->
-              <a class="email-cta" href="{community_url}" style="display:inline-block;padding:12px 32px;background-color:#5c4a32;color:#f0e6d2;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;letter-spacing:1px;">
+              <a class="email-cta" href="{community_url}" style="display:inline-block;padding:14px 36px;background-color:#5c4a32;color:#f0e6d2;font-size:15px;font-weight:bold;text-decoration:none;border-radius:8px;letter-spacing:1px;">
                 访问 Superlinear Academy
               </a>
               <!--[if mso]></center></v:roundrect><![endif]-->
@@ -129,12 +147,14 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
 
         <!-- Footer -->
         <tr><td class="email-footer" style="background-color:#f0ebe3;padding:18px 32px;border-top:1px solid #d8ccb8;">
-          <p class="email-footer-text" style="font-size:11px;color:#a09888;text-align:center;margin:0;line-height:1.7;">
+          <p class="email-footer-text" style="font-size:12px;color:#a09888;text-align:center;margin:0;line-height:1.7;">
             此邮件由 Superlinear Academy 发送 · 社区动态可随时在 Circle 设置中退订<br>&copy; 2026 Superlinear Academy
           </p>
         </td></tr>
 
       </table>
+      <!--[if mso]></td></tr></table><![endif]-->
+
     </td></tr>
   </table>
 </body>

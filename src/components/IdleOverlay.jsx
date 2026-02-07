@@ -36,7 +36,7 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
           <p className="font-serif-cn text-base sm:text-lg md:text-xl text-yellow-200/60">请面向摄像头...</p>
         ) : (
           <p className="font-serif-cn text-base sm:text-lg md:text-xl text-yellow-200/60 animate-pulse">
-            正在加载AI模型...
+            正在加载<span className="font-en">AI</span>模型...
           </p>
         )}
       </div>

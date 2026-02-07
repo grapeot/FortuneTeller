@@ -9,6 +9,12 @@
   font-family: 'Noto Serif SC', 'STSongti-SC', 'Songti SC', serif;
 }
 
+/* Clean English font for mixed CJK/Latin text */
+.font-en {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+}
+
 /* Mirror the camera feed */
 .mirror {
   transform: scaleX(-1);

@@ -23,7 +23,7 @@ describe('IdleOverlay', () => {
 
   it('shows loading message when not ready', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
-    expect(screen.getByText('正在加载AI模型...')).toBeInTheDocument()
+    expect(screen.getByText((_, el) => el.tagName === 'P' && el.textContent === '正在加载AI模型...')).toBeInTheDocument()
   })
 
   it('shows prompt when ready but no face detected', () => {
