@@ -7,7 +7,7 @@ import re
 import mistune
 
 from . import config
-from .firebase import get_db, get_mod
+from .firebase import get_db, get_mod, firestore_retry
 from .ai import generate_deep_analysis, generate_multi_model_analysis
 
 
@@ -321,7 +321,7 @@ async def subscribe_background(email: str, name: str, share_id: str):
         mod = get_mod()
         if db:
             doc = await asyncio.to_thread(
-                db.collection("fortunes").document(share_id).get
+                firestore_retry, db.collection("fortunes").document(share_id).get
             )
             if doc.exists:
                 share_data = doc.to_dict()
@@ -353,6 +353,7 @@ async def subscribe_background(email: str, name: str, share_id: str):
             if name:
                 update_data["subscribed_name"] = name
             await asyncio.to_thread(
+                firestore_retry,
                 db.collection("fortunes").document(share_id).update,
                 update_data,
             )

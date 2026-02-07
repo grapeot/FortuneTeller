@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from .app import app
 from . import config
 from .models import FortuneRequest, PixelateRequest, ShareRequest, SubscribeRequest
-from .firebase import get_db, get_mod
+from .firebase import get_db, get_mod, firestore_retry
 from . import ai
 from .pixelate import pixelate_image
 from . import email_service
@@ -126,7 +126,7 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
     # Write to Firestore in background so the QR code appears instantly
     def _write_to_firestore():
         try:
-            db.collection("fortunes").document(share_id).set(doc)
+            firestore_retry(db.collection("fortunes").document(share_id).set, doc)
         except Exception as e:
             config.logger.error(f"Firestore background write failed for {share_id}: {e}")
 
@@ -145,7 +145,7 @@ async def get_share(share_id: str):
         raise HTTPException(status_code=503, detail="Share feature not available")
 
     doc = await asyncio.to_thread(
-        db.collection("fortunes").document(share_id).get
+        firestore_retry, db.collection("fortunes").document(share_id).get
     )
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Share not found")

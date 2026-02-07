@@ -1,12 +1,16 @@
 """
-Firebase / Firestore initialization.
+Firebase / Firestore initialization and helpers.
 """
 
 import json
+import logging
 import os
+import time
 
 _firestore_db = None
 _firestore_mod = None
+
+logger = logging.getLogger("fortune-teller")
 
 
 def init_firestore():
@@ -45,3 +49,37 @@ def get_db():
 
 def get_mod():
     return _firestore_mod
+
+
+def firestore_retry(func, *args, max_retries=3, base_delay=1.0, **kwargs):
+    """Execute a Firestore operation with exponential-backoff retry.
+
+    Firestore (via gRPC) can raise transient DEADLINE_EXCEEDED / 504 errors
+    even for tiny documents.  Since set/update/get are idempotent, retrying
+    is safe and usually succeeds on the next attempt.
+
+    Args:
+        func: The Firestore callable (e.g. doc_ref.set, doc_ref.get).
+        *args, **kwargs: Forwarded to *func*.
+        max_retries: Total attempts (default 3).
+        base_delay: Initial backoff in seconds; doubles each retry.
+
+    Returns:
+        Whatever *func* returns.
+    """
+    last_exc = None
+    for attempt in range(max_retries):
+        try:
+            return func(*args, **kwargs)
+        except Exception as exc:
+            last_exc = exc
+            if attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                logger.warning(
+                    "Firestore operation %s failed (attempt %d/%d), "
+                    "retrying in %.1fs: %s",
+                    func, attempt + 1, max_retries, delay, exc,
+                )
+                time.sleep(delay)
+    # All retries exhausted — re-raise so the caller can log / handle it
+    raise last_exc
