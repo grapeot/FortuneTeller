@@ -36,19 +36,18 @@ async def test_fortune_no_token(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_fortune_success(client):
-    """Both models return valid results."""
-    gemini_result = {"face": "天庭饱满——", "career": "事业有成。", "blessing": "马到成功！", "source": "ai", "model": "gemini"}
+    """Grok model returns valid result."""
     grok_result = {"face": "山根高——", "career": "适合深耕。", "blessing": "龙马精神！", "source": "ai", "model": "grok"}
 
     async def mock_call(name, model_id, content):
-        return gemini_result if name == "gemini" else grok_result
+        return grok_result
 
     with patch.object(server_ai, "call_model", side_effect=mock_call):
         resp = await client.post("/api/fortune", json={})
 
     assert resp.status_code == 200
     data = resp.json()
-    assert data["gemini"]["face"] == "天庭饱满——"
+    assert data["gemini"] is None
     assert data["grok"]["face"] == "山根高——"
 
 
@@ -66,12 +65,10 @@ async def test_fortune_both_fail(client):
 
 @pytest.mark.asyncio
 async def test_fortune_one_model_fails(client):
-    """One model fails, other succeeds → still 200."""
+    """Grok model succeeds → 200."""
     grok_result = {"face": "山根高——", "career": "适合深耕。", "blessing": "龙马精神！", "source": "ai", "model": "grok"}
 
     async def mock_call(name, model_id, content):
-        if name == "gemini":
-            return None
         return grok_result
 
     with patch.object(server_ai, "call_model", side_effect=mock_call):
@@ -85,7 +82,7 @@ async def test_fortune_one_model_fails(client):
 
 @pytest.mark.asyncio
 async def test_fortune_with_image(client):
-    """Image and measurements are forwarded to call_model."""
+    """Image and measurements are forwarded to call_model (Grok only)."""
     captured_content = []
 
     async def mock_call(name, model_id, content):
@@ -99,7 +96,7 @@ async def test_fortune_with_image(client):
         })
 
     assert resp.status_code == 200
-    assert len(captured_content) == 2
+    assert len(captured_content) == 1
     assert captured_content[0][0]["type"] == "image_url"
     assert captured_content[0][0]["image_url"]["url"] == "data:image/jpeg;base64,abc"
 
