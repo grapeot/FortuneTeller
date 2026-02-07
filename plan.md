@@ -383,45 +383,247 @@
 
 ## 技术设计方案（RFC）
 
+### 技术选型分析
+
+#### 1. 人脸检测方案对比
+
+**方案A：MediaPipe Face Detection（推荐）**
+- **优势：**
+  - Google官方支持，持续更新维护
+  - WebAssembly运行，性能优秀（延迟 < 200ms）
+  - GPU加速（WebGL），适合实时检测
+  - 轻量级模型（~3MB），加载快速
+  - 支持多脸检测
+  - 完全浏览器端运行，隐私保护好
+- **劣势：**
+  - API相对较新，文档可能不够完善
+  - 需要学习MediaPipe Tasks API
+- **适用场景：** 实时人脸检测，性能要求高
+
+**方案B：face-api.js**
+- **优势：**
+  - 基于TensorFlow.js，生态成熟
+  - 支持68点landmark检测（比MediaPipe更详细）
+  - 支持表情识别（可选功能）
+  - 文档完善，社区活跃
+- **劣势：**
+  - 性能略低于MediaPipe（延迟可能 > 300ms）
+  - Bundle size较大（~2-3MB）
+  - 需要更多配置和优化
+- **适用场景：** 需要详细landmark或表情识别
+
+**方案C：TensorFlow.js + 自定义模型**
+- **优势：**
+  - 完全灵活，可自定义模型
+  - 支持模型优化和量化
+- **劣势：**
+  - 开发成本高，需要训练/选择模型
+  - 配置复杂，不适合快速开发
+- **适用场景：** 需要完全自定义的场景
+
+**推荐选择：MediaPipe Face Detection**
+- 理由：性能优秀，官方支持，适合快速开发，完全满足需求
+
+#### 2. 前端框架对比
+
+**方案A：Vue.js 3（推荐）**
+- **优势：**
+  - Bundle size小（35-50KB），加载快速
+  - 开发体验优秀，语法简洁
+  - 响应式系统内置，性能好
+  - 学习曲线平缓，快速上手
+  - 单文件组件（SFC）结构清晰
+  - 适合中小型项目快速开发
+- **劣势：**
+  - 生态相对React较小
+  - 大型项目可能需要更多配置
+- **性能指标：**
+  - 初始加载时间：~1.2s
+  - Bundle size：35-50KB
+  - Time to Interactive：~1.2s
+
+**方案B：React 18**
+- **优势：**
+  - 生态成熟，组件库丰富
+  - 社区活跃，问题解决方案多
+  - 适合大型项目，可扩展性强
+  - 招聘市场React开发者更多
+- **劣势：**
+  - Bundle size较大（45-70KB）
+  - 需要手动优化（useMemo, useCallback等）
+  - 学习曲线较陡，需要理解Hooks
+  - 开发速度相对较慢
+- **性能指标：**
+  - 初始加载时间：~1.4s
+  - Bundle size：45-70KB
+  - Time to Interactive：~1.4s
+
+**推荐选择：Vue.js 3**
+- 理由：快速开发，性能优秀，bundle size小，适合庙会现场快速部署
+
+#### 3. 部署方案对比
+
+**方案A：Vercel（推荐）**
+- **优势：**
+  - 部署速度快，自动化程度高
+  - 全球CDN，性能优秀
+  - 支持预览部署（PR预览）
+  - 免费tier：100GB带宽/月，无需信用卡
+  - 与GitHub集成无缝
+  - 支持环境变量，配置简单
+- **劣势：**
+  - 免费tier有使用限制
+  - 主要优化Next.js，其他框架支持略弱
+- **适用场景：** 快速部署，需要预览功能
+
+**方案B：Netlify**
+- **优势：**
+  - 功能全面，生态成熟
+  - 免费tier：100GB带宽/月，300分钟构建时间
+  - 支持Forms、Functions等内置功能
+  - 支持Monorepo，多站点管理
+  - 本地开发环境模拟好
+- **劣势：**
+  - 配置相对复杂
+  - 免费tier限制较多
+- **适用场景：** 需要完整平台功能
+
+**方案C：GitHub Pages**
+- **优势：**
+  - 完全免费，无使用限制
+  - 与GitHub集成，自动部署
+  - 适合静态站点
+- **劣势：**
+  - 只支持静态站点，无Serverless Functions
+  - 构建时间限制（10次/小时）
+  - 功能相对简单
+- **适用场景：** 纯静态站点，预算有限
+
+**推荐选择：Vercel**
+- 理由：部署快速，性能优秀，免费tier足够，适合快速上线
+
+#### 4. 技术选型总结
+
+| 技术栈 | 推荐方案 | 备选方案 | 理由 |
+|--------|---------|---------|------|
+| 人脸检测 | MediaPipe Face Detection | face-api.js | 性能优秀，官方支持 |
+| 前端框架 | Vue.js 3 | React 18 | 快速开发，bundle size小 |
+| 部署平台 | Vercel | Netlify | 部署快速，性能优秀 |
+| 构建工具 | Vite | Create React App | 快速构建，HMR优秀 |
+| 样式方案 | Tailwind CSS | CSS Modules | 快速开发，响应式友好 |
+| 动画库 | GSAP | CSS Animations | 性能优秀，功能强大 |
+
+#### 5. 技术选型决策树
+
+**决策原则：快速开发 + 性能优先 + 零成本部署**
+
+```
+项目需求分析
+    ↓
+需要实时人脸检测？
+    ├─ 是 → MediaPipe Face Detection（性能优先）
+    └─ 否 → face-api.js（功能丰富）
+    ↓
+需要快速开发？
+    ├─ 是 → Vue.js 3（开发速度快）
+    └─ 否 → React 18（生态成熟）
+    ↓
+需要零成本部署？
+    ├─ 是 → Vercel免费tier（100GB/月）
+    └─ 否 → Netlify（功能更全面）
+    ↓
+需要快速构建？
+    ├─ 是 → Vite（HMR快速）
+    └─ 否 → Webpack（配置灵活）
+```
+
+#### 6. 技术选型理由总结
+
+**为什么选择MediaPipe Face Detection？**
+1. **性能优秀**：WebAssembly + GPU加速，延迟 < 200ms，满足实时检测需求
+2. **官方支持**：Google官方维护，持续更新，稳定性好
+3. **隐私保护**：完全浏览器端运行，数据不上传，符合隐私要求
+4. **轻量级**：模型大小 ~3MB，加载快速
+5. **多脸支持**：支持同时检测多个人脸，适合庙会场景
+
+**为什么选择Vue.js 3？**
+1. **快速开发**：语法简洁，学习曲线平缓，适合快速上线
+2. **性能优秀**：Bundle size小（35-50KB），初始加载快
+3. **开发体验**：Composition API灵活，单文件组件清晰
+4. **响应式系统**：内置响应式，无需手动优化
+5. **适合场景**：中小型项目，快速迭代
+
+**为什么选择Vercel？**
+1. **部署快速**：Git push自动部署，无需配置
+2. **性能优秀**：全球CDN，访问速度快
+3. **免费tier**：100GB带宽/月，足够使用
+4. **预览功能**：PR预览，方便测试
+5. **零配置**：开箱即用，无需复杂配置
+
+**备选方案说明：**
+- **face-api.js**：如果MediaPipe遇到兼容性问题，可快速切换到face-api.js
+- **React 18**：如果团队更熟悉React，也可以使用，但开发速度会稍慢
+- **Netlify**：如果需要更多功能（Forms、Functions），可以选择Netlify
+
 ### 技术栈
 
-#### 前端框架
+#### 前端框架（推荐：Vue.js 3）
 ```
-- React / Vue.js（快速开发）
+- Vue.js 3（Composition API）
+- Vite（构建工具，快速开发）
+- Tailwind CSS（样式框架，快速开发）
 - Web Speech API（可选，语音提示）
 - Web Camera API（摄像头调用）
 ```
 
-#### AI模型
+#### AI模型（推荐：MediaPipe Face Detection）
 ```
 - MediaPipe Face Detection（人脸检测）
   - WebAssembly运行（浏览器端）
   - GPU加速（WebGL）
-  - 6个关键点检测
-  - 多脸支持
+  - 实时检测（延迟 < 200ms）
+  - 多脸支持（最多2人）
 - 无需后端，完全前端运行
+- 隐私保护：数据不存储，不上传
 ```
 
-#### 部署方式
+#### 部署方式（推荐：Vercel）
 ```
-- 静态网站部署（Vercel / Netlify / GitHub Pages）
-- CDN加速（静态资源）
-- 无需服务器成本
+- Vercel（静态网站部署）
+  - 自动部署（Git push触发）
+  - 全球CDN加速
+  - 预览部署（PR预览）
+  - 免费tier：100GB带宽/月
+- 备选：Netlify（功能更全面）
+- 备选：GitHub Pages（完全免费，但功能有限）
 ```
 
 ### 系统架构
 
 ```
 ┌─────────────────────────────────────────────────┐
-│           用户界面（React/Vue）                 │
+│        用户界面（Vue.js 3 + Tailwind CSS）     │
+│    - 待机模式界面                               │
+│    - 隐私授权弹窗                               │
+│    - 算命结果展示                               │
 ├─────────────────────────────────────────────────┤
 │         MediaPipe Face Detection               │
 │    (WebAssembly + GPU Acceleration)            │
+│    - 实时人脸检测（< 200ms延迟）                │
+│    - 多脸支持（最多2人）                        │
 ├─────────────────────────────────────────────────┤
 │         Web Camera API                        │
+│    - 摄像头调用                                 │
+│    - 视频流处理                                 │
 ├─────────────────────────────────────────────────┤
 │         算命文案生成逻辑                      │
 │    (预设模板 + 随机组合)                      │
+│    - 职级/职位/运势文案库                      │
+│    - 随机组合算法                               │
+├─────────────────────────────────────────────────┤
+│         动画与音效模块                        │
+│    - GSAP动画库                                │
+│    - Web Audio API                             │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -517,96 +719,275 @@ MediaPipe Face Detection
 
 ### 技术实现细节
 
-#### MediaPipe Face Detection集成
-```javascript
-// 初始化Face Detection
-const filesetResolver = await FilesetResolver.forVisionTasks(
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision"
-);
+#### 项目初始化（Vite + Vue.js 3）
+```bash
+# 创建项目
+npm create vite@latest msft-fortune-teller -- --template vue
+cd msft-fortune-teller
 
-const faceDetector = await FaceDetection.createFromOptions(
-  filesetResolver,
-  {
-    baseOptions: {
-      modelAssetPath: "blaze_face_short_range.tflite",
-      delegate: "GPU"
-    },
-    minDetectionConfidence: 0.5,
-    runningMode: "VIDEO"
-  }
-);
+# 安装依赖
+npm install
+npm install @mediapipe/tasks-vision
+npm install -D tailwindcss postcss autoprefixer
+npm install gsap
 
-// 实时检测
-async function detectFaces(videoElement) {
-  const result = await faceDetector.detectForVideo(
-    videoElement,
-    performance.now()
-  );
-  return result.detections;
-}
+# 初始化Tailwind CSS
+npx tailwindcss init -p
 ```
 
-#### 算命文案生成
+#### MediaPipe Face Detection集成（Vue.js）
+```vue
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { FilesetResolver, FaceDetection } from '@mediapipe/tasks-vision'
+
+const videoRef = ref(null)
+const faceDetector = ref(null)
+const detections = ref([])
+
+onMounted(async () => {
+  // 初始化Face Detection
+  const filesetResolver = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision"
+  )
+  
+  faceDetector.value = await FaceDetection.createFromOptions(
+    filesetResolver,
+    {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+        delegate: "GPU"
+      },
+      minDetectionConfidence: 0.5,
+      runningMode: "VIDEO"
+    }
+  )
+  
+  // 启动摄像头
+  startCamera()
+})
+
+// 启动摄像头
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+  videoRef.value.srcObject = stream
+  videoRef.value.play()
+  
+  // 开始检测循环
+  detectLoop()
+}
+
+// 检测循环
+function detectLoop() {
+  if (!faceDetector.value || !videoRef.value) return
+  
+  const result = faceDetector.value.detectForVideo(
+    videoRef.value,
+    performance.now()
+  )
+  
+  detections.value = result.detections
+  
+  // 继续下一帧检测
+  requestAnimationFrame(detectLoop)
+}
+
+onUnmounted(() => {
+  // 清理资源
+  if (videoRef.value?.srcObject) {
+    videoRef.value.srcObject.getTracks().forEach(track => track.stop())
+  }
+})
+</script>
+
+<template>
+  <video ref="videoRef" autoplay playsinline></video>
+</template>
+```
+
+#### 算命文案生成（Vue.js Composition API）
 ```javascript
-// 预设文案库
+// composables/useFortune.js
+import { ref } from 'vue'
+
 const careerLevels = [
   "骨相清奇，必是L63以上的Senior！",
   "眉宇间透着Principal的气质，L65起步！",
   "眼神坚毅，一看就是资深SDE！",
   "面容沉稳，PM本色，产品思维拉满！",
   "这气质，Partner级别的人物啊！"
-];
+]
 
 const blessings = [
   "龙年大吉，Bug全消，代码质量UP！",
   "新年好运，项目上线，性能完美！",
   "新春大吉，技术突破，薪资暴涨！",
   "春节快乐，Review秒过，合并顺利！"
-];
+]
 
-// 随机生成
-function generateFortune() {
-  const career = careerLevels[Math.floor(Math.random() * careerLevels.length)];
-  const blessing = blessings[Math.floor(Math.random() * blessings.length)];
-  return `${career}\n\n${blessing}`;
+export function useFortune() {
+  const fortune = ref('')
+  
+  function generateFortune() {
+    const career = careerLevels[Math.floor(Math.random() * careerLevels.length)]
+    const blessing = blessings[Math.floor(Math.random() * blessings.length)]
+    fortune.value = `${career}\n\n${blessing}`
+    return fortune.value
+  }
+  
+  return {
+    fortune,
+    generateFortune
+  }
+}
+```
+
+#### 动画效果（GSAP）
+```javascript
+// utils/animations.js
+import { gsap } from 'gsap'
+
+export function animateResultShow(element) {
+  gsap.fromTo(element, 
+    { opacity: 0, y: 50 },
+    { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+  )
+}
+
+export function animateResultHide(element, callback) {
+  gsap.to(element, {
+    opacity: 0,
+    y: -50,
+    duration: 0.3,
+    ease: 'power2.in',
+    onComplete: callback
+  })
+}
+```
+
+#### Vercel部署配置
+```json
+// vercel.json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
 ```
 
 ### 开发计划
 
-#### 第一阶段：核心功能（4小时）
-- [ ] 搭建React/Vue项目（30分钟）
+#### 第一阶段：项目搭建（1小时）
+- [ ] 使用Vite创建Vue.js 3项目（10分钟）
+- [ ] 配置Tailwind CSS（10分钟）
+- [ ] 配置项目结构（组件、工具函数）（20分钟）
+- [ ] 配置Vercel部署（20分钟）
+
+#### 第二阶段：核心功能（3小时）
 - [ ] 集成MediaPipe Face Detection（1小时）
+  - 安装依赖
+  - 初始化Face Detection
+  - 实现实时检测循环
 - [ ] 实现待机模式（人脸检测）（30分钟）
+  - 摄像头调用
+  - 实时人脸检测
+  - 检测框显示
 - [ ] 实现隐私授权弹窗（30分钟）
+  - 弹窗组件
+  - 状态管理
+  - 用户选择处理
 - [ ] 实现算命文案生成（30分钟）
-- [ ] 实现结果展示页面（1小时）
+  - 文案库设计
+  - 随机组合算法
+  - 文案模板系统
+- [ ] 实现结果展示页面（30分钟）
+  - 结果页面组件
+  - 动画效果
+  - 自动返回待机
 
-#### 第二阶段：优化完善（2小时）
+#### 第三阶段：优化完善（2小时）
 - [ ] 添加音效（30分钟）
+  - Web Audio API集成
+  - 音效文件准备
+  - 音效播放逻辑
 - [ ] 添加动画效果（30分钟）
+  - GSAP集成
+  - 页面切换动画
+  - 结果展示动画
 - [ ] 优化大屏幕显示（30分钟）
+  - 响应式布局
+  - 字体大小适配
+  - 视觉元素优化
 - [ ] 测试调试（30分钟）
+  - 浏览器兼容性测试
+  - 性能优化
+  - Bug修复
 
-#### 第三阶段：部署上线（1小时）
-- [ ] 部署到Vercel/Netlify（30分钟）
-- [ ] 现场测试（30分钟）
+#### 第四阶段：部署上线（1小时）
+- [ ] 部署到Vercel（20分钟）
+  - 配置构建命令
+  - 配置环境变量
+  - 测试部署流程
+- [ ] 现场测试（40分钟）
+  - 摄像头测试
+  - 性能测试
+  - 用户体验测试
 
 ### 风险评估
 
 #### 技术风险
 ```
 风险1：浏览器兼容性问题
-  - 缓解措施：测试Chrome/Edge最新版
-  - 备用方案：准备备用浏览器
+  - 风险描述：MediaPipe Face Detection需要WebAssembly和WebGL支持
+  - 影响：部分旧浏览器可能无法运行
+  - 缓解措施：
+    * 测试Chrome/Edge最新版（主要使用场景）
+    * 检测浏览器支持情况，显示友好提示
+    * 准备降级方案（使用face-api.js作为备选）
+  - 备用方案：准备备用浏览器（Chrome/Edge最新版）
 
 风险2：摄像头调用失败
-  - 缓解措施：现场测试摄像头
-  - 备用方案：准备外接摄像头
+  - 风险描述：浏览器权限被拒绝或摄像头硬件故障
+  - 影响：无法进行人脸检测
+  - 缓解措施：
+    * 现场提前测试摄像头
+    * 友好的错误提示
+    * 准备手动触发模式（点击按钮开始）
+  - 备用方案：准备外接USB摄像头
 
 风险3：人脸检测性能不足
-  - 缓解措施：使用GPU加速
-  - 备用方案：降低检测精度
+  - 风险描述：低端设备可能无法流畅运行
+  - 影响：检测延迟高，用户体验差
+  - 缓解措施：
+    * 使用GPU加速（WebGL）
+    * 降低检测频率（30fps -> 15fps）
+    * 优化模型加载（延迟加载）
+  - 备用方案：
+    * 降低检测精度（minDetectionConfidence: 0.5 -> 0.3）
+    * 使用更轻量的模型
+
+风险4：MediaPipe API变更
+  - 风险描述：MediaPipe API可能更新，导致代码不兼容
+  - 影响：需要更新代码
+  - 缓解措施：
+    * 锁定依赖版本
+    * 查看MediaPipe官方文档
+    * 准备face-api.js作为备选方案
+  - 备用方案：切换到face-api.js（基于TensorFlow.js，更稳定）
+
+风险5：Vercel部署问题
+  - 风险描述：构建失败或部署延迟
+  - 影响：无法及时上线
+  - 缓解措施：
+    * 提前测试部署流程
+    * 准备Netlify作为备选
+    * 本地构建测试
+  - 备用方案：切换到Netlify或GitHub Pages
 ```
 
 #### 用户体验风险
