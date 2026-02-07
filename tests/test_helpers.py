@@ -152,6 +152,15 @@ class TestBuildEmailHtml:
         assert "<ol" in html
         assert "第一点" in html
 
+    def test_markdown_heading_no_space(self):
+        """Gemini sometimes outputs ##标题 without a space after ##."""
+        html = build_email_html("##五官详解\n这是正文。\n###小节\n更多内容。")
+        assert "<h3" in html
+        assert "五官详解" in html
+        assert "小节" in html
+        # Raw ## should not appear in output
+        assert "##" not in html
+
 
 # ── call_model ───────────────────────────────────────────────────────────────
 

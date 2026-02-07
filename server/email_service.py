@@ -3,6 +3,7 @@ Email subscription pipeline: Circle community, Resend email, deep analysis.
 """
 
 import asyncio
+import re
 import mistune
 
 from . import config
@@ -58,9 +59,20 @@ class _EmailRenderer(mistune.HTMLRenderer):
 _email_md = mistune.create_markdown(renderer=_EmailRenderer())
 
 
+_RE_HEADING_NO_SPACE = re.compile(r'^(#{1,6})([^\s#])', re.MULTILINE)
+
+
+def _fix_markdown(text: str) -> str:
+    """Preprocess Markdown to handle common LLM quirks.
+
+    - Adds missing space after heading '#' markers (e.g. '##标题' → '## 标题')
+    """
+    return _RE_HEADING_NO_SPACE.sub(r'\1 \2', text)
+
+
 def markdown_to_email_html(text: str) -> str:
     """Convert Markdown text to email-compatible HTML with inline styles."""
-    return _email_md(text)
+    return _email_md(_fix_markdown(text))
 
 
 # ── Email builder ────────────────────────────────────────────────────────────
