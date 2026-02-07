@@ -168,7 +168,7 @@ export default function SharePage({ shareId }) {
                 <p className="text-red-400 text-xs font-serif-cn">提交失败，请稍后重试</p>
               )}
               <p className="text-xs text-gray-500/70 font-serif-cn text-center leading-relaxed px-2">
-                同时加入 <span className="font-en">Superlinear AI</span> 社区，免费接受深度 <span className="font-en">AI</span> 咨询和实战心得。
+                同时加入 <span className="font-en">Superlinear AI</span> 社区，免费获取前沿 <span className="font-en">AI</span> 资讯和实战干货。
               </p>
             </form>
           )}

@@ -109,7 +109,7 @@ export default function ResultOverlay({
                     className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-lg"
                   />
                 </div>
-                <span className="text-xs text-yellow-400/50 font-serif-cn">扫码收藏</span>
+                <span className="text-xs text-yellow-400/50 font-serif-cn">多 AI 详细报告生成中，扫码获取</span>
               </div>
             )}
           </motion.div>
