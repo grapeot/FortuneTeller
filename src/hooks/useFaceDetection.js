@@ -38,6 +38,11 @@ export function useFaceDetection(videoRef, canvasRef, options = {}) {
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+      // Flip horizontally because video is mirrored but canvas is not
+      ctx.save()
+      ctx.scale(-1, 1)
+      ctx.translate(-canvas.width, 0)
+
       for (const det of detections) {
         const box = det.boundingBox
         if (!box) continue
@@ -46,12 +51,18 @@ export function useFaceDetection(videoRef, canvasRef, options = {}) {
         ctx.lineWidth = lineWidth
         ctx.strokeRect(box.originX, box.originY, box.width, box.height)
 
-        // Draw confidence score
+        // Draw confidence score (text needs to be flipped back)
         const score = Math.round((det.categories?.[0]?.score ?? 0) * 100)
+        ctx.save()
+        ctx.scale(-1, 1)
+        ctx.translate(-box.originX - box.width, box.originY)
         ctx.fillStyle = boxColor
         ctx.font = '16px monospace'
-        ctx.fillText(`${score}%`, box.originX, box.originY - 6)
+        ctx.fillText(`${score}%`, 0, -6)
+        ctx.restore()
       }
+
+      ctx.restore()
     },
     [canvasRef, videoRef, boxColor, lineWidth]
   )

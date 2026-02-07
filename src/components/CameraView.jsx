@@ -7,6 +7,7 @@ import { forwardRef } from 'react'
 const CameraView = forwardRef(function CameraView({ videoRef, canvasRef }, ref) {
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
+      {/* Video: mirrored for user comfort (selfie mode) */}
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover mirror"
@@ -14,9 +15,10 @@ const CameraView = forwardRef(function CameraView({ videoRef, canvasRef }, ref) 
         playsInline
         muted
       />
+      {/* Canvas: NOT mirrored, so detection boxes and text render correctly */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover mirror"
+        className="absolute inset-0 w-full h-full object-cover"
       />
     </div>
   )
