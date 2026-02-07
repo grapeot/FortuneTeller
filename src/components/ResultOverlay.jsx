@@ -1,12 +1,10 @@
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
 
 /**
  * ResultOverlay - displays the fortune result with animations.
- *
- * @param {{ fortune: { face: string, career: string, blessing: string } }} props
+ * Dismissed manually by pressing Space/Enter or clicking the dismiss hint.
  */
-export default function ResultOverlay({ fortune, secondsLeft }) {
+export default function ResultOverlay({ fortune, onDismiss }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -72,15 +70,16 @@ export default function ResultOverlay({ fortune, secondsLeft }) {
         </motion.p>
       </div>
 
-      {/* Countdown */}
-      <motion.div
+      {/* Dismiss hint */}
+      <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5 }}
-        className="mt-12 text-lg text-gray-400"
+        onClick={onDismiss}
+        className="mt-12 text-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
       >
-        {secondsLeft > 0 && `${secondsLeft}秒后返回`}
-      </motion.div>
+        按 空格键 继续下一位 →
+      </motion.button>
 
       {/* Brand footer */}
       <motion.p

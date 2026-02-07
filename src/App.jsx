@@ -21,12 +21,18 @@ export default function App() {
 
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortune, setFortune] = useState(null)
-  const [secondsLeft, setSecondsLeft] = useState(0)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
     enabled: phase === PHASE.IDLE,
   })
+
+  // Dismiss result and return to idle
+  const dismissResult = useCallback(() => {
+    if (phase !== PHASE.RESULT) return
+    setPhase(PHASE.IDLE)
+    setFortune(null)
+  }, [phase])
 
   // Start fortune telling — AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
@@ -42,38 +48,25 @@ export default function App() {
 
     setFortune(generatedFortune)
     setPhase(PHASE.RESULT)
-    setSecondsLeft(Math.ceil(TIMING.resultDuration / 1000))
-
-    // Auto-return to idle
-    setTimeout(() => {
-      setPhase(PHASE.IDLE)
-      setFortune(null)
-      setSecondsLeft(0)
-    }, TIMING.resultDuration)
   }, [phase])
 
-  // Countdown timer during result phase
-  useEffect(() => {
-    if (phase !== PHASE.RESULT || secondsLeft <= 0) return
-
-    const timer = setTimeout(() => {
-      setSecondsLeft((s) => Math.max(0, s - 1))
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [phase, secondsLeft])
-
-  // Keyboard shortcut: Space or Enter to start
+  // Keyboard shortcut: Space or Enter
+  //   IDLE   → start fortune
+  //   RESULT → dismiss and return to IDLE
   useEffect(() => {
     function handleKeyDown(e) {
-      if ((e.key === ' ' || e.key === 'Enter') && phase === PHASE.IDLE) {
+      if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
-        startFortune()
+        if (phase === PHASE.IDLE) {
+          startFortune()
+        } else if (phase === PHASE.RESULT) {
+          dismissResult()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [phase, startFortune])
+  }, [phase, startFortune, dismissResult])
 
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden select-none">
@@ -125,7 +118,7 @@ export default function App() {
           <ResultOverlay
             key="result"
             fortune={fortune}
-            secondsLeft={secondsLeft}
+            onDismiss={dismissResult}
           />
         )}
       </AnimatePresence>

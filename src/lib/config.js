@@ -15,8 +15,6 @@ export const AI_CONFIG = {
 export const TIMING = {
   /** Minimum duration of the analyzing animation (ms) */
   analyzeDuration: 2500,
-  /** How long the result screen stays visible (ms) */
-  resultDuration: 8000,
   /** Max time to wait for AI response before falling back (ms) */
   aiTimeout: 8000,
 }
