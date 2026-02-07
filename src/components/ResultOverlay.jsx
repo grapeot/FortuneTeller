@@ -11,40 +11,40 @@ export default function ResultOverlay({ fortune, onDismiss }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-8"
+      className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8"
     >
-      {/* Decorative top - horse icon */}
+      {/* Decorative top - horse icon - mobile responsive */}
       <motion.div
         initial={{ scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="mb-4"
+        className="mb-2 md:mb-4"
       >
         <img
           src="/assets/horse.jpg"
           alt=""
-          className="w-24 h-24 rounded-full border-2 border-yellow-400/30 object-cover"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 border-yellow-400/30 object-cover"
         />
       </motion.div>
 
-      {/* Title */}
+      {/* Title - mobile responsive */}
       <motion.h2
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="text-3xl text-yellow-400 font-bold mb-8"
+        className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold mb-4 md:mb-8"
       >
         ✨ 您的算命结果 ✨
       </motion.h2>
 
-      {/* Fortune text - three sections */}
-      <div className="max-w-4xl text-center space-y-4">
+      {/* Fortune text - three sections - mobile responsive */}
+      <div className="max-w-4xl text-center space-y-3 md:space-y-4 px-4">
         {/* Face reading */}
         <motion.p
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-4xl text-yellow-200 font-bold leading-relaxed"
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-yellow-200 font-bold leading-relaxed"
         >
           {fortune.face}
         </motion.p>
@@ -54,7 +54,7 @@ export default function ResultOverlay({ fortune, onDismiss }) {
           initial={{ x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="text-5xl text-white font-bold leading-relaxed text-glow"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white font-bold leading-relaxed text-glow"
         >
           {fortune.career}
         </motion.p>
@@ -64,7 +64,7 @@ export default function ResultOverlay({ fortune, onDismiss }) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 1.1 }}
-          className="text-4xl text-red-400 font-bold leading-relaxed"
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-red-400 font-bold leading-relaxed"
         >
           🎊 {fortune.blessing} 🎊
         </motion.p>
