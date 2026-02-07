@@ -106,7 +106,7 @@ export default function ResultOverlay({
                   <img
                     src={shareQr}
                     alt="分享二维码"
-                    className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg"
+                    className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-lg"
                   />
                 </div>
                 <span className="text-xs text-yellow-400/50 font-serif-cn">扫码收藏</span>

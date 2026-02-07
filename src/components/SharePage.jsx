@@ -80,7 +80,7 @@ export default function SharePage({ shareId }) {
   const activeFortune = data?.fortunes?.grok || null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
       <div className="flex flex-col items-center w-full max-w-3xl gap-5 py-8">
 
         {/* Title */}
