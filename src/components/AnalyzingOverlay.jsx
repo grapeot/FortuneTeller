@@ -26,7 +26,7 @@ export default function AnalyzingOverlay() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTermIndex((prev) => (prev + 1) % ANALYSIS_TERMS.length)
-    }, 3000)
+    }, 3750)
     return () => clearInterval(interval)
   }, [])
 
