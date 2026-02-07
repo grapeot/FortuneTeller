@@ -173,7 +173,7 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
             我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
           </p>
           <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 16px;">
-            首次访问社区请前往 <a class="email-link" href="{community_url}" style="color:#7a5c3a;text-decoration:underline;word-break:break-all;">{community_url}</a>，点击「找回密码」设置您的登录密码。
+            首次访问请点击下方按钮设置登录密码，即可进入社区。
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
