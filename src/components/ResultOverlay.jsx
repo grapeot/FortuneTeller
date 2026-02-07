@@ -15,14 +15,18 @@ export default function ResultOverlay({ fortune, secondsLeft }) {
       transition={{ duration: 0.4 }}
       className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-8"
     >
-      {/* Decorative top */}
+      {/* Decorative top - horse icon */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        initial={{ scale: 0, rotate: -20 }}
+        animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="text-6xl mb-4"
+        className="mb-4"
       >
-        🐴
+        <img
+          src="/assets/horse.jpg"
+          alt=""
+          className="w-24 h-24 rounded-full border-2 border-yellow-400/30 object-cover"
+        />
       </motion.div>
 
       {/* Title */}

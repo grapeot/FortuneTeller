@@ -12,8 +12,13 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
       exit={{ opacity: 0 }}
       className="absolute inset-0 flex flex-col items-center justify-between py-12 pointer-events-none"
     >
-      {/* Top: Title + subtitle */}
-      <div className="text-center">
+      {/* Top: Avatar + Title + subtitle */}
+      <div className="text-center flex flex-col items-center">
+        <img
+          src="/assets/fortune-teller.jpg"
+          alt="AI算命师"
+          className="w-24 h-24 rounded-full border-4 border-yellow-400/50 shadow-lg shadow-yellow-400/20 mb-4 object-cover"
+        />
         <h1 className="text-7xl font-bold text-yellow-400 text-glow tracking-wider">
           AI 算命师
         </h1>

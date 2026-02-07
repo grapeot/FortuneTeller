@@ -77,11 +77,34 @@ export default function App() {
 
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden select-none">
+      {/* Background image (Chinese New Year theme) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
+        style={{ backgroundImage: 'url(/assets/bg-cny.jpg)' }}
+      />
+
       {/* Camera feed (always visible as background) */}
       <CameraView videoRef={videoRef} canvasRef={canvasRef} />
 
       {/* Gradient overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
+
+      {/* Decorative elements */}
+      <img
+        src="/assets/lantern.jpg"
+        alt=""
+        className="absolute top-0 left-4 w-20 opacity-40 pointer-events-none"
+      />
+      <img
+        src="/assets/lantern.jpg"
+        alt=""
+        className="absolute top-0 right-4 w-20 opacity-40 pointer-events-none"
+      />
+      <img
+        src="/assets/clouds.jpg"
+        alt=""
+        className="absolute bottom-0 left-0 right-0 h-24 object-cover opacity-20 pointer-events-none"
+      />
 
       {/* Phase-based overlays */}
       <AnimatePresence mode="wait">
