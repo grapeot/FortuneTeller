@@ -45,7 +45,12 @@ export default function QRCodeIcon() {
       {/* QR Code Popup */}
       {showQR && qrDataUrl && (
         <div className="absolute bottom-full left-0 mb-2 p-3 bg-white rounded-lg shadow-2xl z-50">
-          <img src={qrDataUrl} alt="QR Code" className="w-48 h-48" />
+          <img
+            src={qrDataUrl}
+            alt="QR Code"
+            className="w-48 h-48 block object-contain"
+            style={{ aspectRatio: '1 / 1' }}
+          />
           <p className="text-xs text-gray-600 mt-2 text-center">扫码访问</p>
         </div>
       )}
