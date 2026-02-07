@@ -35,9 +35,9 @@ function parseAIResponse(data) {
 }
 
 /**
- * Strategy 1: Call the backend proxy /api/fortune (multi-model).
+ * Strategy 1: Call the backend proxy /api/fortune (Grok only).
  * Token stays server-side — this is the production path.
- * Returns { gemini: {...}, grok: {...} }
+ * Returns { gemini: null, grok: {...} }
  */
 async function callBackendProxy(signal, originalImage, measurements) {
   const body = {}
@@ -102,15 +102,15 @@ async function callDirectAPI(signal, originalImage, measurements) {
 
   if (!resp.ok) throw new Error(`API: ${resp.status}`)
   const result = parseAIResponse(await resp.json())
-  // Wrap in multi-model format
-  return { gemini: result, grok: null }
+  // Wrap in multi-model format (Grok only)
+  return { gemini: null, grok: result }
 }
 
 /**
- * Generate AI fortunes from multiple models.
+ * Generate AI fortunes from Grok model.
  * @param {string|null} originalImage - base64 data URI of the raw face
  * @param {object|null} measurements - facial measurements from landmark detection
- * @returns {Promise<{gemini: FortuneResult|null, grok: FortuneResult|null}>}
+ * @returns {Promise<{gemini: null, grok: FortuneResult|null}>}
  */
 export async function generateAIFortune(originalImage = null, measurements = null) {
   const controller = new AbortController()
@@ -140,7 +140,7 @@ export async function generateAIFortune(originalImage = null, measurements = nul
     clearTimeout(timeoutId)
     console.warn('AI fortune failed, using fallback:', err.message)
     const fallback = { ...generateFallbackFortune(), source: 'fallback' }
-    return { gemini: fallback, grok: null }
+    return { gemini: null, grok: fallback }
   }
 }
 

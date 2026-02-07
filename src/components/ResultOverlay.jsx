@@ -3,37 +3,22 @@ import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import FortuneCard from './FortuneCard'
 
-const MODEL_TABS = [
-  { key: 'gemini', label: 'Gemini' },
-  { key: 'grok', label: 'Grok' },
-]
-
 /**
- * ResultOverlay - displays multi-model fortune results with Chinese-style design.
- * Default tab is Gemini, can switch to Grok.
+ * ResultOverlay - displays Grok fortune results with Chinese-style design.
  * Auto-shares to backend and shows QR code. Dismissed by Space/Enter or click.
  */
 export default function ResultOverlay({
-  fortunes,  // { gemini: {...}, grok: {...} }
+  fortunes,  // { gemini: null, grok: {...} }
   pixelatedImage,
   onDismiss,
 }) {
-  const [activeTab, setActiveTab] = useState('grok')
   const [shareQr, setShareQr] = useState(null)
 
-  // If grok is null but gemini exists, fall back to gemini
-  useEffect(() => {
-    if (!fortunes?.grok && fortunes?.gemini) {
-      setActiveTab('gemini')
-    }
-  }, [fortunes])
-
-  const activeFortune = fortunes?.[activeTab]
-  const availableTabs = MODEL_TABS.filter((t) => fortunes?.[t.key])
+  const activeFortune = fortunes?.grok
 
   // Auto-share: POST to /api/share and generate QR code
   useEffect(() => {
-    if (!fortunes) return
+    if (!fortunes?.grok) return
     let cancelled = false
 
     async function autoShare() {
@@ -44,18 +29,24 @@ export default function ResultOverlay({
           body: JSON.stringify({
             pixelated_image: pixelatedImage || null,
             fortunes: {
-              gemini: fortunes.gemini ? { face: fortunes.gemini.face, career: fortunes.gemini.career, blessing: fortunes.gemini.blessing } : null,
+              gemini: null,
               grok: fortunes.grok ? { face: fortunes.grok.face, career: fortunes.grok.career, blessing: fortunes.grok.blessing } : null,
             },
           }),
         })
-        if (!resp.ok) return
+        if (!resp.ok) {
+          const errorText = await resp.text()
+          console.error('[QR Code] Share API failed:', resp.status, errorText)
+          return
+        }
         const data = await resp.json()
+        console.log('[QR Code] Share API success:', data)
         const shareUrl = `${window.location.origin}/share/${data.id}`
         const qrDataUrl = await QRCode.toDataURL(shareUrl, { width: 200, margin: 2 })
+        console.log('[QR Code] Generated QR code for:', shareUrl)
         if (!cancelled) setShareQr(qrDataUrl)
-      } catch {
-        // Share is best-effort
+      } catch (err) {
+        console.error('[QR Code] Share failed:', err)
       }
     }
 
@@ -124,34 +115,10 @@ export default function ResultOverlay({
           </motion.div>
         )}
 
-        {/* Model tabs */}
-        {availableTabs.length > 1 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/10"
-          >
-            {availableTabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  activeTab === tab.key
-                    ? 'bg-yellow-400/20 text-yellow-400 tab-active'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-
         {/* Fortune text with Chinese styling */}
         <AnimatePresence mode="wait">
           {activeFortune && (
-            <FortuneCard key={activeTab} fortune={activeFortune} />
+            <FortuneCard key="grok" fortune={activeFortune} />
           )}
         </AnimatePresence>
 

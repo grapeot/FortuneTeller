@@ -22,7 +22,7 @@ export default function App() {
   const canvasRef = useRef(null)
 
   const [phase, setPhase] = useState(PHASE.IDLE)
-  const [fortunes, setFortunes] = useState(null) // { gemini: {...}, grok: {...} }
+  const [fortunes, setFortunes] = useState(null) // { gemini: null, grok: {...} }
   const [pixelatedImage, setPixelatedImage] = useState(null)
 
   // Face detection is active only during IDLE phase
@@ -175,7 +175,7 @@ export default function App() {
       </div>
 
       {/* AI source indicator (debug) */}
-      {fortunes?.gemini?.source === 'ai' && phase === PHASE.RESULT && (
+      {fortunes?.grok?.source === 'ai' && phase === PHASE.RESULT && (
         <div className="absolute top-3 right-4 text-xs text-green-700">
           ✦ AI Generated
         </div>

@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react'
 import FortuneCard from './FortuneCard'
 
-const MODEL_TABS = [
-  { key: 'gemini', label: 'Gemini' },
-  { key: 'grok', label: 'Grok' },
-]
-
 /**
- * SharePage - displays a shared fortune result with tabs for multi-model support.
+ * SharePage - displays a shared Grok fortune result.
  * Accessed via /share/{id} URL.
  * Includes an email subscription form for deep analysis + community access.
  */
@@ -15,7 +10,6 @@ export default function SharePage({ shareId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('grok')
 
   // Email subscription form state
   const [email, setEmail] = useState('')
@@ -32,11 +26,6 @@ export default function SharePage({ shareId }) {
         }
         const result = await resp.json()
         setData(result)
-        if (result.fortunes) {
-          if (!result.fortunes.grok && result.fortunes.gemini) {
-            setActiveTab('gemini')
-          }
-        }
       } catch {
         setError('网络错误，请检查连接')
       } finally {
@@ -88,9 +77,7 @@ export default function SharePage({ shareId }) {
     )
   }
 
-  const fortunes = data?.fortunes || {}
-  const activeFortune = fortunes[activeTab] || null
-  const availableTabs = MODEL_TABS.filter((t) => fortunes[t.key])
+  const activeFortune = data?.fortunes?.grok || null
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8">
@@ -116,25 +103,6 @@ export default function SharePage({ shareId }) {
               />
             </div>
             <span className="text-xs text-yellow-400/50 font-serif-cn">像素画像</span>
-          </div>
-        )}
-
-        {/* Model tabs */}
-        {availableTabs.length > 1 && (
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/10">
-            {availableTabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  activeTab === tab.key
-                    ? 'bg-yellow-400/20 text-yellow-400 tab-active'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
           </div>
         )}
 

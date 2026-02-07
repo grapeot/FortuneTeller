@@ -25,7 +25,7 @@ from . import email_service
 
 @app.post("/api/fortune")
 async def generate_fortune(req: FortuneRequest = None):
-    """Call Gemini and Grok in parallel, return both results."""
+    """Call Grok only, return result in multi-model format for compatibility."""
     if not config.AI_TOKEN:
         raise HTTPException(
             status_code=503,
@@ -34,19 +34,12 @@ async def generate_fortune(req: FortuneRequest = None):
 
     user_content = ai.build_user_content(req)
 
-    results = await asyncio.gather(
-        ai.call_model("gemini", config.MODELS["gemini"], user_content),
-        ai.call_model("grok", config.MODELS["grok"], user_content),
-        return_exceptions=True,
-    )
+    grok_result = await ai.call_model("grok", config.MODELS["grok"], user_content)
 
-    gemini_result = results[0] if not isinstance(results[0], Exception) else None
-    grok_result = results[1] if not isinstance(results[1], Exception) else None
+    if not grok_result:
+        raise HTTPException(status_code=502, detail="Grok model failed")
 
-    if not gemini_result and not grok_result:
-        raise HTTPException(status_code=502, detail="Both AI models failed")
-
-    return {"gemini": gemini_result, "grok": grok_result}
+    return {"gemini": None, "grok": grok_result}
 
 
 # ── POST /api/pixelate ──────────────────────────────────────────────────────
