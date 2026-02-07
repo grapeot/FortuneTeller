@@ -1,23 +1,23 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
-// Face reading terms that scroll during analysis
+// Face reading terms that scroll during analysis — traditional Chinese face reading terminology
 const ANALYSIS_TERMS = [
-  '扫描天庭...',
-  '分析眉骨...',
-  '检测印堂...',
-  '解读颧骨...',
-  '测量鼻梁...',
-  '识别耳垂...',
-  '计算面相指数...',
-  '匹配职级数据库...',
-  '查询Connect评分...',
-  '预测马年运势...',
+  '观天庭...',
+  '察印堂...',
+  '看山根...',
+  '审五官...',
+  '量三停...',
+  '观颧骨...',
+  '察法令...',
+  '看田宅宫...',
+  '审夫妻宫...',
+  '综合论断...',
 ]
 
 /**
- * AnalyzingOverlay - shown during the 2.5s analysis animation.
- * Shows scrolling face-reading terms and a progress bar.
+ * AnalyzingOverlay - shown during the analysis animation.
+ * Shows scrolling face-reading terms and a progress bar, with Chinese styling.
  */
 export default function AnalyzingOverlay() {
   const [currentTermIndex, setCurrentTermIndex] = useState(0)
@@ -27,15 +27,15 @@ export default function AnalyzingOverlay() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTermIndex((prev) => (prev + 1) % ANALYSIS_TERMS.length)
-    }, 400)
+    }, 1500)
     return () => clearInterval(interval)
   }, [])
 
-  // Animate progress bar
+  // Animate progress bar slowly
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 2, 100))
-    }, 50)
+      setProgress((prev) => Math.min(prev + 0.5, 95))
+    }, 75)
     return () => clearInterval(interval)
   }, [])
 
@@ -45,28 +45,28 @@ export default function AnalyzingOverlay() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center gap-8"
+      className="absolute inset-0 bg-gradient-to-b from-[#1a0a0a]/85 via-black/80 to-[#1a0a0a]/85 flex flex-col items-center justify-center gap-8"
     >
       {/* Scanning animation circle */}
       <div className="relative w-48 h-48">
         <motion.div
           className="absolute inset-0 rounded-full border-4 border-yellow-400/30"
           animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <motion.div
-          className="absolute inset-2 rounded-full border-2 border-dashed border-yellow-400/50"
-          animate={{ rotate: -360 }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
         />
+        <motion.div
+          className="absolute inset-2 rounded-full border-2 border-dashed border-red-400/40"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+        />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-6xl">🔮</span>
+          <span className="font-calligraphy text-6xl text-yellow-400/80">相</span>
         </div>
       </div>
 
       {/* Title */}
-      <h2 className="text-4xl font-bold text-yellow-400 text-glow">
-        正在分析您的面相...
+      <h2 className="font-calligraphy text-3xl sm:text-4xl text-yellow-400 text-glow-warm tracking-wider">
+        正在观面...
       </h2>
 
       {/* Scrolling terms */}
@@ -77,8 +77,8 @@ export default function AnalyzingOverlay() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-2xl text-yellow-200/80 text-center"
+            transition={{ duration: 0.3 }}
+            className="font-serif-cn text-xl sm:text-2xl text-yellow-200/70 text-center tracking-wide"
           >
             {ANALYSIS_TERMS[currentTermIndex]}
           </motion.p>
@@ -86,9 +86,9 @@ export default function AnalyzingOverlay() {
       </div>
 
       {/* Progress bar */}
-      <div className="w-80 h-3 bg-gray-800 rounded-full overflow-hidden">
+      <div className="w-64 sm:w-80 h-2 bg-gray-800/60 rounded-full overflow-hidden border border-yellow-400/10">
         <motion.div
-          className="h-full bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 rounded-full"
+          className="h-full bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 rounded-full"
           style={{ width: `${progress}%` }}
           transition={{ duration: 0.1 }}
         />

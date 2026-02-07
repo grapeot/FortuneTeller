@@ -10,6 +10,7 @@ vi.mock('framer-motion', () => ({
         {children}
       </div>
     ),
+    h2: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
     p: ({ children, ...props }) => <p {...props}>{children}</p>,
   },
   AnimatePresence: ({ children }) => <>{children}</>,
@@ -18,17 +19,16 @@ vi.mock('framer-motion', () => ({
 describe('AnalyzingOverlay', () => {
   it('renders the analyzing title', () => {
     render(<AnalyzingOverlay />)
-    expect(screen.getByText('正在分析您的面相...')).toBeInTheDocument()
+    expect(screen.getByText('正在观面...')).toBeInTheDocument()
   })
 
-  it('renders the crystal ball emoji', () => {
+  it('renders the calligraphy character', () => {
     render(<AnalyzingOverlay />)
-    expect(screen.getByText('🔮')).toBeInTheDocument()
+    expect(screen.getByText('相')).toBeInTheDocument()
   })
 
   it('renders an initial analysis term', () => {
     render(<AnalyzingOverlay />)
-    // The first term should be visible
-    expect(screen.getByText('扫描天庭...')).toBeInTheDocument()
+    expect(screen.getByText('观天庭...')).toBeInTheDocument()
   })
 })

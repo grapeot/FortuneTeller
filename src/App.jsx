@@ -22,7 +22,7 @@ export default function App() {
   const canvasRef = useRef(null)
 
   const [phase, setPhase] = useState(PHASE.IDLE)
-  const [fortune, setFortune] = useState(null)
+  const [fortunes, setFortunes] = useState(null) // { gemini: {...}, grok: {...} }
   const [pixelatedImage, setPixelatedImage] = useState(null)
 
   // Face detection is active only during IDLE phase
@@ -34,7 +34,7 @@ export default function App() {
   const dismissResult = useCallback(() => {
     if (phase !== PHASE.RESULT) return
     setPhase(PHASE.IDLE)
-    setFortune(null)
+    setFortunes(null)
     setPixelatedImage(null)
   }, [phase])
 
@@ -49,7 +49,7 @@ export default function App() {
 
     setPhase(PHASE.ANALYZING)
 
-    // Run AI fortune, pixelated avatar, and minimum animation timer all in parallel
+    // Run AI fortune (multi-model), pixelated avatar, and minimum animation timer all in parallel
     const pixelatePromise = originalImage
       ? fetch('/api/pixelate', {
           method: 'POST',
@@ -61,20 +61,18 @@ export default function App() {
           .catch(() => null)
       : Promise.resolve(null)
 
-    const [generatedFortune, pixelated] = await Promise.all([
+    const [multiModelFortunes, pixelated] = await Promise.all([
       generateAIFortune(originalImage, measurements),
       pixelatePromise,
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
 
     setPixelatedImage(pixelated)
-    setFortune(generatedFortune)
+    setFortunes(multiModelFortunes) // { gemini: {...}, grok: {...} }
     setPhase(PHASE.RESULT)
   }, [phase])
 
   // Keyboard shortcut: Space or Enter
-  //   IDLE   → start fortune
-  //   RESULT → dismiss and return to IDLE
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === ' ' || e.key === 'Enter') {
@@ -131,10 +129,10 @@ export default function App() {
 
         {phase === PHASE.ANALYZING && <AnalyzingOverlay key="analyzing" />}
 
-        {phase === PHASE.RESULT && fortune && (
+        {phase === PHASE.RESULT && fortunes && (
           <ResultOverlay
             key="result"
-            fortune={fortune}
+            fortunes={fortunes}
             pixelatedImage={pixelatedImage}
             onDismiss={dismissResult}
           />
@@ -177,7 +175,7 @@ export default function App() {
       </div>
 
       {/* AI source indicator (debug) */}
-      {fortune?.source === 'ai' && phase === PHASE.RESULT && (
+      {fortunes?.gemini?.source === 'ai' && phase === PHASE.RESULT && (
         <div className="absolute top-3 right-4 text-xs text-green-700">
           ✦ AI Generated
         </div>
