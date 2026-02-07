@@ -64,21 +64,46 @@ export default function ResultOverlay({
           ✨ 您的相面结果 ✨
         </motion.h2>
 
-        {/* Pixelated avatar */}
-        {pixelatedImage && (
+        {/* Visual combo: Pixelated avatar + QR code side by side */}
+        {(pixelatedImage || shareQr) && (
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            className="flex flex-col items-center gap-1 shrink-0"
+            className="flex flex-row items-center justify-center gap-4 md:gap-6 shrink-0"
           >
-            <img
-              src={pixelatedImage}
-              alt="像素头像"
-              className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
-              style={{ imageRendering: 'pixelated' }}
-            />
-            <span className="text-xs text-gray-500">像素画像</span>
+            {/* Pixelated avatar */}
+            {pixelatedImage && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="relative">
+                  <img
+                    src={pixelatedImage}
+                    alt="像素头像"
+                    className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-xl border-2 border-yellow-400/40 shadow-2xl"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  {/* Decorative corner accent */}
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400/60 rounded-full blur-sm" />
+                </div>
+                <span className="text-xs text-gray-500 mt-1">像素画像</span>
+              </div>
+            )}
+
+            {/* QR code with decorative styling */}
+            {shareQr && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="relative p-2 bg-white/10 rounded-xl border border-yellow-400/30 shadow-xl backdrop-blur-sm">
+                  <img
+                    src={shareQr}
+                    alt="分享二维码"
+                    className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-lg"
+                  />
+                  {/* Decorative corner accent */}
+                  <div className="absolute -top-1 -left-1 w-3 h-3 bg-red-400/60 rounded-full blur-sm" />
+                </div>
+                <span className="text-xs text-gray-500 mt-1">扫码分享结果</span>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -114,23 +139,6 @@ export default function ResultOverlay({
             🎊 {fortune.blessing} 🎊
           </motion.p>
         </div>
-
-        {/* Share QR code */}
-        {shareQr && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.3 }}
-            className="flex flex-col items-center gap-1"
-          >
-            <img
-              src={shareQr}
-              alt="分享二维码"
-              className="w-24 h-24 rounded-lg"
-            />
-            <span className="text-xs text-gray-500">扫码分享结果</span>
-          </motion.div>
-        )}
 
         {/* Dismiss hint */}
         <motion.button
