@@ -41,17 +41,7 @@
 - 背景音乐：轻快春节音乐
 ```
 
-#### 2. 隐私授权
-```
-- 检测到人脸后弹出询问：
-  "AI算命需要分析您的人脸信息，是否同意？"
-- 两个按钮：
-  [同意] [不同意]
-- 不同意：返回待机模式
-- 同意：进入算命模式
-```
-
-#### 3. AI算命
+#### 2. AI算命
 ```
 步骤1：人脸分析（2秒）
 - 显示"正在分析您的面相..."
@@ -70,144 +60,90 @@
 
 ### 算命文案设计
 
-#### 职级相关文案
-```
-- "看您这面相，骨相清奇，必是L63以上的Senior！"
-- "眉宇间透着Principal的气质，L65起步！"
-- "眼神坚毅，一看就是资深SDE，技术大牛！"
-- "面容沉稳，PM本色，产品思维拉满！"
-- "气质像刚从L59升级到L60，潜力股！"
-- "这气质，Partner级别的人物啊！"
-```
+算命文案采用三段式结构：**面相观察 → 职业解读 → 马年祝福**。每段都应当能独立成立，组合后效果加倍。文案设计原则：只说好话（庙会场景没人想听坏消息），但好话要说得有趣、有层次，避免泛泛的"祝你成功"。
 
-#### 职位相关文案
+#### 面相观察句（第一段：建立"专业感"）
 ```
-- "看您的眼神，透着SDE的严谨和智慧！"
-- "气场强大，一看就是Manager级别！"
-- "这面相，PM无疑了，产品感爆棚！"
-- "SDET气质拉满，质量就是生命！"
-- "IC路线走得稳，技术大牛！"
+- "天庭饱满，眉宇开阔——"
+- "眼神坚毅，颧骨挺拔——"
+- "面相方正，下巴有力——"
+- "印堂发亮，双目有神——"
+- "鼻梁高挺，唇形方正——"
+- "耳垂厚实，额头宽广——"
+- "眉骨突出，目光深远——"
+- "两颧饱满，神采奕奕——"
 ```
 
-#### 运势相关文案
+#### 职业解读句（第二段：微软黑话核心笑点）
 ```
-- "龙年大吉，Bug全消，代码质量UP！"
-- "春节快乐，Review秒过，合并顺利！"
-- "新年好运，项目上线，性能完美！"
-- "新春大吉，技术突破，薪资暴涨！"
-- "过年好，AI在手，天下我有！"
-```
+# 职级类
+- "必是L65以上的Principal！这骨相，Connect评分想低都难。"
+- "一看就是Senior级别，写的Design Doc能当教材。"
+- "L63体质，代码一把过，On-call从不翻车。"
+- "面相至少L67，CVP见了都得客气三分。"
+- "IC路线天花板体质！Staff Engineer转世。"
+- "这是刚拿到Exceed Expectations的面相。"
 
-#### 混合文案（推荐）
-```
-- "看您这面相，骨相清奇，必是L63以上的Senior！龙年大吉，Bug全消，代码质量UP！"
-- "眉宇间透着Principal的气质，L65起步！新年好运，项目上线，性能完美！"
-- "眼神坚毅，一看就是资深SDE，技术大牛！新春大吉，技术突破，薪资暴涨！"
-- "面容沉稳，PM本色，产品思维拉满！春节快乐，Review秒过，合并顺利！"
-- "这气质，Partner级别的人物啊！龙年大吉，Bug全消，AI在手，天下我有！"
-```
+# 职位类
+- "天生SDE命格，架构图信手拈来。"
+- "PM面相无疑——用户需求，一眼看穿。"
+- "Manager气场拉满，1:1的时候下属都不敢摸鱼。"
+- "Data Scientist骨相，P-value想不显著都难。"
+- "这面相做Applied Scientist，paper产量翻倍。"
 
-### 面相学基础与文案方向
-
-#### 传统面相学要素（用于文案创作参考）
-面相学主要观察以下部位，可以结合这些元素创作更有"专业感"的算命文案：
-
-**五官观察点：**
-- **额头（天庭）**：宽广饱满 → 智慧、领导力 → 可对应Principal、Manager
-- **眉毛**：浓密整齐 → 逻辑思维强 → 可对应SDE、技术专家
-- **眼睛**：明亮有神 → 洞察力强 → 可对应PM、产品思维
-- **鼻子**：高挺 → 决策力强 → 可对应Manager、Leader
-- **嘴巴**：嘴角上扬 → 沟通能力强 → 可对应PM、跨团队协作
-- **下巴（地阁）**：方正 → 执行力强 → 可对应IC、实干型
-
-**气质类型（可随机组合）：**
-- **技术型**：眼神专注、眉宇间透着代码的严谨
-- **管理型**：气场强大、额头宽广、有领导风范
-- **产品型**：眼神灵动、善于观察、洞察力强
-- **潜力型**：面相年轻、但眼神坚定、未来可期
-
-#### 文案创作方向（Brainstorm）
-
-**方向1：职级进阶路线**
-- 从面相看职业发展路径（IC路线 vs Manager路线）
-- 预测职级晋升时间（"面相显示，今年Q3有望升L62"）
-- 分析适合的职级区间（"这面相，L60-L63之间最合适"）
-
-**方向2：技术栈匹配**
-- 从面相看适合的技术方向（"眼神深邃，适合做AI/ML"）
-- 预测技术突破领域（"眉宇间透着创新，今年在LLM领域有突破"）
-- 分析代码风格（"面相显示，写代码风格优雅，Review必过"）
-
-**方向3：工作运势**
-- 项目运势（"面相显示，Q1项目顺利上线"）
-- 团队协作（"这面相，跨团队合作无压力"）
-- 技术债务（"面相显示，今年能还清技术债"）
-
-**方向4：微软文化梗**
-- OneDrive同步（"面相显示，文件同步从不冲突"）
-- Teams会议（"这面相，Teams会议从不掉线"）
-- Azure部署（"面相显示，Azure部署一次成功"）
-- Windows更新（"这面相，Windows更新从不蓝屏"）
-
-**方向5：程序员专属梗**
-- Bug修复（"面相显示，Bug见您就自动修复"）
-- Code Review（"这面相，PR Review秒过，无Comments"）
-- 性能优化（"面相显示，代码性能自动提升30%"）
-- 技术债务（"这面相，技术债见您就还清"）
-
-**方向6：春节+职场结合**
-- 龙年运势（"龙年面相，技术突破，薪资翻倍"）
-- 春节祝福+职场预测（"龙年大吉，Q1升职，Q2加薪"）
-- 新年目标（"面相显示，新年目标：L63达成"）
-
-**方向7：幽默反转**
-- 反套路（"面相显示，您今天会写Bug，但能快速修复"）
-- 自嘲式（"这面相，一看就是写Bug的高手"）
-- 反差萌（"面相显示，外表严肃，代码风格却很萌"）
-
-**方向8：多维度组合**
-- 职级 + 技术栈 + 运势（"L63 Senior，AI/ML专家，龙年技术突破"）
-- 职位 + 性格 + 预测（"PM面相，产品思维强，Q2产品上线"）
-- 气质 + 能力 + 祝福（"技术大牛气质，代码质量高，新年Bug全消"）
-
-#### 文案模板结构建议
-
-**三段式结构（推荐）：**
-1. **面相观察**（1-2句）：描述面部特征，建立"专业感"
-2. **职业解读**（1-2句）：结合微软文化，给出职业判断
-3. **运势祝福**（1-2句）：春节祝福 + 职场预测
-
-**示例模板：**
-```
-[面相观察] + [职业解读] + [运势祝福]
-
-"看您这[部位]，[特征描述]，必是[职级/职位]！[微软黑话]！[春节祝福]！"
+# 能力类
+- "System Design面试官看了都想给Strong Hire。"
+- "写Code Review Comments的气质，一针见血型。"
+- "天生Oncall体质——但所有alert都是false positive。"
+- "Sprint Planning的时候，Story Points估得又准又快。"
 ```
 
-**四段式结构（进阶）：**
-1. **面相观察**
-2. **职业解读**
-3. **技术预测**
-4. **春节祝福**
+#### 马年祝福句（第三段：蛇年→马年过渡 + 程序员梗）
+```
+# 马年成语谐音梗
+- "马到成功，新Feature一次上线！"
+- "一马当先，Performance Review拿S！"
+- "万马奔腾，Pipeline全绿！"
+- "马年大吉，Bug全消，代码质量UP！"
+- "龙马精神，Deploy从不Rollback！"
 
-#### 文案库扩展建议
+# 程序员祝福
+- "新年PR秒Approve，零Comments！"
+- "马年运势：prod零incident，pager从不响！"
+- "祝您马年 git push --force 都不出事！"
+- "新春快乐，Tech Debt今年全还清！"
+- "马年offer满天飞，TC翻倍不是梦！"
+```
 
-**按职级分类：**
-- L59-L61（初级）："面相年轻，潜力股，今年有望升L60"
-- L62-L64（中级）："面相成熟，技术扎实，L63稳了"
-- L65+（高级）："面相不凡，Principal气质，技术大牛"
+#### 完整文案示例（三段拼接）
+```
+示例1："天庭饱满，眉宇开阔——必是L65以上的Principal！这骨相，Connect评分想低都难。马到成功，新Feature一次上线！"
 
-**按职位分类：**
-- SDE：代码、技术、架构相关
-- PM：产品、用户、需求相关
-- Manager：团队、领导、协作相关
-- SDET：质量、测试、稳定性相关
+示例2："眼神坚毅，颧骨挺拔——天生SDE命格，架构图信手拈来。一马当先，Performance Review拿S！"
 
-**按运势分类：**
-- 技术运势：代码质量、技术突破、架构优化
-- 项目运势：项目上线、性能提升、用户增长
-- 职场运势：升职、加薪、跳槽、转岗
-- 生活运势：工作生活平衡、健康、家庭
+示例3："印堂发亮，双目有神——System Design面试官看了都想给Strong Hire。马年大吉，Bug全消，代码质量UP！"
+
+示例4："面相方正，下巴有力——PM面相无疑，用户需求一眼看穿。万马奔腾，Pipeline全绿！"
+
+示例5："耳垂厚实，额头宽广——这是刚拿到Exceed Expectations的面相。龙马精神，Deploy从不Rollback！"
+
+示例6："鼻梁高挺，唇形方正——Manager气场拉满，1:1的时候下属都不敢摸鱼。祝您马年 git push --force 都不出事！"
+```
+
+### 面相学术语速查（文案创作参考）
+
+面相术语的核心价值是让随机生成的结果听起来有"专业感"。不需要真的懂面相学，只需要用对术语即可。
+
+**常用术语 → 微软职场映射：**
+- **天庭饱满**（额头宽广）→ 智慧型，Principal/Architect体质
+- **印堂发亮**（两眉之间）→ 运势旺，今年有升职相
+- **颧骨挺拔**（两颊骨）→ 执行力强，SDE/IC路线走得稳
+- **鼻梁高挺** → 决策果断，Manager/Lead面相
+- **双目有神** → 洞察力强，PM/产品思维
+- **耳垂厚实** → 福气深厚，TC涨幅可观
+- **下巴方正** → 意志力强，Oncall不翻车的体质
+
+**文案生成逻辑：** 程序从上面三个池（面相观察句、职业解读句、马年祝福句）各随机抽一条拼接。池子足够大的情况下，重复概率低，且每条都能独立成立。
 
 ### 现场互动与气氛调动
 
@@ -216,13 +152,13 @@
 **开场吸引（待机模式）：**
 - "来来来，AI算命师免费算一卦！看看您今年能不能升L63！"
 - "微软黑话算命，看看您是SDE还是PM！"
-- "龙年运势预测，AI算命师等您来测！"
+- "马年运势预测，AI算命师等您来测！"
 - "程序员专属算命，看看您的代码运势！"
 
-**引导参与（检测到人脸）：**
+**引导参与（有人走近）：**
 - "有朋友过来了！AI算命师已经看到您了，要不要算一卦？"
-- "摄像头已经检测到您，点击同意，让AI看看您的面相！"
 - "来来来，站近一点，让AI算命师看清楚您的面相！"
+- "别怕，AI算命师只看面相不看代码——您的Bug是安全的。"
 
 **分析过程（分析中）：**
 - "AI正在分析您的面相...看看您是L几的！"
@@ -275,10 +211,6 @@
 
 #### 现场应急预案
 
-**如果用户不愿意授权：**
-- 主持人："没关系，AI算命师尊重您的选择！"
-- 可以准备"手动算命"模式：主持人根据观察给出幽默解读
-
 **如果算命结果不够准确：**
 - 主持人："AI也有Bug的时候，但娱乐第一！"
 - 可以设计"AI算命师也会出错"的幽默梗
@@ -297,7 +229,7 @@
 
 **视觉元素：**
 - 大屏幕显示，吸引眼球
-- 春节元素（灯笼、祥云、龙）增加节日氛围
+- 春节元素（马年、灯笼、祥云）增加节日氛围
 - AI算命师形象（可选卡通形象）增加趣味性
 
 **音效设计：**
@@ -329,7 +261,7 @@
 #### 主界面
 ```
 - 深色背景（科技感）
-- 春节元素（龙年、灯笼、祥云）
+- 春节元素（马年、灯笼、祥云）
 - AI算命师形象（可选卡通形象）
 - 大屏幕友好（考虑围观人群）
 ```
@@ -347,19 +279,15 @@
 ```
 用户走近大屏幕
     ↓
-摄像头检测到人脸
+摄像头实时显示画面 + 人脸检测框
     ↓
-弹出隐私授权窗口
+用户点击"开始算命"按钮（或主持人触发）
     ↓
-用户点击"同意"
+播放分析动画（2-3秒，显示面相术语滚动）
     ↓
-显示"正在分析您的面相..."
+显示算命结果（面相观察 + 职业解读 + 马年祝福）
     ↓
-显示算命结果（微软黑话+祝福）
-    ↓
-显示春节祝福
-    ↓
-返回待机模式
+停留展示5秒 → 自动返回待机模式
 ```
 
 ### 非功能需求
@@ -383,623 +311,390 @@
 
 ## 技术设计方案（RFC）
 
-### 技术选型分析
+### 技术选型
 
-#### 1. 人脸检测方案对比
+| 层面 | 选择 | 备选 | 理由 |
+|------|------|------|------|
+| 前端框架 | **React 19** | — | 生态成熟，AI辅助编码效率最高 |
+| 构建工具 | **Vite** | — | HMR快，零配置启动 |
+| 样式 | **Tailwind CSS v4** | — | 原子化CSS，大屏适配快 |
+| 人脸检测 | **MediaPipe Face Detection** | face-api.js | Google官方维护，WASM+GPU，延迟<200ms |
+| 动画 | **framer-motion** | CSS transitions | React生态首选，声明式动画 |
+| 部署 | **Vercel** | 本地 `npm run dev` | Git push即部署；庙会现场也可本地跑 |
 
-**方案A：MediaPipe Face Detection（推荐）**
-- **优势：**
-  - Google官方支持，持续更新维护
-  - WebAssembly运行，性能优秀（延迟 < 200ms）
-  - GPU加速（WebGL），适合实时检测
-  - 轻量级模型（~3MB），加载快速
-  - 支持多脸检测
-  - 完全浏览器端运行，隐私保护好
-- **劣势：**
-  - API相对较新，文档可能不够完善
-  - 需要学习MediaPipe Tasks API
-- **适用场景：** 实时人脸检测，性能要求高
-
-**方案B：face-api.js**
-- **优势：**
-  - 基于TensorFlow.js，生态成熟
-  - 支持68点landmark检测（比MediaPipe更详细）
-  - 支持表情识别（可选功能）
-  - 文档完善，社区活跃
-- **劣势：**
-  - 性能略低于MediaPipe（延迟可能 > 300ms）
-  - Bundle size较大（~2-3MB）
-  - 需要更多配置和优化
-- **适用场景：** 需要详细landmark或表情识别
-
-**方案C：TensorFlow.js + 自定义模型**
-- **优势：**
-  - 完全灵活，可自定义模型
-  - 支持模型优化和量化
-- **劣势：**
-  - 开发成本高，需要训练/选择模型
-  - 配置复杂，不适合快速开发
-- **适用场景：** 需要完全自定义的场景
-
-**推荐选择：MediaPipe Face Detection**
-- 理由：性能优秀，官方支持，适合快速开发，完全满足需求
-
-#### 2. 前端框架对比
-
-**方案A：Vue.js 3（推荐）**
-- **优势：**
-  - Bundle size小（35-50KB），加载快速
-  - 开发体验优秀，语法简洁
-  - 响应式系统内置，性能好
-  - 学习曲线平缓，快速上手
-  - 单文件组件（SFC）结构清晰
-  - 适合中小型项目快速开发
-- **劣势：**
-  - 生态相对React较小
-  - 大型项目可能需要更多配置
-- **性能指标：**
-  - 初始加载时间：~1.2s
-  - Bundle size：35-50KB
-  - Time to Interactive：~1.2s
-
-**方案B：React 18**
-- **优势：**
-  - 生态成熟，组件库丰富
-  - 社区活跃，问题解决方案多
-  - 适合大型项目，可扩展性强
-  - 招聘市场React开发者更多
-- **劣势：**
-  - Bundle size较大（45-70KB）
-  - 需要手动优化（useMemo, useCallback等）
-  - 学习曲线较陡，需要理解Hooks
-  - 开发速度相对较慢
-- **性能指标：**
-  - 初始加载时间：~1.4s
-  - Bundle size：45-70KB
-  - Time to Interactive：~1.4s
-
-**推荐选择：Vue.js 3**
-- 理由：快速开发，性能优秀，bundle size小，适合庙会现场快速部署
-
-#### 3. 部署方案对比
-
-**方案A：Vercel（推荐）**
-- **优势：**
-  - 部署速度快，自动化程度高
-  - 全球CDN，性能优秀
-  - 支持预览部署（PR预览）
-  - 免费tier：100GB带宽/月，无需信用卡
-  - 与GitHub集成无缝
-  - 支持环境变量，配置简单
-- **劣势：**
-  - 免费tier有使用限制
-  - 主要优化Next.js，其他框架支持略弱
-- **适用场景：** 快速部署，需要预览功能
-
-**方案B：Netlify**
-- **优势：**
-  - 功能全面，生态成熟
-  - 免费tier：100GB带宽/月，300分钟构建时间
-  - 支持Forms、Functions等内置功能
-  - 支持Monorepo，多站点管理
-  - 本地开发环境模拟好
-- **劣势：**
-  - 配置相对复杂
-  - 免费tier限制较多
-- **适用场景：** 需要完整平台功能
-
-**方案C：GitHub Pages**
-- **优势：**
-  - 完全免费，无使用限制
-  - 与GitHub集成，自动部署
-  - 适合静态站点
-- **劣势：**
-  - 只支持静态站点，无Serverless Functions
-  - 构建时间限制（10次/小时）
-  - 功能相对简单
-- **适用场景：** 纯静态站点，预算有限
-
-**推荐选择：Vercel**
-- 理由：部署快速，性能优秀，免费tier足够，适合快速上线
-
-#### 4. 技术选型总结
-
-| 技术栈 | 推荐方案 | 备选方案 | 理由 |
-|--------|---------|---------|------|
-| 人脸检测 | MediaPipe Face Detection | face-api.js | 性能优秀，官方支持 |
-| 前端框架 | Vue.js 3 | React 18 | 快速开发，bundle size小 |
-| 部署平台 | Vercel | Netlify | 部署快速，性能优秀 |
-| 构建工具 | Vite | Create React App | 快速构建，HMR优秀 |
-| 样式方案 | Tailwind CSS | CSS Modules | 快速开发，响应式友好 |
-| 动画库 | GSAP | CSS Animations | 性能优秀，功能强大 |
-
-#### 5. 技术选型决策树
-
-**决策原则：快速开发 + 性能优先 + 零成本部署**
-
-```
-项目需求分析
-    ↓
-需要实时人脸检测？
-    ├─ 是 → MediaPipe Face Detection（性能优先）
-    └─ 否 → face-api.js（功能丰富）
-    ↓
-需要快速开发？
-    ├─ 是 → Vue.js 3（开发速度快）
-    └─ 否 → React 18（生态成熟）
-    ↓
-需要零成本部署？
-    ├─ 是 → Vercel免费tier（100GB/月）
-    └─ 否 → Netlify（功能更全面）
-    ↓
-需要快速构建？
-    ├─ 是 → Vite（HMR快速）
-    └─ 否 → Webpack（配置灵活）
-```
-
-#### 6. 技术选型理由总结
-
-**为什么选择MediaPipe Face Detection？**
-1. **性能优秀**：WebAssembly + GPU加速，延迟 < 200ms，满足实时检测需求
-2. **官方支持**：Google官方维护，持续更新，稳定性好
-3. **隐私保护**：完全浏览器端运行，数据不上传，符合隐私要求
-4. **轻量级**：模型大小 ~3MB，加载快速
-5. **多脸支持**：支持同时检测多个人脸，适合庙会场景
-
-**为什么选择Vue.js 3？**
-1. **快速开发**：语法简洁，学习曲线平缓，适合快速上线
-2. **性能优秀**：Bundle size小（35-50KB），初始加载快
-3. **开发体验**：Composition API灵活，单文件组件清晰
-4. **响应式系统**：内置响应式，无需手动优化
-5. **适合场景**：中小型项目，快速迭代
-
-**为什么选择Vercel？**
-1. **部署快速**：Git push自动部署，无需配置
-2. **性能优秀**：全球CDN，访问速度快
-3. **免费tier**：100GB带宽/月，足够使用
-4. **预览功能**：PR预览，方便测试
-5. **零配置**：开箱即用，无需复杂配置
-
-**备选方案说明：**
-- **face-api.js**：如果MediaPipe遇到兼容性问题，可快速切换到face-api.js
-- **React 18**：如果团队更熟悉React，也可以使用，但开发速度会稍慢
-- **Netlify**：如果需要更多功能（Forms、Functions），可以选择Netlify
-
-### 技术栈
-
-#### 前端框架（推荐：Vue.js 3）
-```
-- Vue.js 3（Composition API）
-- Vite（构建工具，快速开发）
-- Tailwind CSS（样式框架，快速开发）
-- Web Speech API（可选，语音提示）
-- Web Camera API（摄像头调用）
-```
-
-#### AI模型（推荐：MediaPipe Face Detection）
-```
-- MediaPipe Face Detection（人脸检测）
-  - WebAssembly运行（浏览器端）
-  - GPU加速（WebGL）
-  - 实时检测（延迟 < 200ms）
-  - 多脸支持（最多2人）
-- 无需后端，完全前端运行
-- 隐私保护：数据不存储，不上传
-```
-
-#### 部署方式（推荐：Vercel）
-```
-- Vercel（静态网站部署）
-  - 自动部署（Git push触发）
-  - 全球CDN加速
-  - 预览部署（PR预览）
-  - 免费tier：100GB带宽/月
-- 备选：Netlify（功能更全面）
-- 备选：GitHub Pages（完全免费，但功能有限）
-```
+**关于人脸检测的补充说明：** 本项目中人脸检测的核心作用是"表演性的"——在摄像头画面上画出检测框，让用户感觉AI在"分析"。算命结果本身是随机生成的，不依赖人脸数据。因此不需要landmark、表情识别等高级功能，MediaPipe的基础Face Detection（BlazeFace短距模型，~3MB）完全够用。备选face-api.js仅在MediaPipe加载失败时考虑。
 
 ### 系统架构
 
 ```
-┌─────────────────────────────────────────────────┐
-│        用户界面（Vue.js 3 + Tailwind CSS）     │
-│    - 待机模式界面                               │
-│    - 隐私授权弹窗                               │
-│    - 算命结果展示                               │
-├─────────────────────────────────────────────────┤
-│         MediaPipe Face Detection               │
-│    (WebAssembly + GPU Acceleration)            │
-│    - 实时人脸检测（< 200ms延迟）                │
-│    - 多脸支持（最多2人）                        │
-├─────────────────────────────────────────────────┤
-│         Web Camera API                        │
-│    - 摄像头调用                                 │
-│    - 视频流处理                                 │
-├─────────────────────────────────────────────────┤
-│         算命文案生成逻辑                      │
-│    (预设模板 + 随机组合)                      │
-│    - 职级/职位/运势文案库                      │
-│    - 随机组合算法                               │
-├─────────────────────────────────────────────────┤
-│         动画与音效模块                        │
-│    - GSAP动画库                                │
-│    - Web Audio API                             │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│     React App (Vite + Tailwind CSS)              │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐ │
+│  │  待机模式   │  │  分析动画   │  │  结果展示   │ │
+│  │  (摄像头+   │→│  (面相术语  │→│  (三段式    │ │
+│  │  检测框)    │  │   滚动)     │  │   文案)     │ │
+│  └────────────┘  └────────────┘  └────────────┘ │
+├──────────────────────────────────────────────────┤
+│  MediaPipe Face Detection (WASM + WebGL)         │
+│  @mediapipe/tasks-vision v0.10.x                 │
+├──────────────────────────────────────────────────┤
+│  Web Camera API (getUserMedia)                   │
+├──────────────────────────────────────────────────┤
+│  文案引擎：三个池随机抽取拼接                      │
+│  面相观察句 × 职业解读句 × 马年祝福句              │
+└──────────────────────────────────────────────────┘
 ```
 
 ### 核心模块
 
-#### 1. 人脸检测模块
+#### 1. 摄像头 + 人脸检测
 ```
-功能：实时检测摄像头画面中的人脸
-实现：
-  - MediaPipe Face Detection API
-  - GPU加速（WebGL）
-  - 阈值设置（0.5 confidence）
-  - 多脸支持（最多2人）
-输入：摄像头视频流
-输出：人脸坐标、置信度、6个关键点
+输入：getUserMedia视频流
+处理：MediaPipe FaceDetector.detectForVideo()
+输出：检测框坐标（用于Canvas叠加绘制）
+注意：检测仅用于视觉展示，不影响算命逻辑
 ```
 
-#### 2. 隐私授权模块
+#### 2. 状态机
 ```
-功能：弹窗询问用户是否同意使用人脸信息
-实现：
-  - 状态管理（待机/授权/算命）
-  - 用户选择记录（不存储人脸数据）
-  - 不同意后返回待机模式
+IDLE（待机）→ ANALYZING（分析动画）→ RESULT（结果展示）→ IDLE
+        ↑                                              │
+        └──────────── 5秒自动返回 ──────────────────────┘
+
+触发方式：用户点击按钮 / 主持人点击 / 键盘快捷键
 ```
 
-#### 3. 算命生成模块
+#### 3. 文案引擎
 ```
-功能：基于人脸分析生成算命文案
-实现：
-  - 预设文案库（职级、职位、运势）
-  - 随机组合算法
-  - 微软黑话词库
-  - 祝福语词库
-输出：算命结果文本
-```
-
-#### 4. 视觉展示模块
-```
-功能：展示算命结果
-实现：
-  - 动画效果（渐入、烟花、祥云）
-  - 大屏幕适配
-  - 音效播放
-  - 倒计时自动返回待机
+三个独立文案池，随机各抽一条拼接：
+  Pool A: 面相观察句（8条）
+  Pool B: 职业解读句（15条）
+  Pool C: 马年祝福句（10条）
+组合数：8 × 15 × 10 = 1200种不重复结果
 ```
 
 ### 数据流程
 
 ```
-摄像头视频流
-    ↓
-MediaPipe Face Detection
-    ↓
-检测到人脸？
-    ↓ 否
-待机模式
-    ↓ 是
-弹出隐私授权
-    ↓
-用户同意？
-    ↓ 否
-返回待机模式
-    ↓ 是
-模拟人脸分析（进度条）
-    ↓
-随机生成算命文案
-    ↓
-显示算命结果
-    ↓
-显示祝福语
-    ↓
-5秒后返回待机模式
+摄像头视频流 → Canvas实时绘制
+                ↓
+    MediaPipe持续检测 → 画检测框（纯展示）
+                ↓
+    用户/主持人点击"开始算命"
+                ↓
+    播放分析动画（2-3秒）
+    - 面相术语快速滚动
+    - 进度条推进
+    - 音效：神秘感
+                ↓
+    从三个文案池各随机抽一条 → 拼接
+                ↓
+    显示算命结果（framer-motion渐入）
+    - 音效：欢快
+                ↓
+    停留5秒 → 自动返回待机
 ```
 
-### 隐私保护
+### 技术实现
 
-#### 数据处理原则
-```
-- 人脸数据仅用于实时检测，不存储
-- 不上传人脸图像到服务器
-- 不进行人脸识别或身份验证
-- 完全在浏览器端处理（WebAssembly）
-```
-
-#### 隐私授权
-```
-- 显式弹窗询问
-- 用户可选择不同意
-- 不同意后无法进行算命
-- 明确告知数据用途
-```
-
-### 技术实现细节
-
-#### 项目初始化（Vite + Vue.js 3）
+#### 项目初始化
 ```bash
-# 创建项目
-npm create vite@latest msft-fortune-teller -- --template vue
+npm create vite@latest msft-fortune-teller -- --template react
 cd msft-fortune-teller
 
-# 安装依赖
-npm install
-npm install @mediapipe/tasks-vision
-npm install -D tailwindcss postcss autoprefixer
-npm install gsap
-
-# 初始化Tailwind CSS
-npx tailwindcss init -p
+npm install @mediapipe/tasks-vision framer-motion
+npm install -D tailwindcss @tailwindcss/vite
 ```
 
-#### MediaPipe Face Detection集成（Vue.js）
-```vue
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { FilesetResolver, FaceDetection } from '@mediapipe/tasks-vision'
+#### 人脸检测 Hook
+```jsx
+// hooks/useFaceDetection.js
+import { useRef, useEffect, useState, useCallback } from 'react'
+import { FilesetResolver, FaceDetector } from '@mediapipe/tasks-vision'
 
-const videoRef = ref(null)
-const faceDetector = ref(null)
-const detections = ref([])
+export function useFaceDetection(videoRef, canvasRef) {
+  const detectorRef = useRef(null)
+  const [isReady, setIsReady] = useState(false)
+  const animFrameRef = useRef(null)
 
-onMounted(async () => {
-  // 初始化Face Detection
-  const filesetResolver = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision"
-  )
-  
-  faceDetector.value = await FaceDetection.createFromOptions(
-    filesetResolver,
-    {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-        delegate: "GPU"
-      },
-      minDetectionConfidence: 0.5,
-      runningMode: "VIDEO"
+  useEffect(() => {
+    let cancelled = false
+
+    async function init() {
+      const vision = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
+      )
+      if (cancelled) return
+
+      detectorRef.current = await FaceDetector.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+          delegate: 'GPU',
+        },
+        runningMode: 'VIDEO',
+        minDetectionConfidence: 0.5,
+      })
+
+      // 启动摄像头
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720, facingMode: 'user' },
+      })
+      if (cancelled) return
+
+      videoRef.current.srcObject = stream
+      await videoRef.current.play()
+      setIsReady(true)
+      detectLoop()
     }
-  )
-  
-  // 启动摄像头
-  startCamera()
-})
 
-// 启动摄像头
-async function startCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-  videoRef.value.srcObject = stream
-  videoRef.value.play()
-  
-  // 开始检测循环
-  detectLoop()
+    function detectLoop() {
+      if (cancelled || !detectorRef.current || !videoRef.current) return
+      const result = detectorRef.current.detectForVideo(
+        videoRef.current,
+        performance.now()
+      )
+      drawDetections(result.detections)
+      animFrameRef.current = requestAnimationFrame(detectLoop)
+    }
+
+    function drawDetections(detections) {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      for (const det of detections) {
+        const box = det.boundingBox
+        ctx.strokeStyle = '#facc15' // Tailwind yellow-400
+        ctx.lineWidth = 3
+        ctx.strokeRect(box.originX, box.originY, box.width, box.height)
+      }
+    }
+
+    init()
+
+    return () => {
+      cancelled = true
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((t) => t.stop())
+      }
+    }
+  }, [videoRef, canvasRef])
+
+  return { isReady }
 }
-
-// 检测循环
-function detectLoop() {
-  if (!faceDetector.value || !videoRef.value) return
-  
-  const result = faceDetector.value.detectForVideo(
-    videoRef.value,
-    performance.now()
-  )
-  
-  detections.value = result.detections
-  
-  // 继续下一帧检测
-  requestAnimationFrame(detectLoop)
-}
-
-onUnmounted(() => {
-  // 清理资源
-  if (videoRef.value?.srcObject) {
-    videoRef.value.srcObject.getTracks().forEach(track => track.stop())
-  }
-})
-</script>
-
-<template>
-  <video ref="videoRef" autoplay playsinline></video>
-</template>
 ```
 
-#### 算命文案生成（Vue.js Composition API）
-```javascript
-// composables/useFortune.js
-import { ref } from 'vue'
+#### 文案引擎
+```jsx
+// lib/fortune.js
 
-const careerLevels = [
-  "骨相清奇，必是L63以上的Senior！",
-  "眉宇间透着Principal的气质，L65起步！",
-  "眼神坚毅，一看就是资深SDE！",
-  "面容沉稳，PM本色，产品思维拉满！",
-  "这气质，Partner级别的人物啊！"
+const faceReadings = [
+  '天庭饱满，眉宇开阔——',
+  '眼神坚毅，颧骨挺拔——',
+  '面相方正，下巴有力——',
+  '印堂发亮，双目有神——',
+  '鼻梁高挺，唇形方正——',
+  '耳垂厚实，额头宽广——',
+  '眉骨突出，目光深远——',
+  '两颧饱满，神采奕奕——',
+]
+
+const careerReadings = [
+  '必是L65以上的Principal！这骨相，Connect评分想低都难。',
+  '一看就是Senior级别，写的Design Doc能当教材。',
+  'L63体质，代码一把过，On-call从不翻车。',
+  '面相至少L67，CVP见了都得客气三分。',
+  'IC路线天花板体质！Staff Engineer转世。',
+  '这是刚拿到Exceed Expectations的面相。',
+  '天生SDE命格，架构图信手拈来。',
+  'PM面相无疑——用户需求，一眼看穿。',
+  'Manager气场拉满，1:1的时候下属都不敢摸鱼。',
+  'Data Scientist骨相，P-value想不显著都难。',
+  'System Design面试官看了都想给Strong Hire。',
+  '写Code Review Comments的气质，一针见血型。',
+  '天生Oncall体质——但所有alert都是false positive。',
+  'Sprint Planning的时候，Story Points估得又准又快。',
+  '这面相做Applied Scientist，paper产量翻倍。',
 ]
 
 const blessings = [
-  "龙年大吉，Bug全消，代码质量UP！",
-  "新年好运，项目上线，性能完美！",
-  "新春大吉，技术突破，薪资暴涨！",
-  "春节快乐，Review秒过，合并顺利！"
+  '马到成功，新Feature一次上线！',
+  '一马当先，Performance Review拿S！',
+  '万马奔腾，Pipeline全绿！',
+  '马年大吉，Bug全消，代码质量UP！',
+  '龙马精神，Deploy从不Rollback！',
+  '新年PR秒Approve，零Comments！',
+  '马年运势：prod零incident，pager从不响！',
+  '祝您马年 git push --force 都不出事！',
+  '新春快乐，Tech Debt今年全还清！',
+  '马年offer满天飞，TC翻倍不是梦！',
 ]
 
-export function useFortune() {
-  const fortune = ref('')
-  
-  function generateFortune() {
-    const career = careerLevels[Math.floor(Math.random() * careerLevels.length)]
-    const blessing = blessings[Math.floor(Math.random() * blessings.length)]
-    fortune.value = `${career}\n\n${blessing}`
-    return fortune.value
-  }
-  
+const usedCombos = new Set()
+
+export function generateFortune() {
+  let combo
+  // 避免短期内重复（1200种组合足够一次活动）
+  do {
+    const a = Math.floor(Math.random() * faceReadings.length)
+    const b = Math.floor(Math.random() * careerReadings.length)
+    const c = Math.floor(Math.random() * blessings.length)
+    combo = `${a}-${b}-${c}`
+  } while (usedCombos.has(combo) && usedCombos.size < 100)
+
+  usedCombos.add(combo)
+  const [a, b, c] = combo.split('-').map(Number)
+
   return {
-    fortune,
-    generateFortune
+    face: faceReadings[a],
+    career: careerReadings[b],
+    blessing: blessings[c],
+    full: `${faceReadings[a]}${careerReadings[b]}${blessings[c]}`,
   }
 }
 ```
 
-#### 动画效果（GSAP）
-```javascript
-// utils/animations.js
-import { gsap } from 'gsap'
+#### 主界面组件
+```jsx
+// App.jsx
+import { useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useFaceDetection } from './hooks/useFaceDetection'
+import { generateFortune } from './lib/fortune'
 
-export function animateResultShow(element) {
-  gsap.fromTo(element, 
-    { opacity: 0, y: 50 },
-    { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+const PHASES = { IDLE: 'idle', ANALYZING: 'analyzing', RESULT: 'result' }
+
+export default function App() {
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const { isReady } = useFaceDetection(videoRef, canvasRef)
+  const [phase, setPhase] = useState(PHASES.IDLE)
+  const [fortune, setFortune] = useState(null)
+
+  const startFortune = () => {
+    if (phase !== PHASES.IDLE) return
+    setPhase(PHASES.ANALYZING)
+
+    // 2.5秒分析动画后显示结果
+    setTimeout(() => {
+      setFortune(generateFortune())
+      setPhase(PHASES.RESULT)
+
+      // 5秒后自动返回待机
+      setTimeout(() => {
+        setPhase(PHASES.IDLE)
+        setFortune(null)
+      }, 5000)
+    }, 2500)
+  }
+
+  return (
+    <div className="relative h-screen w-screen bg-black overflow-hidden">
+      {/* 摄像头画面 */}
+      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover mirror" autoPlay playsInline muted />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" width={1280} height={720} />
+
+      {/* 待机模式 */}
+      {phase === PHASES.IDLE && (
+        <div className="absolute inset-0 flex flex-col items-center justify-end pb-20">
+          <h1 className="text-6xl font-bold text-yellow-400 drop-shadow-lg mb-8">
+            AI 算命师
+          </h1>
+          <button
+            onClick={startFortune}
+            disabled={!isReady}
+            className="px-12 py-6 bg-red-600 hover:bg-red-500 text-white text-3xl font-bold rounded-2xl shadow-2xl transition-all"
+          >
+            开始算命
+          </button>
+        </div>
+      )}
+
+      {/* 分析动画 */}
+      <AnimatePresence>
+        {phase === PHASES.ANALYZING && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center"
+          >
+            <p className="text-4xl text-yellow-400 animate-pulse">
+              正在分析您的面相...
+            </p>
+            {/* 这里可以加面相术语快速滚动动画 */}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 算命结果 */}
+      <AnimatePresence>
+        {phase === PHASES.RESULT && fortune && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-12"
+          >
+            <h2 className="text-3xl text-yellow-400 mb-8">您的算命结果</h2>
+            <p className="text-5xl text-white font-bold text-center leading-relaxed max-w-4xl">
+              {fortune.full}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
-
-export function animateResultHide(element, callback) {
-  gsap.to(element, {
-    opacity: 0,
-    y: -50,
-    duration: 0.3,
-    ease: 'power2.in',
-    onComplete: callback
-  })
-}
 ```
 
-#### Vercel部署配置
+#### Vercel 部署配置
 ```json
-// vercel.json
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "framework": "vite"
 }
 ```
 
+**本地运行备选：** 庙会现场如果网络不稳定，也可以直接在笔记本上 `npm run dev`，浏览器全屏打开即可。MediaPipe 模型文件会在首次加载后被浏览器缓存。
+
 ### 开发计划
 
-#### 第一阶段：项目搭建（1小时）
-- [ ] 使用Vite创建Vue.js 3项目（10分钟）
-- [ ] 配置Tailwind CSS（10分钟）
-- [ ] 配置项目结构（组件、工具函数）（20分钟）
-- [ ] 配置Vercel部署（20分钟）
+#### 第一阶段：项目搭建（30分钟）
+- [ ] `npm create vite@latest` + React模板
+- [ ] 安装依赖：`@mediapipe/tasks-vision`, `framer-motion`, `tailwindcss`
+- [ ] Tailwind配置、基础布局
+- [ ] Vercel连接GitHub仓库
 
-#### 第二阶段：核心功能（3小时）
-- [ ] 集成MediaPipe Face Detection（1小时）
-  - 安装依赖
-  - 初始化Face Detection
-  - 实现实时检测循环
-- [ ] 实现待机模式（人脸检测）（30分钟）
-  - 摄像头调用
-  - 实时人脸检测
-  - 检测框显示
-- [ ] 实现隐私授权弹窗（30分钟）
-  - 弹窗组件
-  - 状态管理
-  - 用户选择处理
-- [ ] 实现算命文案生成（30分钟）
-  - 文案库设计
-  - 随机组合算法
-  - 文案模板系统
-- [ ] 实现结果展示页面（30分钟）
-  - 结果页面组件
-  - 动画效果
-  - 自动返回待机
+#### 第二阶段：核心功能（2.5小时）
+- [ ] 摄像头 + MediaPipe人脸检测（1小时）
+- [ ] 状态机（IDLE → ANALYZING → RESULT → IDLE）（30分钟）
+- [ ] 文案引擎（三池随机抽取）（30分钟）
+- [ ] 结果展示页 + framer-motion动画（30分钟）
 
-#### 第三阶段：优化完善（2小时）
-- [ ] 添加音效（30分钟）
-  - Web Audio API集成
-  - 音效文件准备
-  - 音效播放逻辑
-- [ ] 添加动画效果（30分钟）
-  - GSAP集成
-  - 页面切换动画
-  - 结果展示动画
-- [ ] 优化大屏幕显示（30分钟）
-  - 响应式布局
-  - 字体大小适配
-  - 视觉元素优化
-- [ ] 测试调试（30分钟）
-  - 浏览器兼容性测试
-  - 性能优化
-  - Bug修复
+#### 第三阶段：打磨（1.5小时）
+- [ ] 分析动画（面相术语滚动 + 进度条）（30分钟）
+- [ ] 音效集成（30分钟）
+- [ ] 大屏幕适配 + 视觉优化（30分钟）
 
-#### 第四阶段：部署上线（1小时）
-- [ ] 部署到Vercel（20分钟）
-  - 配置构建命令
-  - 配置环境变量
-  - 测试部署流程
-- [ ] 现场测试（40分钟）
-  - 摄像头测试
-  - 性能测试
-  - 用户体验测试
+#### 第四阶段：上线（30分钟）
+- [ ] Vercel部署 + 现场摄像头测试
 
-### 风险评估
+**总计约5小时**（含缓冲），可在半天内完成。
 
-#### 技术风险
-```
-风险1：浏览器兼容性问题
-  - 风险描述：MediaPipe Face Detection需要WebAssembly和WebGL支持
-  - 影响：部分旧浏览器可能无法运行
-  - 缓解措施：
-    * 测试Chrome/Edge最新版（主要使用场景）
-    * 检测浏览器支持情况，显示友好提示
-    * 准备降级方案（使用face-api.js作为备选）
-  - 备用方案：准备备用浏览器（Chrome/Edge最新版）
+### 风险与应对
 
-风险2：摄像头调用失败
-  - 风险描述：浏览器权限被拒绝或摄像头硬件故障
-  - 影响：无法进行人脸检测
-  - 缓解措施：
-    * 现场提前测试摄像头
-    * 友好的错误提示
-    * 准备手动触发模式（点击按钮开始）
-  - 备用方案：准备外接USB摄像头
-
-风险3：人脸检测性能不足
-  - 风险描述：低端设备可能无法流畅运行
-  - 影响：检测延迟高，用户体验差
-  - 缓解措施：
-    * 使用GPU加速（WebGL）
-    * 降低检测频率（30fps -> 15fps）
-    * 优化模型加载（延迟加载）
-  - 备用方案：
-    * 降低检测精度（minDetectionConfidence: 0.5 -> 0.3）
-    * 使用更轻量的模型
-
-风险4：MediaPipe API变更
-  - 风险描述：MediaPipe API可能更新，导致代码不兼容
-  - 影响：需要更新代码
-  - 缓解措施：
-    * 锁定依赖版本
-    * 查看MediaPipe官方文档
-    * 准备face-api.js作为备选方案
-  - 备用方案：切换到face-api.js（基于TensorFlow.js，更稳定）
-
-风险5：Vercel部署问题
-  - 风险描述：构建失败或部署延迟
-  - 影响：无法及时上线
-  - 缓解措施：
-    * 提前测试部署流程
-    * 准备Netlify作为备选
-    * 本地构建测试
-  - 备用方案：切换到Netlify或GitHub Pages
-```
-
-#### 用户体验风险
-```
-风险1：用户不愿意授权
-  - 缓解措施：明确说明用途
-  - 应对方案：尊重用户选择
-
-风险2：算命结果不够搞笑
-  - 缓解措施：丰富文案库
-  - 应对方案：主持人补充幽默
-```
+| 风险 | 影响 | 应对 |
+|------|------|------|
+| 摄像头权限被拒 | 无画面 | 提前在Chrome设置中允许；备用USB摄像头 |
+| MediaPipe加载慢/失败 | 无检测框 | 降级为纯按钮触发模式（不影响核心算命功能） |
+| 现场网络差 | 模型加载失败 | 提前缓存模型文件；或用本地 `npm run dev` |
+| 大屏分辨率异常 | 布局错乱 | Tailwind响应式 + 现场调试 |
+| 文案重复 | 体验差 | 1200种组合 + usedCombos去重 |
 
 ---
 
@@ -1009,7 +704,7 @@ export function animateResultHide(element, callback) {
 
 #### 1. 算命文案植入
 ```
-"龙年大吉，AI Course Developer祝您技术突破！"
+"马年大吉，AI Course Developer祝您技术突破！"
 "新春快乐，来AI Course Developer学AI，天下我有！"
 ```
 
@@ -1066,4 +761,4 @@ export function animateResultHide(element, callback) {
 ---
 
 *创建时间：2026年2月6日*
-*最后更新：2026年2月6日*
+*最后更新：2026年2月7日*
