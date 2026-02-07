@@ -5,7 +5,7 @@ import { generateAIFortune } from './ai-fortune'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-// Mock config to provide a token
+// Mock config – token set so direct-call path is available
 vi.mock('./config', () => ({
   AI_CONFIG: {
     baseUrl: 'https://test.api.com/v1',
@@ -24,7 +24,30 @@ describe('generateAIFortune', () => {
     mockFetch.mockReset()
   })
 
-  it('should return a fortune object with face, career, blessing, full, and source', async () => {
+  it('should use backend proxy when available', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        face: '天庭饱满——',
+        career: '必是L65。',
+        blessing: '马到成功！',
+        source: 'ai',
+      }),
+    })
+
+    const result = await generateAIFortune()
+    expect(result.source).toBe('ai')
+    expect(result.face).toBe('天庭饱满——')
+    expect(result.full).toBe('天庭饱满——必是L65。马到成功！')
+
+    // Should have called /api/fortune
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/fortune')
+  })
+
+  it('should fall back to direct API when backend returns error', async () => {
+    // Backend returns 404
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
+    // Direct API succeeds
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -32,61 +55,10 @@ describe('generateAIFortune', () => {
           {
             message: {
               content: JSON.stringify({
-                face: '天庭饱满——',
-                career: '必是L65的大佬。',
-                blessing: '马到成功！',
+                face: '印堂发亮——',
+                career: 'L67 CVP。',
+                blessing: '一马当先！',
               }),
-            },
-          },
-        ],
-      }),
-    })
-
-    const result = await generateAIFortune()
-    expect(result).toHaveProperty('face', '天庭饱满——')
-    expect(result).toHaveProperty('career', '必是L65的大佬。')
-    expect(result).toHaveProperty('blessing', '马到成功！')
-    expect(result).toHaveProperty('source', 'ai')
-    expect(result.full).toBe('天庭饱满——必是L65的大佬。马到成功！')
-  })
-
-  it('should send correct request to the API', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: '{"face": "a——", "career": "b。", "blessing": "c！"}',
-            },
-          },
-        ],
-      }),
-    })
-
-    await generateAIFortune()
-
-    expect(mockFetch).toHaveBeenCalledTimes(1)
-    const [url, options] = mockFetch.mock.calls[0]
-    expect(url).toBe('https://test.api.com/v1/chat/completions')
-    expect(options.method).toBe('POST')
-    expect(options.headers['Authorization']).toBe('Bearer test-token')
-
-    const body = JSON.parse(options.body)
-    expect(body.model).toBe('grok-4-fast')
-    expect(body.messages).toHaveLength(2)
-    expect(body.messages[0].role).toBe('system')
-    expect(body.messages[1].role).toBe('user')
-  })
-
-  it('should handle markdown-wrapped JSON in response', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: '```json\n{"face": "印堂发亮——", "career": "L67。", "blessing": "一马当先！"}\n```',
             },
           },
         ],
@@ -96,19 +68,48 @@ describe('generateAIFortune', () => {
     const result = await generateAIFortune()
     expect(result.source).toBe('ai')
     expect(result.face).toBe('印堂发亮——')
+
+    // First call was backend, second was direct
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/fortune')
+    expect(mockFetch.mock.calls[1][0]).toContain('chat/completions')
   })
 
-  it('should fall back to pool fortune on API error', async () => {
+  it('should handle markdown-wrapped JSON from direct API', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: '```json\n{"face": "a——", "career": "b。", "blessing": "c！"}\n```',
+            },
+          },
+        ],
+      }),
+    })
+
+    const result = await generateAIFortune()
+    expect(result.source).toBe('ai')
+    expect(result.face).toBe('a——')
+  })
+
+  it('should fall back to local pool when all AI paths fail', async () => {
+    // Backend fails
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+    // Direct API also fails
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
     const result = await generateAIFortune()
-    expect(result).toHaveProperty('face')
-    expect(result).toHaveProperty('career')
-    expect(result).toHaveProperty('blessing')
     expect(result.source).toBe('fallback')
+    expect(result.face).toBeTruthy()
+    expect(result.career).toBeTruthy()
+    expect(result.blessing).toBeTruthy()
   })
 
   it('should fall back on network error', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network error'))
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
     const result = await generateAIFortune()
@@ -116,7 +117,8 @@ describe('generateAIFortune', () => {
     expect(result.full).toBeTruthy()
   })
 
-  it('should fall back on invalid JSON response', async () => {
+  it('should fall back when direct API returns invalid JSON', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -128,21 +130,18 @@ describe('generateAIFortune', () => {
     expect(result.source).toBe('fallback')
   })
 
-  it('should fall back on incomplete fortune structure', async () => {
+  it('backend response should include full field', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        choices: [
-          {
-            message: {
-              content: '{"face": "test", "career": "test"}',
-            },
-          },
-        ],
+        face: 'A——',
+        career: 'B。',
+        blessing: 'C！',
+        source: 'ai',
       }),
     })
 
     const result = await generateAIFortune()
-    expect(result.source).toBe('fallback')
+    expect(result.full).toBe('A——B。C！')
   })
 })

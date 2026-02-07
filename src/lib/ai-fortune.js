@@ -1,6 +1,10 @@
 /**
- * AI-powered fortune generation via OpenAI-compatible API (default: Grok).
- * Falls back to the local pool engine on failure or timeout.
+ * AI-powered fortune generation.
+ *
+ * Strategy (in order):
+ *  1. POST /api/fortune  → backend proxy (token stays server-side, used in production)
+ *  2. Direct API call    → only if VITE_AI_API_TOKEN is set (convenient for local dev without backend)
+ *  3. Local random pool  → fallback if everything else fails
  */
 
 import { AI_CONFIG, TIMING } from './config'
@@ -21,63 +25,111 @@ const SYSTEM_PROMPT = `你是一个AI算命师，在微软春节庙会（2026马
 {"face": "面相观察句——", "career": "职业解读句。", "blessing": "马年祝福句！"}`
 
 /**
- * Call the AI API to generate a fortune.
+ * Parse a fortune from the AI response choices structure.
+ */
+function parseAIResponse(data) {
+  const text = data.choices?.[0]?.message?.content?.trim()
+  if (!text) throw new Error('Empty AI response')
+
+  const jsonStr = text.replace(/```json?\s*/g, '').replace(/```/g, '').trim()
+  const parsed = JSON.parse(jsonStr)
+
+  if (!parsed.face || !parsed.career || !parsed.blessing) {
+    throw new Error('Incomplete fortune structure')
+  }
+
+  return {
+    face: parsed.face,
+    career: parsed.career,
+    blessing: parsed.blessing,
+    full: `${parsed.face}${parsed.career}${parsed.blessing}`,
+    source: 'ai',
+  }
+}
+
+/**
+ * Strategy 1: Call the backend proxy /api/fortune.
+ * Token stays server-side — this is the production path.
+ */
+async function callBackendProxy(signal) {
+  const resp = await fetch('/api/fortune', {
+    method: 'POST',
+    signal,
+  })
+  if (!resp.ok) throw new Error(`Backend: ${resp.status}`)
+  const data = await resp.json()
+
+  // Backend already returns {face, career, blessing, source}
+  if (data.face && data.career && data.blessing) {
+    return {
+      ...data,
+      full: `${data.face}${data.career}${data.blessing}`,
+      source: 'ai',
+    }
+  }
+  throw new Error('Invalid backend response')
+}
+
+/**
+ * Strategy 2: Direct API call (only for local dev when backend isn't running).
+ * Requires VITE_AI_API_TOKEN to be set in .env.
+ */
+async function callDirectAPI(signal) {
+  if (!AI_CONFIG.apiToken) {
+    throw new Error('No VITE_AI_API_TOKEN for direct call')
+  }
+
+  const resp = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${AI_CONFIG.apiToken}`,
+    },
+    body: JSON.stringify({
+      model: AI_CONFIG.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: '请给这位贵客算一卦。' },
+      ],
+      temperature: 1.2,
+      max_tokens: 300,
+    }),
+    signal,
+  })
+
+  if (!resp.ok) throw new Error(`API: ${resp.status}`)
+  return parseAIResponse(await resp.json())
+}
+
+/**
+ * Generate an AI fortune using the best available method.
  * @returns {Promise<{face: string, career: string, blessing: string, full: string, source: string}>}
  */
 export async function generateAIFortune() {
-  if (!AI_CONFIG.apiToken) {
-    console.warn('No AI_BUILDER_TOKEN configured, using fallback')
-    return { ...generateFallbackFortune(), source: 'fallback' }
-  }
-
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), TIMING.aiTimeout)
 
   try {
-    const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${AI_CONFIG.apiToken}`,
-      },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: '请给这位贵客算一卦。' },
-        ],
-        temperature: 1.2,
-        max_tokens: 300,
-      }),
-      signal: controller.signal,
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      throw new Error(`API responded with ${response.status}`)
+    // Try backend proxy first (production path)
+    try {
+      const result = await callBackendProxy(controller.signal)
+      clearTimeout(timeoutId)
+      return result
+    } catch (backendErr) {
+      console.info('Backend proxy unavailable, trying direct API:', backendErr.message)
     }
 
-    const data = await response.json()
-    const text = data.choices?.[0]?.message?.content?.trim()
-
-    if (!text) throw new Error('Empty AI response')
-
-    // Parse JSON (handle possible markdown code fences)
-    const jsonStr = text.replace(/```json?\s*/g, '').replace(/```/g, '').trim()
-    const parsed = JSON.parse(jsonStr)
-
-    if (!parsed.face || !parsed.career || !parsed.blessing) {
-      throw new Error('Incomplete fortune structure')
+    // Try direct API call (local dev path)
+    try {
+      const result = await callDirectAPI(controller.signal)
+      clearTimeout(timeoutId)
+      return result
+    } catch (directErr) {
+      console.info('Direct API unavailable:', directErr.message)
     }
 
-    return {
-      face: parsed.face,
-      career: parsed.career,
-      blessing: parsed.blessing,
-      full: `${parsed.face}${parsed.career}${parsed.blessing}`,
-      source: 'ai',
-    }
+    // All AI paths failed
+    throw new Error('All AI sources unavailable')
   } catch (err) {
     clearTimeout(timeoutId)
     console.warn('AI fortune failed, using fallback:', err.message)
