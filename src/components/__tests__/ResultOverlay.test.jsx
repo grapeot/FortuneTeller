@@ -52,6 +52,6 @@ describe('ResultOverlay', () => {
 
   it('shows the brand footer', () => {
     render(<ResultOverlay fortune={mockFortune} secondsLeft={5} />)
-    expect(screen.getByText(/AI Course Developer/)).toBeInTheDocument()
+    expect(screen.getByText(/Superlinear Academy/)).toBeInTheDocument()
   })
 })

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { BRAND } from '../lib/config'
 
 /**
  * IdleOverlay - shown when the app is waiting for the user to start.
@@ -22,7 +23,7 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
         <h1 className="text-7xl font-bold text-yellow-400 text-glow tracking-wider">
           AI 算命师
         </h1>
-        <p className="text-2xl text-yellow-200/80 mt-3">马年大吉 · 马到成功</p>
+        <p className="text-2xl text-yellow-200/80 mt-3">{BRAND.tagline}</p>
       </div>
 
       {/* Middle: Face detection status */}

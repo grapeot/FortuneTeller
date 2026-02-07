@@ -89,7 +89,7 @@ export default function ResultOverlay({ fortune, secondsLeft }) {
         transition={{ delay: 1.5 }}
         className="absolute bottom-6 text-sm text-gray-500"
       >
-        Powered by AI Course Developer · 马年大吉
+        Powered by Superlinear Academy · 马年大吉
       </motion.p>
     </motion.div>
   )

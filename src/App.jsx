@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
-import { generateFortune } from './lib/fortune'
+import { generateAIFortune } from './lib/ai-fortune'
+import { TIMING, BRAND } from './lib/config'
 import CameraView from './components/CameraView'
 import IdleOverlay from './components/IdleOverlay'
 import AnalyzingOverlay from './components/AnalyzingOverlay'
@@ -13,10 +14,6 @@ const PHASE = {
   ANALYZING: 'analyzing',
   RESULT: 'result',
 }
-
-/** Duration constants (ms) */
-const ANALYZE_DURATION = 2500
-const RESULT_DURATION = 6000
 
 export default function App() {
   const videoRef = useRef(null)
@@ -31,25 +28,28 @@ export default function App() {
     enabled: phase === PHASE.IDLE,
   })
 
-  // Start fortune telling
-  const startFortune = useCallback(() => {
+  // Start fortune telling — AI call runs in parallel with animation
+  const startFortune = useCallback(async () => {
     if (phase !== PHASE.IDLE) return
 
     setPhase(PHASE.ANALYZING)
 
-    // After analysis animation, show result
-    setTimeout(() => {
-      setFortune(generateFortune())
-      setPhase(PHASE.RESULT)
-      setSecondsLeft(Math.ceil(RESULT_DURATION / 1000))
+    // Run AI generation and minimum animation timer in parallel
+    const [generatedFortune] = await Promise.all([
+      generateAIFortune(),
+      new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
+    ])
 
-      // Auto-return to idle after result duration
-      setTimeout(() => {
-        setPhase(PHASE.IDLE)
-        setFortune(null)
-        setSecondsLeft(0)
-      }, RESULT_DURATION)
-    }, ANALYZE_DURATION)
+    setFortune(generatedFortune)
+    setPhase(PHASE.RESULT)
+    setSecondsLeft(Math.ceil(TIMING.resultDuration / 1000))
+
+    // Auto-return to idle
+    setTimeout(() => {
+      setPhase(PHASE.IDLE)
+      setFortune(null)
+      setSecondsLeft(0)
+    }, TIMING.resultDuration)
   }, [phase])
 
   // Countdown timer during result phase
@@ -89,16 +89,18 @@ export default function App() {
       {/* Gradient overlay for readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
 
-      {/* Decorative elements */}
+      {/* Decorative lanterns (PNG with transparency) */}
       <img
-        src="/assets/lantern.jpg"
+        src="/assets/lantern.png"
         alt=""
-        className="absolute top-0 left-4 w-20 opacity-40 pointer-events-none"
+        className="absolute top-0 left-4 w-20 opacity-60 pointer-events-none"
+        onError={(e) => { e.target.style.display = 'none' }}
       />
       <img
-        src="/assets/lantern.jpg"
+        src="/assets/lantern.png"
         alt=""
-        className="absolute top-0 right-4 w-20 opacity-40 pointer-events-none"
+        className="absolute top-0 right-4 w-20 opacity-60 pointer-events-none"
+        onError={(e) => { e.target.style.display = 'none' }}
       />
       <img
         src="/assets/clouds.jpg"
@@ -138,7 +140,14 @@ export default function App() {
       {/* Brand watermark */}
       {phase === PHASE.IDLE && (
         <div className="absolute bottom-3 right-4 text-xs text-gray-600">
-          AI Course Developer · MediaPipe Face Detection
+          {BRAND.name} · MediaPipe Face Detection
+        </div>
+      )}
+
+      {/* AI source indicator (debug) */}
+      {fortune?.source === 'ai' && phase === PHASE.RESULT && (
+        <div className="absolute top-3 right-4 text-xs text-green-700">
+          ✦ AI Generated
         </div>
       )}
     </div>
