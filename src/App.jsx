@@ -137,16 +137,16 @@ export default function App() {
         </div>
       )}
 
-      {/* GitHub link - subtle */}
+      {/* GitHub link - subtle but visible */}
       <a
         href="https://github.com/grapeot/FortuneTeller"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute bottom-3 left-4 text-gray-600 hover:text-gray-400 transition-colors opacity-50 hover:opacity-70"
+        className="absolute bottom-3 left-4 text-gray-500 hover:text-gray-300 transition-colors opacity-60 hover:opacity-90"
         aria-label="View on GitHub"
       >
         <svg
-          className="w-5 h-5"
+          className="w-6 h-6"
           fill="currentColor"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
