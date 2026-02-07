@@ -218,13 +218,20 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('交叉验证')
   })
 
+  it('should describe career section as actionable advice, not jokes', () => {
+    expect(SYSTEM_PROMPT).toContain('扬长避短')
+    expect(SYSTEM_PROMPT).toContain('可执行')
+    expect(SYSTEM_PROMPT).toContain('mentor')
+  })
+
   it('should reference annotated image and measurements', () => {
     expect(SYSTEM_PROMPT).toContain('标注了面相关键部位')
     expect(SYSTEM_PROMPT).toContain('测量数据')
   })
 
-  it('should contain Microsoft-specific references', () => {
-    expect(SYSTEM_PROMPT).toContain('L65-L67')
-    expect(SYSTEM_PROMPT).toContain('Principal')
+  it('should contain tech company career context', () => {
+    expect(SYSTEM_PROMPT).toContain('大厂')
+    expect(SYSTEM_PROMPT).toContain('Design Doc')
+    expect(SYSTEM_PROMPT).toContain('Code Review')
   })
 })

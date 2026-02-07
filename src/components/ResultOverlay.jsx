@@ -1,65 +1,90 @@
 import { motion } from 'framer-motion'
 
 /**
- * ResultOverlay - displays the fortune result with the annotated face image.
+ * ResultOverlay - displays the fortune result with pixelated avatar + annotated face.
  * Dismissed manually by pressing Space/Enter or clicking the dismiss hint.
  */
-export default function ResultOverlay({ fortune, annotatedImage, onDismiss }) {
+export default function ResultOverlay({
+  fortune,
+  annotatedImage,
+  pixelatedImage,
+  onDismiss,
+}) {
+  const hasImages = pixelatedImage || annotatedImage
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-y-auto"
+      className="absolute inset-0 bg-black/85 flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto"
     >
-      {/* Title - mobile responsive */}
-      <motion.h2
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold mb-3 md:mb-4 shrink-0"
-      >
-        ✨ 您的算命结果 ✨
-      </motion.h2>
+      {/* Scrollable content wrapper */}
+      <div className="flex flex-col items-center justify-center min-h-full w-full max-w-5xl gap-4 md:gap-6 py-6">
 
-      {/* Main content: annotated image + fortune text */}
-      <div className="max-w-5xl w-full flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8">
+        {/* Title */}
+        <motion.h2
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-xl sm:text-2xl md:text-3xl text-yellow-400 font-bold shrink-0"
+        >
+          ✨ 您的算命结果 ✨
+        </motion.h2>
 
-        {/* Annotated face image (left on desktop, top on mobile) */}
-        {annotatedImage && (
+        {/* Images row: pixelated avatar + annotated face */}
+        {hasImages && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            className="shrink-0"
+            className="flex flex-row items-center gap-3 md:gap-5 shrink-0"
           >
-            <img
-              src={annotatedImage}
-              alt="面相分析"
-              className="w-48 sm:w-56 md:w-64 lg:w-72 rounded-lg border-2 border-yellow-400/30 shadow-2xl"
-            />
+            {/* Pixelated avatar */}
+            {pixelatedImage && (
+              <div className="flex flex-col items-center gap-1">
+                <img
+                  src={pixelatedImage}
+                  alt="像素头像"
+                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/40 shadow-2xl"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <span className="text-xs text-gray-500">像素画像</span>
+              </div>
+            )}
+            {/* Annotated face */}
+            {annotatedImage && (
+              <div className="flex flex-col items-center gap-1">
+                <img
+                  src={annotatedImage}
+                  alt="面相分析"
+                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-lg border-2 border-yellow-400/20 shadow-2xl object-cover"
+                />
+                <span className="text-xs text-gray-500">面相标注</span>
+              </div>
+            )}
           </motion.div>
         )}
 
         {/* Fortune text - three sections */}
-        <div className="text-center md:text-left space-y-3 md:space-y-4 flex-1 min-w-0">
+        <div className="text-center space-y-3 md:space-y-4 max-w-3xl px-2">
           {/* Face reading */}
           <motion.p
             initial={{ x: -30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-yellow-200 font-bold leading-relaxed"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200 font-bold leading-relaxed"
           >
             {fortune.face}
           </motion.p>
 
-          {/* Career reading */}
+          {/* Career advice */}
           <motion.p
             initial={{ x: 30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold leading-relaxed text-glow"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl text-white font-bold leading-relaxed text-glow"
           >
             {fortune.career}
           </motion.p>
@@ -74,18 +99,18 @@ export default function ResultOverlay({ fortune, annotatedImage, onDismiss }) {
             🎊 {fortune.blessing} 🎊
           </motion.p>
         </div>
-      </div>
 
-      {/* Dismiss hint */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        onClick={onDismiss}
-        className="mt-6 md:mt-10 text-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer shrink-0"
-      >
-        按 空格键 继续下一位 →
-      </motion.button>
+        {/* Dismiss hint */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          onClick={onDismiss}
+          className="mt-4 text-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer shrink-0"
+        >
+          按 空格键 继续下一位 →
+        </motion.button>
+      </div>
 
       {/* Brand footer */}
       <motion.p

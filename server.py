@@ -1,9 +1,13 @@
 """
 Thin FastAPI backend for AI Fortune Teller.
-- POST /api/fortune  → proxies the AI call with optional face image (token stays server-side)
-- GET  /*            → serves the Vite-built static files
+- POST /api/fortune   → proxies the AI call with optional face image (token stays server-side)
+- POST /api/pixelate  → calls Gemini to generate a pixelated cartoon avatar
+- GET  /*             → serves the Vite-built static files
 """
 
+import asyncio
+import base64
+import io
 import json
 import os
 
@@ -61,13 +65,13 @@ SYSTEM_PROMPT = """你是一位精通中国传统面相学的AI算命大师，�
 ## 输出要求
 
 1. **face**（面相观察，3-5句话）：以"首先注意到"开头，用专业术语，交叉验证，提及三停比例。结尾用"——"
-2. **career**（职业解读，2-3句话）：从面相推导，融入微软黑话（IC: L59-L64 SDE, L65-L67 Principal, L68+ Partner; Manager同理）。自信夸张好笑。
-3. **blessing**（马年祝福，1-2句话）：马年成语，和面相呼应。结尾用"！"
+2. **career**（职场扬长避短建议，3-4句话）：从面相推导出性格优势和潜在短板，给出具体可执行的职场发展策略。假设此人在大厂/科技公司，目标是升职加薪、事业有成。可融入科技公司文化术语（Design Doc、Code Review、1:1、stretch project等）。语气像资深mentor给建议，正面积极。
+3. **blessing**（马年祝福，1-2句话）：马年成语+微软黑话增加趣味（如"马年Connect全Exceed"），和面相呼应，语气欢快。结尾用"！"
 
-原则：只说好话但要具体有依据。Principal是L65-L67。参考测量数据。
+原则：只说好话但要具体有依据。face段和career段风格一致，都是专业有深度的分析。参考测量数据。
 
 严格用JSON格式返回，不要markdown代码块：
-{"face": "面相观察段——", "career": "职业解读段。", "blessing": "马年祝福段！"}"""
+{"face": "面相观察段——", "career": "职场建议段。", "blessing": "马年祝福段！"}"""
 
 
 class FortuneRequest(BaseModel):
@@ -156,9 +160,114 @@ async def generate_fortune(req: FortuneRequest = None):
     }
 
 
+# ── Gemini config (for pixelated avatar generation) ──────────────────────
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = "gemini-3-pro-image-preview"
+PIXEL_SIZE = 64      # downscale target (small enough to be "pixel art")
+PIXEL_DISPLAY = 384  # upscale back for display (nearest-neighbor → sharp pixels)
+
+
+class PixelateRequest(BaseModel):
+    """Request body for /api/pixelate."""
+    image: str  # base64 data URI of the face
+
+
+def _generate_pixel_avatar(face_b64: str) -> str:
+    """Sync helper: call Gemini to generate pixel art, then downsample + NN upsample.
+
+    Returns a base64 data URI of the final pixelated image.
+    """
+    from google import genai
+    from google.genai import types
+    from PIL import Image
+
+    if not GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY not configured")
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    # Strip data URI prefix to get raw base64
+    raw_b64 = face_b64.split(",", 1)[-1] if "," in face_b64 else face_b64
+    image_bytes = base64.b64decode(raw_b64)
+
+    # Build Gemini request
+    parts = [
+        types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
+        types.Part.from_text(
+            text=(
+                "Based on this face photo, generate a pixel art style cartoon portrait of this person. "
+                "The portrait should capture the person's key facial features (face shape, hairstyle, "
+                "skin tone, glasses if any, facial hair if any) so that people who know them can "
+                "recognize them instantly. Use a clean, colorful pixel art aesthetic with a simple "
+                "solid-color background. The style should be cute but recognizable — like a retro "
+                "game character portrait. Do NOT include any text or labels."
+            )
+        ),
+    ]
+
+    config = types.GenerateContentConfig(
+        response_modalities=["IMAGE", "TEXT"],
+        image_config=types.ImageConfig(aspect_ratio="1:1"),
+    )
+
+    # Call Gemini (streaming to collect image parts)
+    generated_image_data = None
+    for chunk in client.models.generate_content_stream(
+        model=GEMINI_MODEL,
+        contents=[types.Content(role="user", parts=parts)],
+        config=config,
+    ):
+        if not chunk.candidates or not chunk.candidates[0].content:
+            continue
+        for part in chunk.candidates[0].content.parts:
+            if getattr(part, "inline_data", None) and part.inline_data.data:
+                generated_image_data = part.inline_data.data
+                break
+        if generated_image_data:
+            break
+
+    if not generated_image_data:
+        raise RuntimeError("Gemini returned no image data")
+
+    # Pixelation: downscale → nearest-neighbor upscale
+    img = Image.open(io.BytesIO(generated_image_data))
+    img = img.convert("RGB")
+
+    # Downscale to PIXEL_SIZE x PIXEL_SIZE
+    small = img.resize((PIXEL_SIZE, PIXEL_SIZE), Image.LANCZOS)
+    # Upscale back with nearest-neighbor for sharp pixel art look
+    pixelated = small.resize((PIXEL_DISPLAY, PIXEL_DISPLAY), Image.NEAREST)
+
+    # Encode as PNG (better for pixel art)
+    buf = io.BytesIO()
+    pixelated.save(buf, format="PNG")
+    result_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    return f"data:image/png;base64,{result_b64}"
+
+
+@app.post("/api/pixelate")
+async def pixelate_avatar(req: PixelateRequest):
+    """Generate a pixelated cartoon avatar from a face photo using Gemini."""
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
+
+    try:
+        # Run sync Gemini call in thread pool to avoid blocking
+        result = await asyncio.to_thread(_generate_pixel_avatar, req.image)
+        return {"pixelated_image": result}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Pixelation failed: {e}")
+
+
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "model": AI_MODEL, "token_configured": bool(AI_TOKEN)}
+    return {
+        "status": "ok",
+        "model": AI_MODEL,
+        "token_configured": bool(AI_TOKEN),
+        "gemini_configured": bool(GEMINI_API_KEY),
+    }
 
 
 # ── Serve static files (must be LAST) ──────────────────────────────────────

@@ -24,6 +24,7 @@ export default function App() {
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortune, setFortune] = useState(null)
   const [annotatedImage, setAnnotatedImage] = useState(null)
+  const [pixelatedImage, setPixelatedImage] = useState(null)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
@@ -36,6 +37,7 @@ export default function App() {
     setPhase(PHASE.IDLE)
     setFortune(null)
     setAnnotatedImage(null)
+    setPixelatedImage(null)
   }, [phase])
 
   // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
@@ -51,12 +53,25 @@ export default function App() {
     setAnnotatedImage(annotatedImg)
     setPhase(PHASE.ANALYZING)
 
-    // Run AI generation (with both images + measurements) and minimum animation timer in parallel
-    const [generatedFortune] = await Promise.all([
+    // Run AI fortune, pixelated avatar, and minimum animation timer all in parallel
+    const pixelatePromise = originalImage
+      ? fetch('/api/pixelate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: originalImage }),
+        })
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => d?.pixelated_image || null)
+          .catch(() => null)
+      : Promise.resolve(null)
+
+    const [generatedFortune, pixelated] = await Promise.all([
       generateAIFortune(originalImage, annotatedImg, measurements),
+      pixelatePromise,
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
 
+    setPixelatedImage(pixelated)
     setFortune(generatedFortune)
     setPhase(PHASE.RESULT)
   }, [phase])
@@ -125,6 +140,7 @@ export default function App() {
             key="result"
             fortune={fortune}
             annotatedImage={annotatedImage}
+            pixelatedImage={pixelatedImage}
             onDismiss={dismissResult}
           />
         )}

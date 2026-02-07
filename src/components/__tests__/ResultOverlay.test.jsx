@@ -70,4 +70,27 @@ describe('ResultOverlay', () => {
     render(<ResultOverlay fortune={mockFortune} annotatedImage={null} onDismiss={() => {}} />)
     expect(screen.queryByAltText('面相分析')).not.toBeInTheDocument()
   })
+
+  it('renders pixelated image when provided', () => {
+    const fakePixel = 'data:image/png;base64,pixel123'
+    render(<ResultOverlay fortune={mockFortune} pixelatedImage={fakePixel} onDismiss={() => {}} />)
+    const img = screen.getByAltText('像素头像')
+    expect(img).toBeInTheDocument()
+    expect(img.src).toBe(fakePixel)
+  })
+
+  it('renders both images side by side', () => {
+    const fakeAnnotated = 'data:image/jpeg;base64,ann'
+    const fakePixel = 'data:image/png;base64,pix'
+    render(
+      <ResultOverlay
+        fortune={mockFortune}
+        annotatedImage={fakeAnnotated}
+        pixelatedImage={fakePixel}
+        onDismiss={() => {}}
+      />,
+    )
+    expect(screen.getByAltText('面相分析')).toBeInTheDocument()
+    expect(screen.getByAltText('像素头像')).toBeInTheDocument()
+  })
 })
