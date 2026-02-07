@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MediaPipe Face Detection Test</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+    .test-case { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 8px; }
+    .pass { border-color: #4ade80; background: #052e16; }
+    .fail { border-color: #f87171; background: #2a0a0a; }
+    .running { border-color: #facc15; background: #1a1500; }
+    canvas { display: block; max-width: 300px; margin: 10px 0; border: 1px solid #444; }
+    h1 { color: #facc15; }
+    .summary { font-size: 18px; margin-top: 20px; padding: 15px; border-radius: 8px; }
+    .summary.pass { background: #052e16; }
+    .summary.fail { background: #2a0a0a; }
+  </style>
+</head>
+<body>
+  <h1>🔮 MediaPipe Face Detection - Integration Test</h1>
+  <p>Testing face detection on generated test images...</p>
+  <div id="results"></div>
+  <div id="summary"></div>
+
+  <script type="module">
+    import { FilesetResolver, FaceDetector } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs'
+
+    const TEST_IMAGES = [
+      { name: 'test-face-1.jpg', expectedFaces: 1, description: 'Young man, front-facing' },
+      { name: 'test-face-2.jpg', expectedFaces: 1, description: 'Young woman, front-facing' },
+      { name: 'test-face-3.jpg', expectedFaces: 1, description: 'Middle-aged man with glasses' },
+    ]
+
+    const resultsDiv = document.getElementById('results')
+    const summaryDiv = document.getElementById('summary')
+
+    function log(testName, message, status) {
+      const div = document.querySelector(`[data-test="${testName}"]`)
+      if (div) {
+        div.className = `test-case ${status}`
+        div.querySelector('.status').textContent = message
+      }
+    }
+
+    async function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = reject
+        img.src = src
+      })
+    }
+
+    async function runTests() {
+      // Create test case UI
+      for (const test of TEST_IMAGES) {
+        const div = document.createElement('div')
+        div.className = 'test-case running'
+        div.dataset.test = test.name
+        div.innerHTML = `
+          <strong>${test.name}</strong> - ${test.description}<br>
+          <span class="status">⏳ Running...</span>
+          <canvas></canvas>
+        `
+        resultsDiv.appendChild(div)
+      }
+
+      // Initialize MediaPipe
+      let detector
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
+        )
+        detector = await FaceDetector.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+            delegate: 'GPU',
+          },
+          runningMode: 'IMAGE',
+          minDetectionConfidence: 0.5,
+        })
+      } catch (err) {
+        summaryDiv.className = 'summary fail'
+        summaryDiv.textContent = `❌ Failed to initialize MediaPipe: ${err.message}`
+        return
+      }
+
+      let passed = 0
+      let failed = 0
+
+      for (const test of TEST_IMAGES) {
+        try {
+          // Load test image
+          const img = await loadImage(`test-assets/${test.name}`)
+
+          // Draw on canvas for visualization
+          const div = document.querySelector(`[data-test="${test.name}"]`)
+          const canvas = div.querySelector('canvas')
+          canvas.width = Math.min(img.width, 300)
+          canvas.height = (img.height / img.width) * canvas.width
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+          // Run detection
+          const result = detector.detect(img)
+          const detections = result.detections || []
+
+          // Draw detection boxes
+          const scaleX = canvas.width / img.width
+          const scaleY = canvas.height / img.height
+          for (const det of detections) {
+            const box = det.boundingBox
+            ctx.strokeStyle = '#4ade80'
+            ctx.lineWidth = 2
+            ctx.strokeRect(
+              box.originX * scaleX,
+              box.originY * scaleY,
+              box.width * scaleX,
+              box.height * scaleY
+            )
+            const score = Math.round((det.categories?.[0]?.score ?? 0) * 100)
+            ctx.fillStyle = '#4ade80'
+            ctx.font = '12px monospace'
+            ctx.fillText(`${score}%`, box.originX * scaleX, box.originY * scaleY - 4)
+          }
+
+          // Assert
+          if (detections.length >= test.expectedFaces) {
+            const scores = detections.map(d => Math.round((d.categories?.[0]?.score ?? 0) * 100))
+            log(test.name, `✅ PASS - Detected ${detections.length} face(s), confidence: ${scores.join(', ')}%`, 'pass')
+            passed++
+          } else {
+            log(test.name, `❌ FAIL - Expected ${test.expectedFaces} face(s), got ${detections.length}`, 'fail')
+            failed++
+          }
+        } catch (err) {
+          log(test.name, `❌ ERROR - ${err.message}`, 'fail')
+          failed++
+        }
+      }
+
+      // Summary
+      const total = passed + failed
+      if (failed === 0) {
+        summaryDiv.className = 'summary pass'
+        summaryDiv.textContent = `✅ All ${total} tests passed!`
+      } else {
+        summaryDiv.className = 'summary fail'
+        summaryDiv.textContent = `❌ ${failed}/${total} tests failed`
+      }
+
+      // Cleanup
+      detector.close()
+    }
+
+    runTests()
+  </script>
+</body>
+</html>
