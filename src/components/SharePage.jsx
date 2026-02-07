@@ -11,6 +11,13 @@ export default function SharePage({ shareId }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Override body overflow-hidden (set in index.html for the camera view)
+  // so this page can scroll on mobile
+  useEffect(() => {
+    document.body.style.overflow = 'auto'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   // Email subscription form state
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
