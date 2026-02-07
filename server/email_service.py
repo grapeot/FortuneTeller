@@ -3,11 +3,67 @@ Email subscription pipeline: Circle community, Resend email, deep analysis.
 """
 
 import asyncio
+import mistune
 
 from . import config
 from .firebase import get_db, get_mod
 from .ai import generate_deep_analysis
 
+
+# ── Email-compatible Markdown renderer ───────────────────────────────────────
+
+class _EmailRenderer(mistune.HTMLRenderer):
+    """Custom Markdown renderer that outputs email-compatible HTML with inline styles."""
+
+    # Inline style constants for consistency
+    _BODY = 'font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 14px;'
+    _HEADING = 'font-size:19px;color:#5c4a32;margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid #e0d5c3;'
+    _STRONG = 'color:#3d2e1c;'
+    _LIST = 'font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 14px;padding-left:24px;'
+    _LI = 'margin:0 0 6px;'
+    _BLOCKQUOTE = 'border-left:3px solid #c9b99a;padding:8px 16px;margin:16px 0;color:#6b5d4d;font-style:italic;'
+    _CODE = 'background-color:#f0ebe3;padding:1px 5px;border-radius:3px;font-size:14px;color:#5c4a32;'
+    _HR = 'border:none;border-top:1px solid #e0d5c3;margin:24px 0;'
+
+    def heading(self, text: str, level: int, **attrs) -> str:
+        # Map all heading levels to h3 for email consistency
+        return f'\n          <h3 class="email-heading" style="{self._HEADING}">{text}</h3>'
+
+    def paragraph(self, text: str) -> str:
+        return f'\n          <p class="email-body" style="{self._BODY}">{text}</p>'
+
+    def strong(self, text: str) -> str:
+        return f'<strong style="{self._STRONG}">{text}</strong>'
+
+    def emphasis(self, text: str) -> str:
+        return f'<em>{text}</em>'
+
+    def list(self, text: str, ordered: bool, **attrs) -> str:
+        tag = 'ol' if ordered else 'ul'
+        return f'\n          <{tag} style="{self._LIST}">{text}\n          </{tag}>'
+
+    def list_item(self, text: str) -> str:
+        return f'\n            <li style="{self._LI}">{text}</li>'
+
+    def block_quote(self, text: str) -> str:
+        return f'\n          <blockquote style="{self._BLOCKQUOTE}">{text}</blockquote>'
+
+    def codespan(self, text: str) -> str:
+        return f'<code style="{self._CODE}">{text}</code>'
+
+    def thematic_break(self) -> str:
+        return f'\n          <hr style="{self._HR}" />'
+
+
+_email_md = mistune.create_markdown(renderer=_EmailRenderer())
+
+
+def markdown_to_email_html(text: str) -> str:
+    """Convert Markdown text to email-compatible HTML with inline styles."""
+    return _email_md(text)
+
+
+# ── Email builder ────────────────────────────────────────────────────────────
 
 def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | None = None) -> str:
     """Build Outlook-compatible HTML email with harmonious palette."""
@@ -22,18 +78,7 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
                style="width:96px;height:96px;border-radius:8px;image-rendering:pixelated;border:2px solid #c9b99a;" />
         </td></tr>"""
 
-    sections_html = ""
-    for line in deep_analysis.strip().split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith("## "):
-            heading = line[3:].strip()
-            sections_html += f"""
-          <h3 class="email-heading" style="font-size:19px;color:#5c4a32;margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid #e0d5c3;">{heading}</h3>"""
-        else:
-            sections_html += f"""
-          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 14px;">{line}</p>"""
+    sections_html = markdown_to_email_html(deep_analysis)
 
     return f"""<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">

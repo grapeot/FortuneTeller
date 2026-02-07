@@ -130,6 +130,28 @@ class TestBuildEmailHtml:
         html = build_email_html("内容")
         assert "v:roundrect" in html
 
+    def test_markdown_bold_rendered(self):
+        html = build_email_html("这位来访者**天庭饱满**，印堂开阔。")
+        assert "<strong" in html
+        assert "天庭饱满" in html
+        assert "**" not in html  # raw markdown syntax should not appear
+
+    def test_markdown_list_rendered(self):
+        html = build_email_html("## 特征\n\n- 眉毛浓密\n- 鼻梁挺直\n- 嘴角上翘")
+        assert "<ul" in html
+        assert "<li" in html
+        assert "眉毛浓密" in html
+
+    def test_markdown_emphasis_rendered(self):
+        html = build_email_html("鼻梁挺直，*自信果敢*。")
+        assert "<em>" in html
+        assert "自信果敢" in html
+
+    def test_markdown_ordered_list_rendered(self):
+        html = build_email_html("1. 第一点\n2. 第二点")
+        assert "<ol" in html
+        assert "第一点" in html
+
 
 # ── call_model ───────────────────────────────────────────────────────────────
 

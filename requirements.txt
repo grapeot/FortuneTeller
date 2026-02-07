@@ -6,3 +6,4 @@ Pillow
 firebase-admin
 resend
 requests
+mistune
