@@ -111,16 +111,26 @@ class TestGenerateDeepAnalysis:
         mock_resp.json.return_value = ai_response
         mock_resp.raise_for_status = MagicMock()
 
+        call_count = 0
         async def mock_post(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
             body = kwargs.get("json", {})
             user_msg = body.get("messages", [{}])[-1].get("content", "")
-            assert "无前次分析结果" in user_msg
+            if call_count == 1:  # First call
+                assert "无前次分析结果" in user_msg
             return mock_resp
 
         with patch("httpx.AsyncClient.post", side_effect=mock_post):
             result = await generate_deep_analysis({})
 
-        assert result == "分析内容"
+        # Now returns multi-model format
+        assert "我们咨询了多个AI模型" in result
+        assert "Gemini 3 Flash的解读" in result
+        assert "DeepSeek R1的解读" in result
+        assert "Kimi K2.5的解读" in result
+        assert "分析内容" in result
+        assert call_count == 3  # Should call 3 models
 
     @pytest.mark.asyncio
     async def test_empty_response_fallback(self):

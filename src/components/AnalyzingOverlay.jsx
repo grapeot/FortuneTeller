@@ -17,25 +17,16 @@ const ANALYSIS_TERMS = [
 
 /**
  * AnalyzingOverlay - shown during the analysis animation.
- * Shows scrolling face-reading terms and a progress bar, with Chinese styling.
+ * Shows scrolling face-reading terms with Chinese styling.
  */
 export default function AnalyzingOverlay() {
   const [currentTermIndex, setCurrentTermIndex] = useState(0)
-  const [progress, setProgress] = useState(0)
 
-  // Cycle through terms
+  // Cycle through terms - slowed down by 100% (interval doubled from 1500ms to 3000ms)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTermIndex((prev) => (prev + 1) % ANALYSIS_TERMS.length)
-    }, 1500)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Animate progress bar slowly
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 0.5, 95))
-    }, 75)
+    }, 3000)
     return () => clearInterval(interval)
   }, [])
 
@@ -83,15 +74,6 @@ export default function AnalyzingOverlay() {
             {ANALYSIS_TERMS[currentTermIndex]}
           </motion.p>
         </AnimatePresence>
-      </div>
-
-      {/* Progress bar */}
-      <div className="w-64 sm:w-80 h-2 bg-gray-800/60 rounded-full overflow-hidden border border-yellow-400/10">
-        <motion.div
-          className="h-full bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 rounded-full"
-          style={{ width: `${progress}%` }}
-          transition={{ duration: 0.1 }}
-        />
       </div>
     </motion.div>
   )

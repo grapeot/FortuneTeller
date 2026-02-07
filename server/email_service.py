@@ -170,7 +170,7 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
         <!-- Body -->
         <tr><td class="email-body-cell" style="padding:24px 32px 28px;">
           <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 16px;">{greeting}</p>
-          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">以下是为您准备的 AI 面相深度分析报告。这份报告综合了多维度的面相学知识，从五官、三停、十二宫位等多个角度为您进行了全面解读。</p>
+          <p class="email-body" style="font-size:16px;color:#4a3c2e;line-height:1.9;margin:0 0 20px;">刚才的速览只是冰山一角。我们调用了多个不同AI，为您生成了一份涵盖五官、三停、十二宫位的多维度深度面相报告，包含事业、财运、感情等多方面个性化建议。</p>
 
           {sections_html}
 
@@ -181,11 +181,8 @@ def build_email_html(deep_analysis: str, name: str = "", pixelated_image: str | 
 
         <!-- Community section -->
         <tr><td class="email-community-cell" style="padding:20px 32px;">
-          <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 8px;">
-            我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
-          </p>
           <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 16px;">
-            首次访问请点击下方按钮设置登录密码，即可进入社区。
+            同时加入 <strong style="color:#5c4a32;">Superlinear AI</strong> 社区，免费接受深度AI咨询和实战心得。
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">

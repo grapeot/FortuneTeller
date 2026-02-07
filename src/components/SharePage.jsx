@@ -137,10 +137,10 @@ export default function SharePage({ shareId }) {
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
               <h3 className="font-calligraphy text-xl text-yellow-400/90 tracking-wide">
-                接收 <span className="font-en">AI</span> 深度面相分析
+                免费获取深度分析报告
               </h3>
               <p className="text-sm text-yellow-100/70 font-serif-cn text-center leading-relaxed px-1">
-                刚才的速览只是冰山一角。输入邮箱，<span className="font-en">AI</span> 将为你生成一份涵盖五官、三停、十二宫位的多维度深度面相报告，包含事业、财运、感情等方面的详细解读与个性化建议。
+                刚才的速览只是冰山一角，输入邮箱，我们会调用多个不同AI，为你生成一份涵盖五官、三停、十二宫位的多维度深度面相报告。包含事业、财运、感情等多方面个性化建议。
               </p>
               <input
                 type="email"
@@ -162,13 +162,13 @@ export default function SharePage({ shareId }) {
                 disabled={subscribeStatus === 'submitting' || !email.includes('@')}
                 className="w-full py-2.5 bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/20 text-yellow-400 font-serif-cn text-sm rounded-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                {subscribeStatus === 'submitting' ? '提交中...' : <>免费获取 <span className="font-en">AI</span> 深度分析报告</>}
+                {subscribeStatus === 'submitting' ? '提交中...' : <>免费获取深度分析报告</>}
               </button>
               {subscribeStatus === 'error' && (
                 <p className="text-red-400 text-xs font-serif-cn">提交失败，请稍后重试</p>
               )}
               <p className="text-xs text-gray-500/70 font-serif-cn text-center leading-relaxed px-2">
-                同时加入 Superlinear Academy <span className="font-en">AI</span> 社区，接收学员实战项目更新。社区邮件可随时退订。
+                同时加入Superlinear AI社区，免费接受深度AI咨询和实战心得。
               </p>
             </form>
           )}
