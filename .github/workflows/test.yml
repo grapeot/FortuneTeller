@@ -68,7 +68,6 @@ jobs:
           koyeb service update ai-builders-7/fortune-teller \
             --git-builder docker \
             --git-docker-dockerfile Dockerfile \
-            --git-docker-command 'uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}' \
             --regions na \
             --ports 8000:http \
             --routes "/fortune-teller:8000" || true
@@ -81,7 +80,6 @@ jobs:
           git-branch: "master"
           git-builder: "docker"
           git-docker-dockerfile: "Dockerfile"
-          git-docker-command: "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"
           service-regions: "na"
           service-ports: "8000:http"
           service-routes: "/fortune-teller:8000"
