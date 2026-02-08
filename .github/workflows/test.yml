@@ -1,4 +1,4 @@
-name: Tests
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     branches: [master]
 
 jobs:
+  # 第一步：跑测试
   frontend:
     name: Frontend Tests (Vitest)
     runs-on: ubuntu-latest
@@ -47,3 +48,24 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t fortune-teller-test .
+
+  # 第二步：部署（只有所有测试过了才会跑这里）
+  deploy:
+    needs: [frontend, backend, docker]
+    runs-on: ubuntu-latest
+    # 只在 push 到 master 时部署，PR 时不部署
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Deployment on Koyeb
+        uses: koyeb/action-git-deploy@v1
+        with:
+          # TODO: 请在 Koyeb 控制台找到你的应用名称和服务名称，替换下面的值
+          # 应用名称通常在 Koyeb Dashboard > Your App > Settings > General 中可以看到
+          # 服务名称通常在 Koyeb Dashboard > Your App > Services 中可以看到
+          # 或者使用 Koyeb CLI: koyeb apps list 和 koyeb services list
+          api_token: "${{ secrets.KOYEB_API_TOKEN }}"
+          app-name: "fortune-teller"  # 请替换为你的实际应用名称
+          service-name: "fortune-teller-service"  # 请替换为你的实际服务名称
+          git-branch: "master"
