@@ -58,10 +58,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install and configure the Koyeb CLI
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: "${{ secrets.KOYEB_API_TOKEN }}"
+
       - name: Trigger Deployment on Koyeb
         uses: koyeb/action-git-deploy@v1
         with:
-          api_token: "${{ secrets.KOYEB_API_TOKEN }}"
           app-name: "ai-builders-7"
           service-name: "fortune-teller"
           git-branch: "master"
