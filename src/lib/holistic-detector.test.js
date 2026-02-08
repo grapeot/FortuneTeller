@@ -26,26 +26,30 @@ describe('holistic-detector', () => {
 
   it('should initialize HolisticLandmarker', async () => {
     vi.resetModules()
-    const { initHolisticLandmarker } = await import('./holistic-detector')
-
+    
+    // Set up mocks before importing (to catch auto-init)
     const mockVision = {}
     const mockLandmarker = { test: 'landmarker' }
-
-    // Reset mocks since module auto-init may have called them
-    mockForVisionTasks.mockReset()
-    mockCreateFromOptions.mockReset()
     
     mockForVisionTasks.mockResolvedValue(mockVision)
     mockCreateFromOptions.mockResolvedValue(mockLandmarker)
 
+    const { initHolisticLandmarker } = await import('./holistic-detector')
+
+    // Wait a bit for auto-init to complete if it's running
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
     const result = await initHolisticLandmarker()
 
-    // Verify the initialization was called (may have been called by auto-init or our call)
+    // Verify the initialization was called
     expect(mockForVisionTasks).toHaveBeenCalled()
     expect(mockCreateFromOptions).toHaveBeenCalled()
     // Result should be the landmarker instance or a promise resolving to it
     const finalResult = result instanceof Promise ? await result : result
     expect(finalResult).toBeDefined()
+    if (finalResult && typeof finalResult === 'object') {
+      expect(finalResult.test).toBe('landmarker')
+    }
   })
 
   it('should return cached instance on subsequent calls', async () => {
