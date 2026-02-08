@@ -71,6 +71,7 @@ jobs:
           git-branch: "master"
           git-builder: "docker"
           git-docker-dockerfile: "Dockerfile"
+          git-docker-command: "sh -c \"uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}\""
           service-regions: "na"
           service-ports: "8000:http"
           service-routes: "/fortune-teller:8000"
