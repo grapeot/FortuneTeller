@@ -69,3 +69,7 @@ jobs:
           app-name: "ai-builders-7"
           service-name: "fortune-teller"
           git-branch: "master"
+          service-regions: "na"
+          service-ports: "8000:http"
+          service-routes: "/fortune-teller:8000"
+          git-docker-dockerfile: "Dockerfile"
