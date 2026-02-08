@@ -63,6 +63,12 @@ export function useFaceDetection(videoRef, canvasRef, options = {}) {
       }
 
       ctx.restore()
+
+      // Draw holistic skeletons after face detection boxes
+      // This ensures skeletons are drawn on top and not cleared
+      if (window.__drawHolisticSkeletons) {
+        window.__drawHolisticSkeletons(ctx, canvas.width, canvas.height)
+      }
     },
     [canvasRef, videoRef, boxColor, lineWidth]
   )

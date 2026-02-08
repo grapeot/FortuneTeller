@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
+import { useHolisticDetection } from './hooks/useHolisticDetection'
 import { generateAIFortune } from './lib/ai-fortune'
 import { captureAndAnnotate } from './lib/face-annotator'
 import { TIMING, BRAND } from './lib/config'
@@ -27,6 +28,11 @@ export default function App() {
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
+    enabled: phase === PHASE.IDLE,
+  })
+
+  // Holistic detection for pose + hand skeleton visualization (IDLE phase only)
+  useHolisticDetection(videoRef, canvasRef, {
     enabled: phase === PHASE.IDLE,
   })
 
