@@ -66,23 +66,23 @@ export default function App() {
 
       setPhase(PHASE.ANALYZING)
 
-    // Run AI fortune (multi-model), pixelated avatar, and minimum animation timer all in parallel
-    const pixelatePromise = originalImage
-      ? fetch('/api/pixelate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: originalImage }),
-        })
-          .then((r) => r.ok ? r.json() : null)
-          .then((d) => d?.pixelated_image || null)
-          .catch(() => null)
-      : Promise.resolve(null)
+      // Run AI fortune (multi-model), pixelated avatar, and minimum animation timer all in parallel
+      const pixelatePromise = originalImage
+        ? fetch('/api/pixelate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: originalImage }),
+          })
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => d?.pixelated_image || null)
+            .catch(() => null)
+        : Promise.resolve(null)
 
-    const [multiModelFortunes, pixelated] = await Promise.all([
-      generateAIFortune(originalImage, measurements),
-      pixelatePromise,
-      new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
-    ])
+      const [multiModelFortunes, pixelated] = await Promise.all([
+        generateAIFortune(originalImage, measurements),
+        pixelatePromise,
+        new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
+      ])
 
       setPixelatedImage(pixelated)
       setFortunes(multiModelFortunes) // { gemini: {...}, grok: {...} }
