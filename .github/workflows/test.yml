@@ -63,6 +63,16 @@ jobs:
         with:
           api_token: "${{ secrets.KOYEB_API_TOKEN }}"
 
+      - name: Update service to use Docker builder
+        run: |
+          koyeb service update ai-builders-7/fortune-teller \
+            --git-builder docker \
+            --git-docker-dockerfile Dockerfile \
+            --git-docker-command "sh -c \"uvicorn server:app --host 0.0.0.0 --port \${PORT:-8000}\"" \
+            --regions na \
+            --ports 8000:http \
+            --routes "/fortune-teller:8000" || true
+
       - name: Trigger Deployment on Koyeb
         uses: koyeb/action-git-deploy@v1
         with:
