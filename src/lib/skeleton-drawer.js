@@ -267,12 +267,94 @@ export function drawHandSkeleton(ctx, landmarks, width, height) {
 }
 
 /**
+ * Draw face landmarks as dots (no skeleton connections)
+ * Selects the most important 20-33 landmarks for face reading
+ */
+export function drawFaceLandmarks(ctx, landmarks, width, height) {
+  if (!landmarks || landmarks.length === 0) return
+
+  // Select the most important landmarks for face reading (from face-annotator.js LM object)
+  // These are key points for 三停, 十二宫位, and facial features
+  const IMPORTANT_FACE_LANDMARKS = [
+    10,   // 天庭 top (foreheadTop)
+    151,  // 官禄宫 (foreheadMid)
+    9,    // 印堂 (glabella)
+    6,    // 山根 (noseBridgeTop)
+    1,    // 准头 (noseTip)
+    2,    // 鼻底 (noseBottom)
+    48,   // 左鼻翼 (leftNoseWing)
+    278,  // 右鼻翼 (rightNoseWing)
+    33,   // 左夫妻宫 (leftEyeOuter)
+    133,  // 左眼内角 (leftEyeInner)
+    362,  // 右夫妻宫 (rightEyeOuter)
+    263,  // 右眼内角 (rightEyeInner)
+    159,  // 左眼上 (leftEyeTop)
+    145,  // 左眼下 (leftEyeBottom)
+    386,  // 右眼上 (rightEyeTop)
+    374,  // 右眼下 (rightEyeBottom)
+    70,   // 左眉头 (leftBrowInner)
+    107,  // 左眉尾 (leftBrowOuter)
+    105,  // 左眉峰 (leftBrowPeak)
+    300,  // 右眉头 (rightBrowInner)
+    336,  // 右眉尾 (rightBrowOuter)
+    334,  // 右眉峰 (rightBrowPeak)
+    13,   // 上唇 (upperLip)
+    14,   // 下唇 (lowerLip)
+    0,    // 人中底部 (lipTop)
+    17,   // 唇底 (lipBottom)
+    152,  // 地阁 (chin)
+    234,  // 左颧骨 (leftCheekbone)
+    454,  // 右颧骨 (rightCheekbone)
+    172,  // 左腮骨 (leftJaw)
+    397,  // 右腮骨 (rightJaw)
+    54,   // 左太阳穴 (leftTemple)
+    284,  // 右太阳穴 (rightTemple)
+    164,  // 人中 (philtrum)
+  ]
+
+  ctx.fillStyle = '#ffff00' // Yellow for face landmarks
+  ctx.strokeStyle = '#000000'
+  ctx.lineWidth = 1
+
+  for (const idx of IMPORTANT_FACE_LANDMARKS) {
+    if (idx >= landmarks.length) continue
+    
+    const landmark = landmarks[idx]
+    if (!landmark) continue
+
+    const x = landmark.x * width
+    const y = landmark.y * height
+
+    // Draw landmark as a filled circle with border
+    ctx.beginPath()
+    ctx.arc(x, y, 3, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+  }
+}
+
+/**
  * Draw all skeletons from HolisticLandmarker result
- * Draws pose skeleton (body) and hand skeletons, but NOT face landmarks
+ * Draws pose skeleton (body), hand skeletons, and face landmarks
  */
 export function drawHolisticSkeletons(ctx, result, width, height) {
   if (!result) {
     return
+  }
+
+  // Draw face landmarks as dots (no skeleton)
+  if (result.faceLandmarks && Array.isArray(result.faceLandmarks)) {
+    let faceLandmarks = result.faceLandmarks
+    
+    // If first element is an array, it's an array of faces - take the first one
+    if (faceLandmarks.length > 0 && Array.isArray(faceLandmarks[0])) {
+      faceLandmarks = faceLandmarks[0]
+    }
+    
+    // Check if we have valid landmarks
+    if (faceLandmarks && faceLandmarks.length > 0 && typeof faceLandmarks[0] === 'object' && 'x' in faceLandmarks[0]) {
+      drawFaceLandmarks(ctx, faceLandmarks, width, height)
+    }
   }
 
   // Draw pose skeleton (body) - but skip face-related connections
