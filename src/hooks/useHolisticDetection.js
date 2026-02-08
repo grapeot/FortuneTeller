@@ -19,6 +19,7 @@ export function useHolisticDetection(videoRef, canvasRef, options = {}) {
   const animFrameRef = useRef(null)
   const latestResultRef = useRef(null)
   const drawSkeletonsRef = useRef(null)
+  const instanceIdRef = useRef(Math.random().toString(36).substring(7))
 
   // Draw skeletons function that will be called from useFaceDetection
   // Use ref instead of useCallback to avoid hook order issues
@@ -54,7 +55,9 @@ export function useHolisticDetection(videoRef, canvasRef, options = {}) {
         }
 
         landmarkerRef.current = landmarker
-        console.log('HolisticLandmarker initialized')
+        if (import.meta.env.DEV) {
+          console.log('HolisticLandmarker initialized')
+        }
 
         // Start detection loop
         detectLoop()
@@ -72,8 +75,8 @@ export function useHolisticDetection(videoRef, canvasRef, options = {}) {
           const result = landmarkerRef.current.detectForVideo(video, performance.now())
           if (result) {
             latestResultRef.current = result
-            // Debug: log detection results occasionally
-            if (Math.random() < 0.01) { // Log 1% of frames
+            // Debug: log detection results occasionally (dev only)
+            if (import.meta.env.DEV && Math.random() < 0.01) { // Log 1% of frames
               const poseLm = result.poseLandmarks
               const leftLm = result.leftHandLandmarks
               const rightLm = result.rightHandLandmarks
@@ -102,10 +105,20 @@ export function useHolisticDetection(videoRef, canvasRef, options = {}) {
     }
 
     // Register draw function globally so useFaceDetection can call it
-    window.__drawHolisticSkeletons = drawSkeletonsRef.current
+    // Use instance ID to avoid collisions if multiple instances exist
+    const globalKey = `__drawHolisticSkeletons_${instanceIdRef.current}`
+    window[globalKey] = drawSkeletonsRef.current
     
-    // Debug: log when initialized
-    console.log('useHolisticDetection: initialized, draw function registered')
+    // Also register on a shared object for useFaceDetection to find
+    if (!window.__holisticDrawers) {
+      window.__holisticDrawers = new Map()
+    }
+    window.__holisticDrawers.set(instanceIdRef.current, drawSkeletonsRef.current)
+    
+    // Set the active drawer (use the first one if multiple exist)
+    if (!window.__drawHolisticSkeletons) {
+      window.__drawHolisticSkeletons = drawSkeletonsRef.current
+    }
 
     init()
 
@@ -114,9 +127,21 @@ export function useHolisticDetection(videoRef, canvasRef, options = {}) {
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current)
       }
-      // Clean up global function
-      if (window.__drawHolisticSkeletons === drawSkeletonsRef.current) {
-        delete window.__drawHolisticSkeletons
+      // Clean up global functions
+      const globalKey = `__drawHolisticSkeletons_${instanceIdRef.current}`
+      delete window[globalKey]
+      
+      if (window.__holisticDrawers) {
+        window.__holisticDrawers.delete(instanceIdRef.current)
+        // Update active drawer if this was the active one
+        if (window.__drawHolisticSkeletons === drawSkeletonsRef.current) {
+          const nextDrawer = window.__holisticDrawers.values().next().value
+          window.__drawHolisticSkeletons = nextDrawer || undefined
+        }
+        // Clean up Map if empty
+        if (window.__holisticDrawers.size === 0) {
+          delete window.__holisticDrawers
+        }
       }
     }
   }, [enabled, videoRef, canvasRef])

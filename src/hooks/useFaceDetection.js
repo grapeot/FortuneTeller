@@ -36,6 +36,11 @@ export function useFaceDetection(videoRef, canvasRef, options = {}) {
       }
 
       const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        console.warn('Canvas 2d context not available')
+        return
+      }
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Flip horizontally because video is mirrored but canvas is not
@@ -74,7 +79,13 @@ export function useFaceDetection(videoRef, canvasRef, options = {}) {
   )
 
   useEffect(() => {
-    if (!enabled) return
+    // Clear error state when disabling or re-enabling
+    if (!enabled) {
+      setError(null)
+      setIsReady(false)
+      setIsDetecting(false)
+      return
+    }
 
     let cancelled = false
 

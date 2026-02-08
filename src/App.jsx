@@ -21,6 +21,7 @@ const PHASE = {
 export default function App() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
+  const isProcessingRef = useRef(false)
 
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortunes, setFortunes] = useState(null) // { gemini: null, grok: {...} }
@@ -46,14 +47,24 @@ export default function App() {
 
   // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
-    if (phase !== PHASE.IDLE) return
+    // Prevent race condition: check phase and processing state
+    if (phase !== PHASE.IDLE || isProcessingRef.current) return
+    
+    isProcessingRef.current = true
 
-    // Capture face image and measurements BEFORE switching phase (video is still active)
-    const captureResult = await captureAndAnnotate(videoRef.current)
-    const originalImage = captureResult?.originalDataUrl || null
-    const measurements = captureResult?.measurements || null
+    try {
+      // Capture face image and measurements BEFORE switching phase (video is still active)
+      const captureResult = await captureAndAnnotate(videoRef.current)
+      if (!captureResult) {
+        console.error('Failed to capture face image')
+        // Could show error message to user here
+        return
+      }
+      
+      const originalImage = captureResult.originalDataUrl || null
+      const measurements = captureResult.measurements || null
 
-    setPhase(PHASE.ANALYZING)
+      setPhase(PHASE.ANALYZING)
 
     // Run AI fortune (multi-model), pixelated avatar, and minimum animation timer all in parallel
     const pixelatePromise = originalImage
@@ -73,9 +84,16 @@ export default function App() {
       new Promise((resolve) => setTimeout(resolve, TIMING.analyzeDuration)),
     ])
 
-    setPixelatedImage(pixelated)
-    setFortunes(multiModelFortunes) // { gemini: {...}, grok: {...} }
-    setPhase(PHASE.RESULT)
+      setPixelatedImage(pixelated)
+      setFortunes(multiModelFortunes) // { gemini: {...}, grok: {...} }
+      setPhase(PHASE.RESULT)
+    } catch (err) {
+      console.error('Error in fortune telling:', err)
+      // Reset to IDLE on error
+      setPhase(PHASE.IDLE)
+    } finally {
+      isProcessingRef.current = false
+    }
   }, [phase])
 
   // Keyboard shortcut: Space or Enter
