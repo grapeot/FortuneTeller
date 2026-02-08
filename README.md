@@ -74,9 +74,14 @@ npm run test:watch  # 观察模式
 
 ## 部署到 AI Builder Space
 
+部署通过 GitHub Actions CI/CD 流程自动触发：
+1. 推送代码到 `master` 分支
+2. GitHub Actions 运行所有测试（frontend、backend、docker）
+3. 测试通过后自动部署到 Koyeb
+
 ```bash
-# 1. 推送到 GitHub（自动触发部署）
-git push origin main
+# 推送到 GitHub（自动触发 CI/CD）
+git push origin master
 ```
 
 运行时环境变量（在 AI Builder Space 控制台设置）：
