@@ -76,6 +76,63 @@ BLACK_BG = (0, 0, 0, 166)  # 65% opacity
 WHITE = (255, 255, 255)
 
 
+def load_chinese_font(size=14):
+    """Load a Chinese font with fallback chain."""
+    # macOS Chinese fonts (in priority order, with font index for .ttc files)
+    # Format: (font_path, font_index) or (font_path,) for non-ttc files
+    font_configs = [
+        ("/System/Library/Fonts/STHeiti Medium.ttc", 0),  # 华文黑体 Medium (简体)
+        ("/System/Library/Fonts/STHeiti Light.ttc", 0),  # 华文黑体 Light (简体)
+        ("/System/Library/Fonts/Supplemental/Songti.ttc", 0),  # 宋体 SC (简体)
+        ("/System/Library/Fonts/Supplemental/Songti.ttc", 1),  # 宋体 TC (繁体，fallback)
+    ]
+    
+    # Linux Chinese fonts
+    linux_fonts = [
+        ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", 0),  # 文泉驿微米黑
+        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0),  # 文泉驿正黑
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0),  # Noto Sans CJK
+    ]
+    
+    # Try macOS fonts first
+    for font_config in font_configs:
+        try:
+            if len(font_config) == 2:
+                font_path, font_index = font_config
+            else:
+                font_path = font_config[0]
+                font_index = 0
+            
+            if Path(font_path).exists():
+                if font_path.endswith(".ttc"):
+                    return ImageFont.truetype(font_path, size, index=font_index)
+                else:
+                    return ImageFont.truetype(font_path, size)
+        except Exception as e:
+            continue
+    
+    # Try Linux fonts
+    for font_config in linux_fonts:
+        try:
+            if len(font_config) == 2:
+                font_path, font_index = font_config
+            else:
+                font_path = font_config[0]
+                font_index = 0
+            
+            if Path(font_path).exists():
+                if font_path.endswith(".ttc"):
+                    return ImageFont.truetype(font_path, size, index=font_index)
+                else:
+                    return ImageFont.truetype(font_path, size)
+        except Exception:
+            continue
+    
+    # Fallback: try to use default font (may not support Chinese)
+    print("Warning: No Chinese font found, Chinese text may display as boxes", file=sys.stderr)
+    return ImageFont.load_default()
+
+
 def dist(a, b):
     """Calculate Euclidean distance between two points."""
     return np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
@@ -383,15 +440,8 @@ def main():
     image = Image.open(args.image_path).convert("RGB")
     draw = ImageDraw.Draw(image, "RGBA")
     
-    # Try to load a font, fallback to default if not available
-    try:
-        # Try to use a system font
-        font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 14)
-    except:
-        try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        except:
-            font = ImageFont.load_default()
+    # Load Chinese font with fallback chain
+    font = load_chinese_font(14)
     
     # Draw all visualizations
     visualize_santing(draw, landmarks, width, height, font)
