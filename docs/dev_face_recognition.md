@@ -290,7 +290,191 @@ MediaPipe FaceLandmarker.detect()
 - **标准化**：百分比形式更符合面相学的判断标准
 - **鲁棒性**：对图像缩放、裁剪不敏感
 
-## 七、参考资料
+## 七、关键测量可视化
+
+为了直观展示面部测量结果，我们设计了 5 个最重要的可视化项。每个可视化项都通过绘制关键点和连线，配合标注文字，清晰展示测量数据和判断结果。
+
+### 7.1 可视化项列表
+
+| 序号 | 可视化项 | 关键点 | 绘制内容 | 标注内容 |
+|------|---------|--------|----------|----------|
+| 1 | **三停比例** | 额头顶部(10)、眉峰(105,334)、鼻底(2)、下巴(152) | 两条水平分界线 + 三个区域标注 | 上庭X% / 中庭Y% / 下庭Z% |
+| 2 | **印堂宽度** | 左眉头(70)、右眉头(300) | 两点连线 + 宽度标注 | 宽度值 + 判断（开阔/适中/较窄） |
+| 3 | **田宅宫** | 左眉峰(105)、左眼上(159)、右眉峰(334)、右眼上(386) | 左右各一条垂直线 + 距离标注 | 平均距离 + 判断（宽广/较窄） |
+| 4 | **颧骨突出度** | 左颧骨(234)、右颧骨(454)、左下颌(172)、右下颌(397) | 两条水平宽度线 + 比较标注 | 颧骨宽度 vs 下颌宽度 + 判断（突出/平和） |
+| 5 | **鼻翼宽度** | 左鼻翼(48)、右鼻翼(278) | 两点连线 + 宽度标注 | 宽度值 + 判断（饱满/适中） |
+
+### 7.2 可视化算法详解
+
+#### 7.2.1 三停比例可视化
+
+**算法步骤**：
+1. 获取关键点 Y 坐标：
+   - `foreheadY = landmarks[10].y * height` （额头顶部）
+   - `browY = (landmarks[105].y + landmarks[334].y) / 2 * height` （眉峰平均）
+   - `noseBottomY = landmarks[2].y * height` （鼻底）
+   - `chinY = landmarks[152].y * height` （下巴）
+
+2. 绘制两条水平分界线：
+   - 上庭/中庭分界线：从 `(0.1*width, browY)` 到 `(0.9*width, browY)`，虚线样式
+   - 中庭/下庭分界线：从 `(0.1*width, noseBottomY)` 到 `(0.9*width, noseBottomY)`，虚线样式
+
+3. 计算各庭高度和百分比：
+   ```javascript
+   upper = browY - foreheadY
+   middle = noseBottomY - browY
+   lower = chinY - noseBottomY
+   total = upper + middle + lower
+   上庭% = Math.round((upper / total) * 100)
+   中庭% = Math.round((middle / total) * 100)
+   下庭% = 100 - 上庭% - 中庭%
+   ```
+
+4. 在右侧绘制标注：
+   - 上庭标注：位置 `(width - 20, (foreheadY + browY) / 2)`，文本 `"上庭 X%"`
+   - 中庭标注：位置 `(width - 20, (browY + noseBottomY) / 2)`，文本 `"中庭 Y%"`
+   - 下庭标注：位置 `(width - 20, (noseBottomY + chinY) / 2)`，文本 `"下庭 Z%"`
+
+**视觉样式**：
+- 分界线：金色虚线，线宽 2px，透明度 0.6
+- 标注：金色文字，黑色半透明背景，字体大小 14px
+
+#### 7.2.2 印堂宽度可视化
+
+**算法步骤**：
+1. 获取关键点坐标：
+   - `leftBrowInner = {x: landmarks[70].x * width, y: landmarks[70].y * height}`
+   - `rightBrowInner = {x: landmarks[300].x * width, y: landmarks[300].y * height}`
+
+2. 计算宽度：
+   ```javascript
+   yintangWidth = sqrt((rightBrowInner.x - leftBrowInner.x)² + (rightBrowInner.y - leftBrowInner.y)²)
+   eyeSpacing = dist(landmarks[133], landmarks[263])  // 眼间距作为参考
+   ```
+
+3. 绘制连线：
+   - 从 `leftBrowInner` 到 `rightBrowInner`，实线，金色，线宽 2px
+
+4. 绘制标注：
+   - 位置：连线中点上方 10px
+   - 文本：`"印堂: ${yintangWidth.toFixed(1)}px (${判断})"`
+   - 判断标准：
+     - `yintangWidth > eyeSpacing * 0.7` → "开阔"
+     - `yintangWidth > eyeSpacing * 0.5` → "适中"
+     - 否则 → "较窄"
+
+**视觉样式**：
+- 连线：金色实线，线宽 2px
+- 标注：金色文字，黑色半透明背景，字体大小 12px
+
+#### 7.2.3 田宅宫（眉眼间距）可视化
+
+**算法步骤**：
+1. 获取关键点坐标：
+   - `leftBrowPeak = {x: landmarks[105].x * width, y: landmarks[105].y * height}`
+   - `leftEyeTop = {x: landmarks[159].x * width, y: landmarks[159].y * height}`
+   - `rightBrowPeak = {x: landmarks[334].x * width, y: landmarks[334].y * height}`
+   - `rightEyeTop = {x: landmarks[386].x * width, y: landmarks[386].y * height}`
+
+2. 计算距离：
+   ```javascript
+   leftTianZhai = leftEyeTop.y - leftBrowPeak.y
+   rightTianZhai = rightEyeTop.y - rightBrowPeak.y
+   avgTianZhai = (leftTianZhai + rightTianZhai) / 2
+   eyeWidth = dist(landmarks[33], landmarks[133])  // 左眼宽度作为参考
+   ```
+
+3. 绘制垂直线：
+   - 左侧：从 `leftBrowPeak` 到 `leftEyeTop`，带箭头指向下方
+   - 右侧：从 `rightBrowPeak` 到 `rightEyeTop`，带箭头指向下方
+
+4. 绘制标注：
+   - 位置：左侧垂直线中点左侧 10px
+   - 文本：`"田宅宫: ${avgTianZhai.toFixed(1)}px (${判断})"`
+   - 判断标准：
+     - `avgTianZhai > eyeWidth * 0.4` → "宽广"
+     - 否则 → "较窄"
+
+**视觉样式**：
+- 垂直线：金色实线，线宽 2px，带箭头
+- 标注：金色文字，黑色半透明背景，字体大小 12px
+
+#### 7.2.4 颧骨突出度可视化
+
+**算法步骤**：
+1. 获取关键点 Y 坐标（取平均值作为水平线位置）：
+   - `cheekY = (landmarks[234].y + landmarks[454].y) / 2 * height`
+   - `jawY = (landmarks[172].y + landmarks[397].y) / 2 * height`
+
+2. 计算宽度：
+   ```javascript
+   cheekWidth = dist(landmarks[234], landmarks[454])
+   jawWidth = dist(landmarks[172], landmarks[397])
+   ```
+
+3. 绘制两条水平宽度线：
+   - 颧骨宽度线：从 `(landmarks[234].x * width, cheekY)` 到 `(landmarks[454].x * width, cheekY)`
+   - 下颌宽度线：从 `(landmarks[172].x * width, jawY)` 到 `(landmarks[397].x * width, jawY)`
+
+4. 绘制比较标注：
+   - 位置：两条线之间，右侧
+   - 文本：`"颧骨: ${cheekWidth.toFixed(1)}px vs 下颌: ${jawWidth.toFixed(1)}px"`
+   - 判断：`cheekWidth > jawWidth * 1.08` → "突出"，否则 → "平和"
+
+**视觉样式**：
+- 宽度线：金色实线，线宽 2px，两端带端点标记
+- 标注：金色文字，黑色半透明背景，字体大小 12px
+
+#### 7.2.5 鼻翼宽度可视化
+
+**算法步骤**：
+1. 获取关键点坐标：
+   - `leftNoseWing = {x: landmarks[48].x * width, y: landmarks[48].y * height}`
+   - `rightNoseWing = {x: landmarks[278].x * width, y: landmarks[278].y * height}`
+
+2. 计算宽度：
+   ```javascript
+   noseWidth = dist(leftNoseWing, rightNoseWing)
+   eyeSpacing = dist(landmarks[133], landmarks[263])  // 眼间距作为参考
+   ```
+
+3. 绘制连线：
+   - 从 `leftNoseWing` 到 `rightNoseWing`，实线，金色，线宽 2px
+
+4. 绘制标注：
+   - 位置：连线中点上方 10px
+   - 文本：`"鼻翼: ${noseWidth.toFixed(1)}px (${判断})"`
+   - 判断标准：
+     - `noseWidth > eyeSpacing * 0.85` → "饱满"
+     - 否则 → "适中"
+
+**视觉样式**：
+- 连线：金色实线，线宽 2px
+- 标注：金色文字，黑色半透明背景，字体大小 12px
+
+### 7.3 可视化布局原则
+
+1. **避免重叠**：各可视化项的标注位置错开，避免文字重叠
+2. **颜色统一**：所有标注使用金色（#ffd700）文字，黑色半透明背景（rgba(0,0,0,0.65)）
+3. **层次清晰**：关键点用实心圆标记，连线用实线或虚线区分
+4. **信息完整**：每个可视化项都包含数值和判断结果
+5. **位置合理**：标注文字放在不遮挡面部关键特征的位置
+
+### 7.4 实现工具
+
+可视化工具位于 `tools/visualize_face.py`，使用方法：
+
+```bash
+python tools/visualize_face.py test-assets/test-face-1.jpg
+```
+
+工具会：
+1. 使用 MediaPipe FaceLandmarker 检测人脸 landmarks
+2. 计算所有测量值
+3. 在图像上绘制 5 个关键可视化项
+4. 保存结果到 `test-assets/test-face-1-visualized.jpg`
+
+## 八、参考资料
 
 - [MediaPipe Face Landmarker 官方文档](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
 - [面相学知识库](./face_reading_knowledge.md)

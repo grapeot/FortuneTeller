@@ -7,3 +7,5 @@ firebase-admin
 resend
 requests
 mistune
+mediapipe
+opencv-python
