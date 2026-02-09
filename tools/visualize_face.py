@@ -219,17 +219,23 @@ def visualize_santing(draw, landmarks, width, height, font):
     dash_length = 8
     gap_length = 4
     
-    # Upper/Middle boundary
-    x = line_margin
-    while x < width - line_margin:
-        draw.line([(x, brow_y), (min(x + dash_length, width - line_margin), brow_y)], fill=GOLD, width=2)
-        x += dash_length + gap_length
+    # Draw all four boundary lines: forehead top (start), brow (upper/middle), nose bottom (middle/lower), chin (end)
+    boundary_lines = [
+        (forehead_y, "起点"),  # 上庭起点
+        (brow_y, "上/中"),      # 上庭/中庭分界
+        (nose_bottom_y, "中/下"), # 中庭/下庭分界
+        (chin_y, "终点"),        # 下庭终点
+    ]
     
-    # Middle/Lower boundary
-    x = line_margin
-    while x < width - line_margin:
-        draw.line([(x, nose_bottom_y), (min(x + dash_length, width - line_margin), nose_bottom_y)], fill=GOLD, width=2)
-        x += dash_length + gap_length
+    for y_pos, label_text in boundary_lines:
+        x = line_margin
+        while x < width - line_margin:
+            draw.line([(x, y_pos), (min(x + dash_length, width - line_margin), y_pos)], fill=GOLD, width=2)
+            x += dash_length + gap_length
+        
+        # Draw marker dot at the key point
+        key_x = width * 0.15  # Position marker on left side
+        draw.ellipse([key_x - 4, y_pos - 4, key_x + 4, y_pos + 4], fill=GOLD, outline=GOLD)
     
     # Draw labels on right side
     label_x = width - 20
@@ -243,9 +249,30 @@ def visualize_santing(draw, landmarks, width, height, font):
         draw.rectangle([bg_x - 4, bg_y, label_x + 4, bg_y + text_height + 8], fill=BLACK_BG)
         draw.text((bg_x, bg_y + 4), text, fill=GOLD, font=font)
     
+    # Draw percentage labels for each division
     draw_label(f"上庭 {upper_pct}%", (forehead_y + brow_y) / 2)
     draw_label(f"中庭 {middle_pct}%", (brow_y + nose_bottom_y) / 2)
     draw_label(f"下庭 {lower_pct}%", (nose_bottom_y + chin_y) / 2)
+    
+    # Draw boundary labels on left side (smaller font)
+    try:
+        small_font = load_chinese_font(10)
+    except:
+        small_font = font
+    
+    def draw_boundary_label(text, y_pos):
+        bbox = draw.textbbox((0, 0), text, font=small_font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        label_x_pos = width * 0.15 + 8
+        bg_x = label_x_pos - 2
+        bg_y = y_pos - text_height // 2 - 2
+        draw.rectangle([bg_x - 2, bg_y - 2, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
+        draw.text((bg_x, bg_y), text, fill=GOLD, font=small_font)
+    
+    # Draw boundary labels
+    draw_boundary_label("起点", forehead_y)
+    draw_boundary_label("终点", chin_y)
 
 
 def visualize_yintang(draw, landmarks, width, height, font):
