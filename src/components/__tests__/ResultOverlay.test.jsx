@@ -127,7 +127,7 @@ describe('ResultOverlay', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('影像轮廓图')).toBeInTheDocument()
+      expect(screen.getByText('面相特征检测结果')).toBeInTheDocument()
       expect(screen.getByText('测量结果')).toBeInTheDocument()
     })
 

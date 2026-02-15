@@ -92,7 +92,7 @@ export default function ResultOverlay({
           className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
         >
           <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3">
-            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">影像轮廓图</p>
+            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">面相特征检测结果</p>
             {hasVisualization ? (
               <button
                 type="button"

@@ -28,11 +28,11 @@ function getPoint(points, idx) {
   return null
 }
 
-function pointsToPath(points, indices, close = false) {
+function pointsToPath(points, indices, width, height, close = false) {
   const valid = indices
     .map((idx) => getPoint(points, idx))
     .filter(Boolean)
-    .map(([x, y]) => `${x * 1000},${y * 1000}`)
+    .map(([x, y]) => `${x * width},${y * height}`)
 
   if (valid.length < 2) return ''
   const cmd = `M ${valid[0]} L ${valid.slice(1).join(' L ')}`
@@ -69,6 +69,9 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
   const points = visualizationData?.landmarks
   const contours = visualizationData?.contour_indices || DEFAULT_CONTOURS
   const measurements = visualizationData?.measurements || null
+  const aspectRatio = Number(visualizationData?.aspect_ratio) > 0 ? Number(visualizationData.aspect_ratio) : 1
+  const svgHeight = 1000
+  const svgWidth = Math.max(500, Math.round(svgHeight * aspectRatio))
 
   if (!points || points.length === 0) return null
 
@@ -76,10 +79,10 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
 
   return (
     <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
-      <svg viewBox="0 0 1000 1000" className="w-full h-auto">
+      <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
         {Object.entries(contours).map(([name, indices]) => {
           const close = name.includes('eye') || name.includes('oval')
-          const d = pointsToPath(points, indices, close)
+          const d = pointsToPath(points, indices, svgWidth, svgHeight, close)
           if (!d) return null
           return (
             <path

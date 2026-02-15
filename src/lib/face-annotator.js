@@ -189,7 +189,7 @@ function buildVisualizationData(landmarks, measurements) {
     [1, 0, 1, 0],
   )
 
-  const padRatio = 0.18
+  const padRatio = 0.12
   const w = Math.max(1e-5, maxX0 - minX0)
   const h = Math.max(1e-5, maxY0 - minY0)
   const minX = Math.max(0, minX0 - w * padRatio)
@@ -199,19 +199,17 @@ function buildVisualizationData(landmarks, measurements) {
 
   const boxW = Math.max(1e-5, maxX - minX)
   const boxH = Math.max(1e-5, maxY - minY)
-  const centerX = (minX + maxX) / 2
-  const centerY = (minY + maxY) / 2
-  const scale = Math.max(boxW, boxH)
 
   const points = rawPoints.map(([x, y]) => [
-    Math.round(Math.min(1, Math.max(0, ((x - centerX) / scale + 0.5))) * 10000) / 10000,
-    Math.round(Math.min(1, Math.max(0, ((y - centerY) / scale + 0.5))) * 10000) / 10000,
+    Math.round(((x - minX) / boxW) * 10000) / 10000,
+    Math.round(((y - minY) / boxH) * 10000) / 10000,
   ])
 
   return {
     landmarks: points,
     contour_indices: CONTOUR_INDICES,
     measurements,
+    aspect_ratio: Math.round((boxW / boxH) * 10000) / 10000,
     face_bbox_norm: {
       min_x: Math.round(minX * 10000) / 10000,
       max_x: Math.round(maxX * 10000) / 10000,
