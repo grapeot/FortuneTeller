@@ -39,6 +39,9 @@ const KEY_LM = {
 
 const ANNO_TEXT_SIZE = 28
 const ANNO_STROKE = 2
+const VIEW_PAD_X = 96
+const VIEW_PAD_Y = 90
+const LABEL_RIGHT_GAP = 120
 
 function getPoint(points, idx) {
   const p = points[idx]
@@ -110,6 +113,10 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
   const aspectRatio = Number(visualizationData?.aspect_ratio) > 0 ? Number(visualizationData.aspect_ratio) : 1
   const svgHeight = 1000
   const svgWidth = Math.max(500, Math.round(svgHeight * aspectRatio))
+  const viewLeft = -VIEW_PAD_X
+  const viewTop = -VIEW_PAD_Y
+  const viewWidth = svgWidth + VIEW_PAD_X * 2 + LABEL_RIGHT_GAP
+  const viewHeight = svgHeight + VIEW_PAD_Y * 2
 
   if (!points || points.length === 0) return null
 
@@ -132,7 +139,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
 
   return (
     <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
-      <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
+      <svg viewBox={`${viewLeft} ${viewTop} ${viewWidth} ${viewHeight}`} className="w-full h-auto">
         <defs>
           <marker id="dim-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
             <path d="M 0 0 L 8 4 L 0 8 z" fill="rgba(255,215,0,0.85)" />
@@ -166,14 +173,38 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
                 x2={svgWidth * 0.92}
                 y1={y}
                 y2={y}
-              stroke="rgba(255,215,0,0.35)"
+                stroke="rgba(255,215,0,0.35)"
                 strokeWidth="1.3"
                 strokeDasharray="8 6"
               />
             ))}
-            <text x={svgWidth * 0.93} y={(forehead.y + browY) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>上庭{upperPct !== null ? ` ${upperPct}%` : ''}</text>
-            <text x={svgWidth * 0.93} y={(browY + noseBottom.y) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>中庭{middlePct !== null ? ` ${middlePct}%` : ''}</text>
-            <text x={svgWidth * 0.93} y={(noseBottom.y + chin.y) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>下庭{lowerPct !== null ? ` ${lowerPct}%` : ''}</text>
+
+            {[
+              { key: 'upper', y1: forehead.y, y2: browY, label: `上庭${upperPct !== null ? ` ${upperPct}%` : ''}` },
+              { key: 'middle', y1: browY, y2: noseBottom.y, label: `中庭${middlePct !== null ? ` ${middlePct}%` : ''}` },
+              { key: 'lower', y1: noseBottom.y, y2: chin.y, label: `下庭${lowerPct !== null ? ` ${lowerPct}%` : ''}` },
+            ].map((seg) => (
+              <g key={seg.key}>
+                <line
+                  x1={svgWidth + 36}
+                  y1={seg.y1}
+                  x2={svgWidth + 36}
+                  y2={seg.y2}
+                  stroke="rgba(255,215,0,0.9)"
+                  strokeWidth={ANNO_STROKE}
+                  markerStart="url(#dim-arrow)"
+                  markerEnd="url(#dim-arrow)"
+                />
+                <text
+                  x={svgWidth + 54}
+                  y={(seg.y1 + seg.y2) / 2 + 6}
+                  fill="rgba(255,215,0,0.95)"
+                  fontSize={ANNO_TEXT_SIZE}
+                >
+                  {seg.label}
+                </text>
+              </g>
+            ))}
           </g>
         )}
 
@@ -249,8 +280,8 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               markerEnd="url(#dim-arrow)"
             />
             <text
-              x={(leftEyeTop.x + rightEyeTop.x) / 2 - 44}
-              y={Math.min(leftBrowPeak.y, rightBrowPeak.y) - 18}
+              x={rightEyeTop.x + 28}
+              y={rightBrowPeak.y - 8}
               fill="rgba(255,215,0,0.9)"
               fontSize={ANNO_TEXT_SIZE}
             >
