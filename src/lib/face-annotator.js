@@ -176,7 +176,7 @@ const CONTOUR_INDICES = {
   lower_lip: LOWER_LIP,
 }
 
-function buildVisualizationData(landmarks, measurements) {
+export function buildVisualizationData(landmarks, measurements) {
   const rawPoints = landmarks.map((lm) => [lm.x, lm.y])
 
   const [minX0, maxX0, minY0, maxY0] = rawPoints.reduce(

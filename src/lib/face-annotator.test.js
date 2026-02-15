@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatMeasurements } from './face-annotator'
+import { formatMeasurements, buildVisualizationData } from './face-annotator'
 
 describe('formatMeasurements', () => {
   it('should return empty string for null input', () => {
@@ -54,5 +54,47 @@ describe('formatMeasurements', () => {
     // Should have 9 lines: header + 8 data lines
     expect(lines.length).toBe(9)
     expect(lines[0]).toContain('面部测量数据')
+  })
+})
+
+describe('buildVisualizationData', () => {
+  function makeSyntheticFaceLandmarks() {
+    const points = []
+    const cx = 0.5
+    const cy = 0.5
+    const rx = 0.2
+    const ry = 0.3
+    for (let i = 0; i < 478; i += 1) {
+      const t = (i / 478) * Math.PI * 2
+      points.push({
+        x: cx + Math.cos(t) * rx,
+        y: cy + Math.sin(t) * ry,
+      })
+    }
+    return points
+  }
+
+  it('keeps a face-like aspect ratio after normalization', () => {
+    const landmarks = makeSyntheticFaceLandmarks()
+    const visualization = buildVisualizationData(landmarks, { three_parts: [0.33, 0.34, 0.33] })
+
+    expect(visualization.aspect_ratio).toBeGreaterThan(0.55)
+    expect(visualization.aspect_ratio).toBeLessThan(0.85)
+    expect(visualization.aspect_ratio).toBeCloseTo(2 / 3, 1)
+  })
+
+  it('normalizes points into [0,1] range and preserves spread', () => {
+    const landmarks = makeSyntheticFaceLandmarks()
+    const visualization = buildVisualizationData(landmarks, null)
+    const xs = visualization.landmarks.map(([x]) => x)
+    const ys = visualization.landmarks.map(([, y]) => y)
+
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(0)
+    expect(Math.max(...xs)).toBeLessThanOrEqual(1)
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0)
+    expect(Math.max(...ys)).toBeLessThanOrEqual(1)
+
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(0.75)
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.75)
   })
 })

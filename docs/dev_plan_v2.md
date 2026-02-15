@@ -355,6 +355,12 @@ Phase D（评估与调参）
 - 渲染端根据 `aspect_ratio` 动态设置 SVG `viewBox`，保持裁切区域长宽比，避免出现“过窄/过胖”变形。
 - 快速结果页左上标题文案从“影像轮廓图”统一为“面相特征检测结果”。
 
+#### 归一化回归测试（本轮）
+- 新增 `buildVisualizationData` 单测：
+  - 使用合成脸型 landmarks 验证 `aspect_ratio` 落在人脸常见区间并接近 `2/3`；
+  - 验证归一化后 landmarks 坐标均落在 `[0,1]` 且保持足够空间展开。
+- 已验证：`npm test -- src/lib/face-annotator.test.js` 通过（6 passed）。
+
 #### Prompt 质量对齐（本轮）
 - 将快版 `system_prompt` 对齐到详版的证据化框架：
   - 明确“先证据、后解释、再边界”；
