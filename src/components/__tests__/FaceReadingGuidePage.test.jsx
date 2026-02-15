@@ -22,4 +22,9 @@ describe('FaceReadingGuidePage', () => {
     expect(select).toBeInTheDocument()
     fireEvent.change(select, { target: { value: select.querySelector('option')?.value } })
   })
+
+  it('renders markdown emphasis as semantic elements', () => {
+    const { container } = render(<FaceReadingGuidePage />)
+    expect(container.querySelector('strong')).toBeInTheDocument()
+  })
 })

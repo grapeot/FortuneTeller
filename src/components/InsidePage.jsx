@@ -22,7 +22,7 @@ export default function InsidePage() {
       <div className="mx-auto max-w-4xl h-full rounded-2xl border border-yellow-400/20 bg-black/35 backdrop-blur p-6 sm:p-8 overflow-y-auto">
         <h1 className="font-calligraphy text-3xl sm:text-4xl text-yellow-300 text-glow-warm">内部实现</h1>
         <p className="mt-2 text-yellow-100/70 font-serif-cn text-sm sm:text-base">
-          我们希望把“怎么做出来”公开透明。下面是项目来源、开源地址与学习入口。
+          我们希望把这个项目如何落地做得公开透明。下面是项目来源、开源地址和学习入口。
         </p>
 
         <div className="mt-6 grid gap-4 sm:gap-5">

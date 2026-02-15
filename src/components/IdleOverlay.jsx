@@ -14,7 +14,7 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
-    }, 2200)
+    }, 5000)
     return () => window.clearInterval(timer)
   }, [])
 
@@ -26,19 +26,19 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
       className="absolute inset-0 flex flex-col items-center justify-between py-4 sm:py-8 md:py-12 pointer-events-none px-4"
     >
       {/* Top: Avatar + Title + subtitle */}
-      <div className="text-center flex flex-col items-center">
+      <div className="text-center flex flex-col items-center mt-14 sm:mt-16 md:mt-20">
         <img
           src="/assets/fortune-teller.jpg"
           alt="AI相面"
           className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 sm:border-4 border-yellow-400/50 shadow-lg shadow-yellow-400/20 mb-2 sm:mb-3 md:mb-4 object-cover"
         />
-        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-yellow-400 text-glow-warm tracking-widest">
-          <span className="font-en">AI</span><span className="font-calligraphy">相面</span>
+        <h1 className="text-yellow-400 text-glow-warm tracking-wide" aria-live="polite">
+          <span className="block font-en text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+            {MODEL_ROTATION[modelIndex]} AI
+          </span>
+          <span className="block font-calligraphy text-5xl sm:text-6xl md:text-7xl lg:text-8xl">相面</span>
         </h1>
         <p className="font-serif-cn text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200/70 mt-2 sm:mt-3 tracking-wide">{BRAND.tagline}</p>
-        <p className="font-serif-cn text-sm sm:text-base text-yellow-300/70 mt-1 tracking-wide" aria-live="polite">
-          {MODEL_ROTATION[modelIndex]} 模型支持
-        </p>
       </div>
 
       {/* Middle: Face detection status */}

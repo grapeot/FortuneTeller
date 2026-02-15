@@ -11,20 +11,16 @@ vi.mock('framer-motion', () => ({
 }))
 
 describe('IdleOverlay', () => {
-  it('renders the title', () => {
+  it('renders rotating model title', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
     const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading.textContent).toBe('AI相面')
+    expect(heading.textContent).toContain('Gemini 3 Flash AI')
+    expect(heading.textContent).toContain('相面')
   })
 
   it('renders the subtitle', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
     expect(screen.getByText('马年大吉 · 马到成功')).toBeInTheDocument()
-  })
-
-  it('renders rotating model support label', () => {
-    render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
-    expect(screen.getByText(/Gemini 3 Flash 模型支持/)).toBeInTheDocument()
   })
 
   it('shows loading message when not ready', () => {

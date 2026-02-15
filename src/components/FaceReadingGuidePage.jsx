@@ -35,26 +35,43 @@ function parseMarkdown(md) {
   return sections
 }
 
+function renderInlineMarkdown(text) {
+  const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g)
+  return tokens.map((token, idx) => {
+    if (!token) return null
+    if (token.startsWith('**') && token.endsWith('**')) {
+      return <strong key={idx} className="text-yellow-100 font-semibold">{token.slice(2, -2)}</strong>
+    }
+    if (token.startsWith('`') && token.endsWith('`')) {
+      return <code key={idx} className="px-1 py-0.5 rounded bg-black/35 text-yellow-200 text-sm">{token.slice(1, -1)}</code>
+    }
+    if (token.startsWith('*') && token.endsWith('*')) {
+      return <em key={idx} className="text-yellow-100 italic">{token.slice(1, -1)}</em>
+    }
+    return <span key={idx}>{token}</span>
+  })
+}
+
 function renderLine(line, key) {
   if (!line.trim()) return <div key={key} className="h-3" />
   if (line.startsWith('---')) return <hr key={key} className="my-3 border-yellow-400/20" />
   if (line.startsWith('- ')) {
     return (
       <li key={key} className="ml-5 list-disc text-yellow-100/85 leading-7">
-        {line.slice(2)}
+        {renderInlineMarkdown(line.slice(2))}
       </li>
     )
   }
   if (/^\d+\.\s+/.test(line)) {
     return (
       <li key={key} className="ml-5 list-decimal text-yellow-100/85 leading-7">
-        {line.replace(/^\d+\.\s+/, '')}
+        {renderInlineMarkdown(line.replace(/^\d+\.\s+/, ''))}
       </li>
     )
   }
   return (
     <p key={key} className="text-yellow-100/85 leading-7 whitespace-pre-wrap">
-      {line}
+      {renderInlineMarkdown(line)}
     </p>
   )
 }
