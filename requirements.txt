@@ -9,3 +9,4 @@ requests
 mistune
 mediapipe
 opencv-python
+jinja2

@@ -334,6 +334,14 @@ def measure(landmarks, w, h):
     else:
         lateral_pattern = "横向均衡"
 
+    tianzhai_ratio_eye = tianzhai / ((left_eye_width + right_eye_width) / 2)
+    if tianzhai_ratio_eye > 0.55:
+        tianzhai_judgment = "偏宽"
+    elif tianzhai_ratio_eye > 0.4:
+        tianzhai_judgment = "适中"
+    else:
+        tianzhai_judgment = "偏窄"
+
     return {
         "hairlineY": hairline_y,
         "browY": brow_y,
@@ -356,10 +364,9 @@ def measure(landmarks, w, h):
         },
         "田宅宫": {
             "距离px": round(tianzhai, 1),
-            "相对眼宽": round(tianzhai / ((left_eye_width + right_eye_width) / 2), 2),
-            "判断": "宽广"
-            if tianzhai > ((left_eye_width + right_eye_width) / 2) * 0.4
-            else "较窄",
+            "相对眼宽倍数": round(tianzhai_ratio_eye, 2),
+            "占脸高": round(tianzhai / face_height, 3),
+            "判断": tianzhai_judgment,
         },
         "横向三宽": {
             "额颞宽px": round(temple_w, 1),
@@ -416,7 +423,7 @@ def draw_measurement_overlay(draw, landmarks, w, h, m, font):
     panel_lines = [
         f"三停(发际线估计): {m['三停比例']['上庭']}/{m['三停比例']['中庭']}/{m['三停比例']['下庭']}",
         f"印堂: {m['印堂']['判断']} ({m['印堂']['相对眼距']})",
-        f"田宅宫: {m['田宅宫']['判断']} ({m['田宅宫']['相对眼宽']})",
+        f"田宅宫: {m['田宅宫']['判断']} ({m['田宅宫']['相对眼宽倍数']}x眼宽)",
         f"横向三宽: {m['横向三宽']['形态']}",
         f"鼻翼: {m['鼻翼']['判断']} ({m['鼻翼']['相对眼距']})",
         f"面宽高比: {m['扩展测量']['面宽高比']}",
