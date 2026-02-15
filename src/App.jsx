@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { lazy, Suspense, useRef, useState, useCallback, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
 import { useHolisticDetection } from './hooks/useHolisticDetection'
@@ -11,8 +11,9 @@ import AnalyzingOverlay from './components/AnalyzingOverlay'
 import ResultOverlay from './components/ResultOverlay'
 import QRCodeIcon from './components/QRCodeIcon'
 import AppTabs from './components/AppTabs'
-import FaceReadingGuidePage from './components/FaceReadingGuidePage'
-import InsidePage from './components/InsidePage'
+
+const FaceReadingGuidePage = lazy(() => import('./components/FaceReadingGuidePage'))
+const InsidePage = lazy(() => import('./components/InsidePage'))
 
 /** App states */
 const PHASE = {
@@ -237,9 +238,13 @@ export default function App() {
           )}
         </>
       ) : activeTab === TAB.GUIDE ? (
-        <FaceReadingGuidePage />
+        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center text-yellow-200 font-serif-cn">加载指南中...</div>}>
+          <FaceReadingGuidePage />
+        </Suspense>
       ) : (
-        <InsidePage />
+        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center text-yellow-200 font-serif-cn">加载页面中...</div>}>
+          <InsidePage />
+        </Suspense>
       )}
 
       <AppTabs activeTab={activeTab} onChange={setActiveTab} />

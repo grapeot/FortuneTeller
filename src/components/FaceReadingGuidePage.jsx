@@ -136,6 +136,22 @@ export default function FaceReadingGuidePage() {
             <h1 className="font-calligraphy text-3xl sm:text-4xl text-yellow-300 text-glow-warm mb-4">相面学指南</h1>
             <p className="text-yellow-100/70 text-sm mb-6">基于 Face Reading Mastery 内容，支持按章节跳读。</p>
 
+            <div className="md:hidden mb-5">
+              <label htmlFor="chapter-select" className="block text-yellow-200/80 text-sm mb-2">章节跳转</label>
+              <select
+                id="chapter-select"
+                className="w-full bg-black/40 border border-yellow-400/20 rounded-lg px-3 py-2 text-yellow-100"
+                value={activeId}
+                onChange={(e) => jumpTo(e.target.value)}
+              >
+                {toc.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.level === 2 ? `  - ${item.title}` : item.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {sections.map((s) => (
               <section key={s.id} id={s.id} className="mb-8 scroll-mt-4">
                 {s.level === 1 && <h2 className="font-serif-cn text-2xl text-yellow-200 mb-3">{s.title}</h2>}

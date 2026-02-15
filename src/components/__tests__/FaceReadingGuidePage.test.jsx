@@ -15,4 +15,11 @@ describe('FaceReadingGuidePage', () => {
     fireEvent.click(chapterBtn)
     expect(chapterBtn).toBeInTheDocument()
   })
+
+  it('shows mobile chapter select', () => {
+    render(<FaceReadingGuidePage />)
+    const select = screen.getByLabelText('章节跳转')
+    expect(select).toBeInTheDocument()
+    fireEvent.change(select, { target: { value: select.querySelector('option')?.value } })
+  })
 })
