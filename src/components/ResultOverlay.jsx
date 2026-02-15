@@ -110,6 +110,7 @@ export default function ResultOverlay({
                   />
                 </div>
                 <span className="text-xs text-yellow-400/50 font-serif-cn">多 AI 详细报告生成中，扫码获取</span>
+                <span className="text-[11px] text-yellow-200/55 font-serif-cn">扫码获取 Gemini 3 Flash 详细解读</span>
               </div>
             )}
           </motion.div>

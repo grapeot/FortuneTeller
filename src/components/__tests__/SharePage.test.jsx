@@ -82,9 +82,8 @@ describe('SharePage', () => {
       expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
     })
     expect(screen.getByPlaceholderText('姓名/昵称（选填）')).toBeInTheDocument()
-    // h3 heading and button have different text (AI wrapped in span)
-    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('免费获取深度分析报告'))).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: (name) => name.includes('免费获取') && name.includes('AI') })).toBeInTheDocument()
+    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('留邮箱查看 Gemini 3 Flash'))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /留邮箱获取三模型完整解读/ })).toBeInTheDocument()
   })
 
   it('submits the subscription form and shows success', async () => {
@@ -115,7 +114,7 @@ describe('SharePage', () => {
     })
 
     // Submit
-    const submitButton = screen.getByRole('button', { name: /免费获取.*AI.*深度分析报告/ })
+    const submitButton = screen.getByRole('button', { name: /留邮箱获取三模型完整解读/ })
     fireEvent.click(submitButton)
 
     await waitFor(() => {
@@ -123,7 +122,7 @@ describe('SharePage', () => {
     })
 
     // Verify the API call
-    const subscribeCall = mockFetch.mock.calls[1]
+    const subscribeCall = mockFetch.mock.calls.find((call) => call[0] === '/api/subscribe')
     expect(subscribeCall[0]).toBe('/api/subscribe')
     const body = JSON.parse(subscribeCall[1].body)
     expect(body.email).toBe('test@example.com')
@@ -149,7 +148,7 @@ describe('SharePage', () => {
 
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-    const submitButton = screen.getByRole('button', { name: /免费获取.*AI.*深度分析报告/ })
+    const submitButton = screen.getByRole('button', { name: /留邮箱获取三模型完整解读/ })
     fireEvent.click(submitButton)
 
     await waitFor(() => {

@@ -15,6 +15,30 @@
   - 补充眉、眼、鼻、口、田宅宫、横向三宽、三停阶段窗口的具体解释模板；
   - 明确命运类措辞边界（倾向表达，禁止绝对断言）。
 
+### 正在推进（无须人工交互）
+- 已开始实现三 Tab 前端：
+  - 新增 `AppTabs`；
+  - 新增 `FaceReadingGuidePage`（左索引 + 右正文 + 章节跳转）；
+  - 新增 `InsidePage`（三条外链卡片）。
+- 已新增对应前端测试：
+  - `AppTabs.test.jsx`
+  - `FaceReadingGuidePage.test.jsx`
+  - `InsidePage.test.jsx`
+
+### 本轮新增落地（继续推进）
+- `App.jsx` 已接入三 Tab 容器，支持 `?tab=guide` / `?tab=inside` 状态。
+- 新增 L2 后端接口：`POST /api/analysis/l2`（按 share_id 生成/读取 Gemini 3 Flash 详版）。
+- `SharePage` 已改为三层表达：
+  - 现场速览（Grok）
+  - 扫码详版（Gemini 3 Flash，异步拉取）
+  - 邮箱三模型（Gemini 3 Flash / DeepSeek / Kimi K2.5）
+- `ResultOverlay` 二维码提示文案已更新为“扫码获取 Gemini 3 Flash 详细解读”。
+
+### 验证结果
+- 前端测试：`npm test` 全量通过（80 tests）。
+- 前端构建：`npm run build` 通过。
+- 后端语法：`python -m py_compile server/routes.py server/models.py` 通过。
+
 ### 下一步（按 dev_plan_v2 执行）
 1. 实现三 Tab 容器与路由：相面 / 相面学指南 / 内部实现。
 2. 实现相面学指南双栏导航与章节锚点跳转（基于 `Face_Reading_Mastery.md`）。

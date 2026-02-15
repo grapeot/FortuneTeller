@@ -14,7 +14,13 @@ from fastapi.responses import FileResponse
 
 from .app import app
 from . import config
-from .models import FortuneRequest, PixelateRequest, ShareRequest, SubscribeRequest
+from .models import (
+    FortuneRequest,
+    PixelateRequest,
+    ShareRequest,
+    SubscribeRequest,
+    AnalysisRequest,
+)
 from .firebase import get_db, get_mod, firestore_retry
 from . import ai
 from .pixelate import pixelate_image
@@ -23,8 +29,9 @@ from . import email_service
 
 # ── POST /api/fortune ────────────────────────────────────────────────────────
 
+
 @app.post("/api/fortune")
-async def generate_fortune(req: FortuneRequest = None):
+async def generate_fortune(req: FortuneRequest | None = None):
     """Call Grok only, return result in multi-model format for compatibility."""
     if not config.AI_TOKEN:
         raise HTTPException(
@@ -43,6 +50,7 @@ async def generate_fortune(req: FortuneRequest = None):
 
 
 # ── POST /api/pixelate ──────────────────────────────────────────────────────
+
 
 @app.post("/api/pixelate")
 async def pixelate_avatar(req: PixelateRequest):
@@ -101,14 +109,15 @@ async def pixelate_avatar(req: PixelateRequest):
 
 # ── POST /api/share ──────────────────────────────────────────────────────────
 
+
 @app.post("/api/share")
 async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
     """Save fortune to Firestore (async) and return a share URL immediately."""
     db = get_db()
-    mod = get_mod()
     if not db:
         raise HTTPException(
-            status_code=503, detail="Share feature not available (Firestore not configured)"
+            status_code=503,
+            detail="Share feature not available (Firestore not configured)",
         )
 
     share_id = uuid.uuid4().hex[:8]
@@ -120,7 +129,6 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
     doc = {
         "pixelated_image": req.pixelated_image,
         "fortunes": fortunes_data,
-        "created_at": mod.SERVER_TIMESTAMP,
     }
 
     # Write to Firestore in background so the QR code appears instantly
@@ -128,7 +136,9 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
         try:
             firestore_retry(db.collection("fortunes").document(share_id).set, doc)
         except Exception as e:
-            config.logger.error(f"Firestore background write failed for {share_id}: {e}")
+            config.logger.error(
+                f"Firestore background write failed for {share_id}: {e}"
+            )
 
     background_tasks.add_task(asyncio.to_thread, _write_to_firestore)
 
@@ -136,6 +146,7 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
 
 
 # ── GET /api/share/{id} ─────────────────────────────────────────────────────
+
 
 @app.get("/api/share/{share_id}")
 async def get_share(share_id: str):
@@ -163,6 +174,7 @@ async def get_share(share_id: str):
 
 # ── POST /api/subscribe ─────────────────────────────────────────────────────
 
+
 @app.post("/api/subscribe")
 async def subscribe(req: SubscribeRequest, background_tasks: BackgroundTasks):
     """Accept email subscription and process in background."""
@@ -172,7 +184,9 @@ async def subscribe(req: SubscribeRequest, background_tasks: BackgroundTasks):
     if not config.RESEND_API_KEY:
         raise HTTPException(status_code=503, detail="Email service not configured")
 
-    background_tasks.add_task(email_service.subscribe_background, req.email, req.name, req.share_id)
+    background_tasks.add_task(
+        email_service.subscribe_background, req.email, req.name, req.share_id
+    )
 
     return {
         "status": "accepted",
@@ -180,7 +194,50 @@ async def subscribe(req: SubscribeRequest, background_tasks: BackgroundTasks):
     }
 
 
+# ── POST /api/analysis/l2 ───────────────────────────────────────────────────
+
+
+@app.post("/api/analysis/l2")
+async def generate_l2_analysis(req: AnalysisRequest):
+    """Generate or return cached L2 detailed analysis (Gemini)."""
+    if not config.AI_TOKEN:
+        raise HTTPException(status_code=503, detail="AI token not configured")
+
+    db = get_db()
+    if not db:
+        raise HTTPException(status_code=503, detail="Share feature not available")
+
+    doc = await asyncio.to_thread(
+        firestore_retry, db.collection("fortunes").document(req.share_id).get
+    )
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    data = doc.to_dict() or {}
+    cached = data.get("analysis_l2")
+    if cached:
+        return {"analysis": cached, "cached": True}
+
+    fortunes = data.get("fortunes")
+    if not fortunes and data.get("fortune"):
+        fortunes = {"gemini": data["fortune"], "grok": None}
+    fortunes = fortunes or {}
+
+    analysis = await ai.generate_deep_analysis(fortunes)
+
+    update_data = {"analysis_l2": analysis}
+
+    await asyncio.to_thread(
+        firestore_retry,
+        db.collection("fortunes").document(req.share_id).update,
+        update_data,
+    )
+
+    return {"analysis": analysis, "cached": False}
+
+
 # ── GET /api/health ──────────────────────────────────────────────────────────
+
 
 @app.get("/api/health")
 async def health():
@@ -198,6 +255,7 @@ async def health():
 dist_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
 
 if os.path.isdir(dist_dir):
+
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str = ""):
         """Serve static files from dist/, fall back to index.html for SPA routing."""

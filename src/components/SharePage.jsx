@@ -10,6 +10,8 @@ export default function SharePage({ shareId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [l2Analysis, setL2Analysis] = useState('')
+  const [l2Status, setL2Status] = useState('idle') // idle | loading | ready | error
 
   // Override body overflow-hidden (set in index.html for the camera view)
   // so this page can scroll on mobile
@@ -33,6 +35,25 @@ export default function SharePage({ shareId }) {
         }
         const result = await resp.json()
         setData(result)
+
+        // Layer 2: request detailed analysis (Gemini 3 Flash)
+        setL2Status('loading')
+        try {
+          const l2Resp = await fetch('/api/analysis/l2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ share_id: shareId }),
+          })
+          if (l2Resp.ok) {
+            const l2 = await l2Resp.json()
+            setL2Analysis(l2.analysis || '')
+            setL2Status('ready')
+          } else {
+            setL2Status('error')
+          }
+        } catch {
+          setL2Status('error')
+        }
       } catch {
         setError('网络错误，请检查连接')
       } finally {
@@ -113,12 +134,29 @@ export default function SharePage({ shareId }) {
           </div>
         )}
 
-        {/* Fortune content */}
+        {/* Fortune content (Layer 1 quick summary) */}
         {activeFortune ? (
-          <FortuneCard fortune={activeFortune} />
+          <div className="w-full">
+            <h2 className="font-serif-cn text-yellow-300 text-base mb-2 text-center">现场速览（Grok）</h2>
+            <FortuneCard fortune={activeFortune} />
+          </div>
         ) : (
           <p className="font-serif-cn text-gray-400 text-center">该模型暂无结果</p>
         )}
+
+        {/* Layer 2 detailed analysis */}
+        <div className="w-full max-w-3xl mt-2 rounded-xl border border-yellow-400/15 bg-white/5 p-4 sm:p-5">
+          <h2 className="font-serif-cn text-yellow-300 text-lg">扫码详版（Gemini 3 Flash）</h2>
+          {l2Status === 'loading' && (
+            <p className="mt-2 text-yellow-100/70 text-sm animate-pulse">正在生成详细解读...</p>
+          )}
+          {l2Status === 'ready' && l2Analysis && (
+            <div className="mt-2 text-yellow-100/85 text-sm leading-7 whitespace-pre-wrap">{l2Analysis}</div>
+          )}
+          {l2Status === 'error' && (
+            <p className="mt-2 text-yellow-100/60 text-sm">详细解读生成暂时失败，请稍后刷新重试。</p>
+          )}
+        </div>
 
         {/* Decorative divider before form */}
         <div className="w-64 h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent mt-2" />
@@ -137,10 +175,10 @@ export default function SharePage({ shareId }) {
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
               <h3 className="font-calligraphy text-xl text-yellow-400/90 tracking-wide">
-                免费获取深度分析报告
+                留邮箱查看 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型完整解读
               </h3>
               <p className="text-sm text-yellow-100/70 font-serif-cn text-center leading-relaxed px-1">
-                刚才的速览只是冰山一角，输入邮箱，我们会调用多个不同 <span className="font-en">AI</span>，为你生成一份涵盖五官、三停、十二宫位的多维度深度面相报告。包含事业、财运、感情等多方面个性化建议。
+                扫码版是 Gemini 3 Flash 详解；留邮箱后将收到 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型并行解读，并附共识与分歧视角，帮助你更全面理解结果。
               </p>
               <input
                 type="email"
@@ -162,7 +200,7 @@ export default function SharePage({ shareId }) {
                 disabled={subscribeStatus === 'submitting' || !email.includes('@')}
                 className="w-full py-2.5 bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/20 text-yellow-400 font-serif-cn text-sm rounded-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                {subscribeStatus === 'submitting' ? '提交中...' : <>免费获取 <span className="font-en">AI</span> 深度分析报告</>}
+                {subscribeStatus === 'submitting' ? '提交中...' : '留邮箱获取三模型完整解读'}
               </button>
               {subscribeStatus === 'error' && (
                 <p className="text-red-400 text-xs font-serif-cn">提交失败，请稍后重试</p>
