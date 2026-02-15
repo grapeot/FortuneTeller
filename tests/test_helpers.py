@@ -277,7 +277,7 @@ class TestPrompts:
         assert "马年" in SYSTEM_PROMPT
 
     def test_deep_analysis_prompt_content(self):
-        assert "面相学" in DEEP_ANALYSIS_PROMPT
-        assert "500-700" in DEEP_ANALYSIS_PROMPT
+        assert "面相" in DEEP_ANALYSIS_PROMPT
+        assert "600-900" in DEEP_ANALYSIS_PROMPT
         assert "五官与三停" in DEEP_ANALYSIS_PROMPT
         assert "马年寄语" in DEEP_ANALYSIS_PROMPT
