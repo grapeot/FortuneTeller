@@ -1,37 +1,37 @@
 #!/usr/bin/env python3
 """
-Standalone face measurement visualization tool.
+Standalone privacy-safe face visualization.
 
-Visualizes 5 key facial measurements:
-1. 三停比例 (Three Divisions)
-2. 印堂宽度 (Glabella Width)
-3. 田宅宫 (Eyebrow-Eye Distance)
-4. 颧骨突出度 (Cheekbone Prominence)
-5. 鼻翼宽度 (Nose Wing Width)
+What it does:
+1) Uses MediaPipe FaceLandmarker (478 points)
+2) Draws dense contour-only wireframe (no real face pixels, no keypoint dots)
+3) Keeps core measurements and extends coverage
 
 Usage:
     python tools/visualize_face.py <image_path> [--output <output_path>]
 """
 
 import argparse
+import json
 import sys
 import urllib.request
 from pathlib import Path
 
 try:
     import cv2
-    import numpy as np
     import mediapipe as mp
+    import numpy as np
     from mediapipe.tasks import python
     from mediapipe.tasks.python import vision
     from PIL import Image, ImageDraw, ImageFont
 except ImportError as e:
     print(f"Error: Missing required package: {e}", file=sys.stderr)
-    print("Please install: pip install opencv-python mediapipe pillow", file=sys.stderr)
+    print(
+        "Please install: uv pip install opencv-python mediapipe pillow", file=sys.stderr
+    )
     sys.exit(1)
 
 
-# MediaPipe landmark indices (matching face-annotator.js)
 LM = {
     "foreheadTop": 10,
     "foreheadMid": 151,
@@ -55,8 +55,6 @@ LM = {
     "rightBrowInner": 300,
     "rightBrowOuter": 336,
     "rightBrowPeak": 334,
-    "upperLip": 13,
-    "lowerLip": 14,
     "lipTop": 0,
     "lipBottom": 17,
     "chin": 152,
@@ -67,114 +65,155 @@ LM = {
     "leftTemple": 54,
     "rightTemple": 284,
     "philtrum": 164,
+    "mouthLeft": 61,
+    "mouthRight": 291,
 }
 
-# Colors
+
+CONTOUR_PATHS = {
+    "face_oval": {
+        "points": [
+            10,
+            338,
+            297,
+            332,
+            284,
+            251,
+            389,
+            356,
+            454,
+            323,
+            361,
+            288,
+            397,
+            365,
+            379,
+            378,
+            400,
+            377,
+            152,
+            148,
+            176,
+            149,
+            150,
+            136,
+            172,
+            58,
+            132,
+            93,
+            234,
+            127,
+            162,
+            21,
+            54,
+            103,
+            67,
+            109,
+        ],
+        "stroke": 2,
+        "close": True,
+    },
+    "left_brow": {"points": [70, 63, 105, 66, 107], "stroke": 2, "close": False},
+    "right_brow": {"points": [300, 293, 334, 296, 336], "stroke": 2, "close": False},
+    "left_eye": {
+        "points": [33, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7],
+        "stroke": 1,
+        "close": True,
+    },
+    "right_eye": {
+        "points": [
+            362,
+            385,
+            386,
+            387,
+            388,
+            466,
+            263,
+            249,
+            390,
+            373,
+            374,
+            380,
+            381,
+            382,
+        ],
+        "stroke": 1,
+        "close": True,
+    },
+    "nose_bridge": {"points": [6, 197, 195, 5, 4, 1], "stroke": 1, "close": False},
+    "nose_wings": {
+        "points": [48, 115, 220, 45, 4, 275, 440, 344, 278],
+        "stroke": 1,
+        "close": False,
+    },
+    "upper_lip": {
+        "points": [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291],
+        "stroke": 1,
+        "close": False,
+    },
+    "lower_lip": {
+        "points": [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291],
+        "stroke": 1,
+        "close": False,
+    },
+}
+
+
 GOLD = (255, 215, 0)
-GOLD_DIM = (255, 215, 0, 153)  # 60% opacity
-BLACK_BG = (0, 0, 0, 166)  # 65% opacity
-WHITE = (255, 255, 255)
+GOLD_SOFT = (255, 215, 0, 170)
+LABEL_BG = (0, 0, 0, 166)
 
 
 def load_chinese_font(size=14):
-    """Load a Chinese font with fallback chain."""
-    # macOS Chinese fonts (in priority order, with font index for .ttc files)
-    # Format: (font_path, font_index) or (font_path,) for non-ttc files
-    font_configs = [
-        ("/System/Library/Fonts/STHeiti Medium.ttc", 0),  # 华文黑体 Medium (简体)
-        ("/System/Library/Fonts/STHeiti Light.ttc", 0),  # 华文黑体 Light (简体)
-        ("/System/Library/Fonts/Supplemental/Songti.ttc", 0),  # 宋体 SC (简体)
-        ("/System/Library/Fonts/Supplemental/Songti.ttc", 1),  # 宋体 TC (繁体，fallback)
+    fonts = [
+        ("/System/Library/Fonts/STHeiti Medium.ttc", 0),
+        ("/System/Library/Fonts/STHeiti Light.ttc", 0),
+        ("/System/Library/Fonts/Supplemental/Songti.ttc", 0),
+        ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", 0),
+        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0),
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0),
     ]
-    
-    # Linux Chinese fonts
-    linux_fonts = [
-        ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", 0),  # 文泉驿微米黑
-        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0),  # 文泉驿正黑
-        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0),  # Noto Sans CJK
-    ]
-    
-    # Try macOS fonts first
-    for font_config in font_configs:
+    for font_path, font_index in fonts:
         try:
-            if len(font_config) == 2:
-                font_path, font_index = font_config
-            else:
-                font_path = font_config[0]
-                font_index = 0
-            
             if Path(font_path).exists():
                 if font_path.endswith(".ttc"):
                     return ImageFont.truetype(font_path, size, index=font_index)
-                else:
-                    return ImageFont.truetype(font_path, size)
-        except Exception as e:
-            continue
-    
-    # Try Linux fonts
-    for font_config in linux_fonts:
-        try:
-            if len(font_config) == 2:
-                font_path, font_index = font_config
-            else:
-                font_path = font_config[0]
-                font_index = 0
-            
-            if Path(font_path).exists():
-                if font_path.endswith(".ttc"):
-                    return ImageFont.truetype(font_path, size, index=font_index)
-                else:
-                    return ImageFont.truetype(font_path, size)
+                return ImageFont.truetype(font_path, size)
         except Exception:
             continue
-    
-    # Fallback: try to use default font (may not support Chinese)
-    print("Warning: No Chinese font found, Chinese text may display as boxes", file=sys.stderr)
     return ImageFont.load_default()
 
 
 def dist(a, b):
-    """Calculate Euclidean distance between two points."""
-    return np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+    return float(np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2))
 
 
-def get_point(landmarks, idx, width, height):
-    """Get pixel coordinates from normalized landmark."""
-    return (int(landmarks[idx].x * width), int(landmarks[idx].y * height))
+def pxy(landmarks, idx, w, h):
+    return (float(landmarks[idx].x * w), float(landmarks[idx].y * h))
 
 
 def get_model_path():
-    """Get or download the MediaPipe face landmarker model."""
     model_url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
     cache_dir = Path.home() / ".cache" / "mediapipe"
     cache_dir.mkdir(parents=True, exist_ok=True)
     model_path = cache_dir / "face_landmarker.task"
-    
+
     if not model_path.exists():
-        print(f"Downloading MediaPipe face landmarker model...")
+        print("Downloading MediaPipe face landmarker model...")
         urllib.request.urlretrieve(model_url, model_path)
         print(f"✓ Model downloaded to {model_path}")
-    
+
     return str(model_path)
 
 
 def detect_landmarks(image_path):
-    """Detect face landmarks using MediaPipe."""
-    # Read image
     image = cv2.imread(str(image_path))
     if image is None:
         raise ValueError(f"Could not read image: {image_path}")
-    
-    height, width = image.shape[:2]
-    
-    # Convert BGR to RGB
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # Get model path (download if needed)
-    model_path = get_model_path()
-    
-    # Initialize MediaPipe FaceLandmarker
-    base_options = python.BaseOptions(model_asset_path=model_path)
+    h, w = image.shape[:2]
+    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    base_options = python.BaseOptions(model_asset_path=get_model_path())
     options = vision.FaceLandmarkerOptions(
         base_options=base_options,
         output_face_blendshapes=False,
@@ -182,304 +221,271 @@ def detect_landmarks(image_path):
         num_faces=1,
     )
     detector = vision.FaceLandmarker.create_from_options(options)
-    
-    # Create MediaPipe image
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
-    
-    # Detect landmarks
-    detection_result = detector.detect(mp_image)
-    
-    if not detection_result.face_landmarks or len(detection_result.face_landmarks) == 0:
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+    result = detector.detect(mp_image)
+    detector.close()
+
+    if not result.face_landmarks:
         raise ValueError("No face detected in image")
-    
-    landmarks = detection_result.face_landmarks[0]
-    return landmarks, width, height
+    return result.face_landmarks[0], w, h
 
 
-def visualize_santing(draw, landmarks, width, height, font):
-    """Visualize 三停比例 (Three Divisions)."""
-    # Get key points
-    forehead_y = landmarks[LM["foreheadTop"]].y * height
-    brow_y = (landmarks[LM["leftBrowPeak"]].y + landmarks[LM["rightBrowPeak"]].y) / 2 * height
-    nose_bottom_y = landmarks[LM["noseBottom"]].y * height
-    chin_y = landmarks[LM["chin"]].y * height
-    
-    # Calculate divisions
-    upper = brow_y - forehead_y
-    middle = nose_bottom_y - brow_y
-    lower = chin_y - nose_bottom_y
+def create_privacy_canvas(w, h):
+    image = Image.new("RGB", (w, h), (9, 12, 20))
+    draw = ImageDraw.Draw(image, "RGBA")
+    for y in range(h):
+        t = y / max(h - 1, 1)
+        c = int(15 + 20 * t)
+        draw.line([(0, y), (w, y)], fill=(c, c + 6, c + 18, 255), width=1)
+    return image
+
+
+def draw_path(draw, pts, color, width, close=False):
+    if len(pts) < 2:
+        return
+    path = pts + ([pts[0]] if close else [])
+    draw.line(path, fill=color, width=width, joint="curve")
+
+
+def draw_contours(draw, landmarks, w, h):
+    used = set()
+    for spec in CONTOUR_PATHS.values():
+        points = spec["points"]
+        used.update(points)
+        draw_path(
+            draw,
+            [pxy(landmarks, i, w, h) for i in points],
+            color=GOLD_SOFT,
+            width=spec["stroke"],
+            close=spec["close"],
+        )
+    return len(used)
+
+
+def draw_label(draw, text, x, y, font, align="left"):
+    x0, y0, x1, y1 = draw.textbbox((0, 0), text, font=font)
+    tw = x1 - x0
+    th = y1 - y0
+    pad = 4
+    lx = x - tw if align == "right" else x
+    draw.rectangle([lx - pad, y - pad, lx + tw + pad, y + th + pad], fill=LABEL_BG)
+    draw.text((lx, y), text, fill=GOLD, font=font)
+
+
+def measure(landmarks, w, h):
+    brow_y = (
+        pxy(landmarks, LM["leftBrowPeak"], w, h)[1]
+        + pxy(landmarks, LM["rightBrowPeak"], w, h)[1]
+    ) / 2
+    forehead_y = pxy(landmarks, LM["foreheadTop"], w, h)[1]
+    nose_bottom_y = pxy(landmarks, LM["noseBottom"], w, h)[1]
+    chin_y = pxy(landmarks, LM["chin"], w, h)[1]
+
+    # Hairline proxy: move up from foreheadTop by 35% of brow->forehead height.
+    upper_raw = max(brow_y - forehead_y, 1.0)
+    hairline_y = max(0.0, forehead_y - upper_raw * 0.35)
+
+    upper = max(brow_y - hairline_y, 1.0)
+    middle = max(nose_bottom_y - brow_y, 1.0)
+    lower = max(chin_y - nose_bottom_y, 1.0)
     total = upper + middle + lower
-    
-    upper_pct = int((upper / total) * 100)
-    middle_pct = int((middle / total) * 100)
-    lower_pct = 100 - upper_pct - middle_pct
-    
-    # Draw division lines (dashed)
-    line_margin = width * 0.1
-    dash_length = 8
-    gap_length = 4
-    
-    # Draw all four boundary lines: forehead top (start), brow (upper/middle), nose bottom (middle/lower), chin (end)
-    boundary_lines = [
-        (forehead_y, "起点"),  # 上庭起点
-        (brow_y, "上/中"),      # 上庭/中庭分界
-        (nose_bottom_y, "中/下"), # 中庭/下庭分界
-        (chin_y, "终点"),        # 下庭终点
-    ]
-    
-    for y_pos, label_text in boundary_lines:
-        x = line_margin
-        while x < width - line_margin:
-            draw.line([(x, y_pos), (min(x + dash_length, width - line_margin), y_pos)], fill=GOLD, width=2)
-            x += dash_length + gap_length
-        
-        # Draw marker dot at the key point
-        key_x = width * 0.15  # Position marker on left side
-        draw.ellipse([key_x - 4, y_pos - 4, key_x + 4, y_pos + 4], fill=GOLD, outline=GOLD)
-    
-    # Draw labels on right side
-    label_x = width - 20
-    
-    def draw_label(text, y_pos):
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        bg_x = label_x - text_width - 8
-        bg_y = y_pos - text_height // 2 - 4
-        draw.rectangle([bg_x - 4, bg_y, label_x + 4, bg_y + text_height + 8], fill=BLACK_BG)
-        draw.text((bg_x, bg_y + 4), text, fill=GOLD, font=font)
-    
-    # Draw percentage labels for each division
-    draw_label(f"上庭 {upper_pct}%", (forehead_y + brow_y) / 2)
-    draw_label(f"中庭 {middle_pct}%", (brow_y + nose_bottom_y) / 2)
-    draw_label(f"下庭 {lower_pct}%", (nose_bottom_y + chin_y) / 2)
-    
-    # Draw boundary labels on left side (smaller font)
-    try:
-        small_font = load_chinese_font(10)
-    except:
-        small_font = font
-    
-    def draw_boundary_label(text, y_pos):
-        bbox = draw.textbbox((0, 0), text, font=small_font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        label_x_pos = width * 0.15 + 8
-        bg_x = label_x_pos - 2
-        bg_y = y_pos - text_height // 2 - 2
-        draw.rectangle([bg_x - 2, bg_y - 2, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
-        draw.text((bg_x, bg_y), text, fill=GOLD, font=small_font)
-    
-    # Draw boundary labels
-    draw_boundary_label("起点", forehead_y)
-    draw_boundary_label("终点", chin_y)
 
+    left_brow_inner = pxy(landmarks, LM["leftBrowInner"], w, h)
+    right_brow_inner = pxy(landmarks, LM["rightBrowInner"], w, h)
+    left_eye_inner = pxy(landmarks, LM["leftEyeInner"], w, h)
+    right_eye_inner = pxy(landmarks, LM["rightEyeInner"], w, h)
+    left_eye_outer = pxy(landmarks, LM["leftEyeOuter"], w, h)
+    right_eye_outer = pxy(landmarks, LM["rightEyeOuter"], w, h)
+    left_eye_top = pxy(landmarks, LM["leftEyeTop"], w, h)
+    left_eye_bottom = pxy(landmarks, LM["leftEyeBottom"], w, h)
+    right_eye_top = pxy(landmarks, LM["rightEyeTop"], w, h)
+    right_eye_bottom = pxy(landmarks, LM["rightEyeBottom"], w, h)
+    left_cheek = pxy(landmarks, LM["leftCheekbone"], w, h)
+    right_cheek = pxy(landmarks, LM["rightCheekbone"], w, h)
+    left_jaw = pxy(landmarks, LM["leftJaw"], w, h)
+    right_jaw = pxy(landmarks, LM["rightJaw"], w, h)
+    left_nose_wing = pxy(landmarks, LM["leftNoseWing"], w, h)
+    right_nose_wing = pxy(landmarks, LM["rightNoseWing"], w, h)
+    mouth_left = pxy(landmarks, LM["mouthLeft"], w, h)
+    mouth_right = pxy(landmarks, LM["mouthRight"], w, h)
 
-def visualize_yintang(draw, landmarks, width, height, font):
-    """Visualize 印堂宽度 (Glabella Width)."""
-    left_brow_inner = get_point(landmarks, LM["leftBrowInner"], width, height)
-    right_brow_inner = get_point(landmarks, LM["rightBrowInner"], width, height)
-    
-    # Calculate width
-    yintang_width = dist(left_brow_inner, right_brow_inner)
-    
-    # Get eye spacing for comparison
-    left_eye_inner = get_point(landmarks, LM["leftEyeInner"], width, height)
-    right_eye_inner = get_point(landmarks, LM["rightEyeInner"], width, height)
-    eye_spacing = dist(left_eye_inner, right_eye_inner)
-    
-    # Determine judgment
-    if yintang_width > eye_spacing * 0.7:
-        judgment = "开阔"
-    elif yintang_width > eye_spacing * 0.5:
-        judgment = "适中"
+    eye_spacing = max(dist(left_eye_inner, right_eye_inner), 1.0)
+    face_height = max(chin_y - hairline_y, 1.0)
+    left_eye_width = max(dist(left_eye_outer, left_eye_inner), 1.0)
+    right_eye_width = max(dist(right_eye_outer, right_eye_inner), 1.0)
+    left_eye_height = dist(left_eye_top, left_eye_bottom)
+    right_eye_height = dist(right_eye_top, right_eye_bottom)
+
+    yintang = dist(left_brow_inner, right_brow_inner)
+    tianzhai_left = left_eye_top[1] - pxy(landmarks, LM["leftBrowPeak"], w, h)[1]
+    tianzhai_right = right_eye_top[1] - pxy(landmarks, LM["rightBrowPeak"], w, h)[1]
+    tianzhai = (tianzhai_left + tianzhai_right) / 2
+    temple_w = dist(
+        pxy(landmarks, LM["leftTemple"], w, h), pxy(landmarks, LM["rightTemple"], w, h)
+    )
+    cheek_w = dist(left_cheek, right_cheek)
+    jaw_w = dist(left_jaw, right_jaw)
+    nose_w = dist(left_nose_wing, right_nose_wing)
+
+    if cheek_w > temple_w * 1.06 and cheek_w > jaw_w * 1.06:
+        lateral_pattern = "中面偏宽"
+    elif jaw_w > cheek_w * 0.98:
+        lateral_pattern = "下庭偏宽"
     else:
-        judgment = "较窄"
-    
-    # Draw line
-    draw.line([left_brow_inner, right_brow_inner], fill=GOLD, width=2)
-    
-    # Draw label above midpoint
-    mid_x = (left_brow_inner[0] + right_brow_inner[0]) // 2
-    mid_y = (left_brow_inner[1] + right_brow_inner[1]) // 2
-    text = f"印堂: {yintang_width:.1f}px ({judgment})"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    bg_x = mid_x - text_width // 2
-    bg_y = mid_y - text_height - 15
-    draw.rectangle([bg_x - 4, bg_y - 4, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
-    draw.text((bg_x, bg_y), text, fill=GOLD, font=font)
+        lateral_pattern = "横向均衡"
+
+    return {
+        "hairlineY": hairline_y,
+        "browY": brow_y,
+        "noseBottomY": nose_bottom_y,
+        "chinY": chin_y,
+        "三停比例": {
+            "上庭": round(upper / total * 100),
+            "中庭": round(middle / total * 100),
+            "下庭": 100 - round(upper / total * 100) - round(middle / total * 100),
+            "上庭起点": "发际线估计",
+        },
+        "印堂": {
+            "宽度px": round(yintang, 1),
+            "相对眼距": round(yintang / eye_spacing, 2),
+            "判断": "开阔"
+            if yintang > eye_spacing * 0.7
+            else "适中"
+            if yintang > eye_spacing * 0.5
+            else "较窄",
+        },
+        "田宅宫": {
+            "距离px": round(tianzhai, 1),
+            "相对眼宽": round(tianzhai / ((left_eye_width + right_eye_width) / 2), 2),
+            "判断": "宽广"
+            if tianzhai > ((left_eye_width + right_eye_width) / 2) * 0.4
+            else "较窄",
+        },
+        "横向三宽": {
+            "额颞宽px": round(temple_w, 1),
+            "中面宽px": round(cheek_w, 1),
+            "下颌宽px": round(jaw_w, 1),
+            "形态": lateral_pattern,
+        },
+        "鼻翼": {
+            "宽度px": round(nose_w, 1),
+            "相对眼距": round(nose_w / eye_spacing, 2),
+            "判断": "饱满" if nose_w > eye_spacing * 0.85 else "适中",
+        },
+        "扩展测量": {
+            "面宽高比": round(cheek_w / face_height, 2),
+            "双眼开合比": {
+                "左": round(left_eye_height / left_eye_width, 2),
+                "右": round(right_eye_height / right_eye_width, 2),
+            },
+            "眉峰高低差px": round(
+                abs(
+                    pxy(landmarks, LM["leftBrowPeak"], w, h)[1]
+                    - pxy(landmarks, LM["rightBrowPeak"], w, h)[1]
+                ),
+                1,
+            ),
+            "人中长度占脸高": round(
+                dist(
+                    pxy(landmarks, LM["noseBottom"], w, h),
+                    pxy(landmarks, LM["lipTop"], w, h),
+                )
+                / face_height,
+                3,
+            ),
+            "口宽占眼距": round(dist(mouth_left, mouth_right) / eye_spacing, 2),
+            "下庭高占脸高": round((chin_y - nose_bottom_y) / face_height, 2),
+        },
+    }
 
 
-def visualize_tianzhai(draw, landmarks, width, height, font):
-    """Visualize 田宅宫 (Eyebrow-Eye Distance)."""
-    left_brow_peak = get_point(landmarks, LM["leftBrowPeak"], width, height)
-    left_eye_top = get_point(landmarks, LM["leftEyeTop"], width, height)
-    right_brow_peak = get_point(landmarks, LM["rightBrowPeak"], width, height)
-    right_eye_top = get_point(landmarks, LM["rightEyeTop"], width, height)
-    
-    # Calculate distances
-    left_tianzhai = left_eye_top[1] - left_brow_peak[1]
-    right_tianzhai = right_eye_top[1] - right_brow_peak[1]
-    avg_tianzhai = (left_tianzhai + right_tianzhai) / 2
-    
-    # Get eye width for comparison
-    left_eye_outer = get_point(landmarks, LM["leftEyeOuter"], width, height)
-    left_eye_inner = get_point(landmarks, LM["leftEyeInner"], width, height)
-    eye_width = dist(left_eye_outer, left_eye_inner)
-    
-    # Determine judgment
-    judgment = "宽广" if avg_tianzhai > eye_width * 0.4 else "较窄"
-    
-    # Draw vertical lines with arrows
-    def draw_arrow_line(start, end):
-        draw.line([start, end], fill=GOLD, width=2)
-        # Simple arrow (triangle at end)
-        arrow_size = 5
-        if end[1] > start[1]:  # Downward
-            arrow_points = [
-                (end[0], end[1]),
-                (end[0] - arrow_size, end[1] - arrow_size),
-                (end[0] + arrow_size, end[1] - arrow_size),
-            ]
-        else:  # Upward
-            arrow_points = [
-                (end[0], end[1]),
-                (end[0] - arrow_size, end[1] + arrow_size),
-                (end[0] + arrow_size, end[1] + arrow_size),
-            ]
-        draw.polygon(arrow_points, fill=GOLD)
-    
-    draw_arrow_line(left_brow_peak, left_eye_top)
-    draw_arrow_line(right_brow_peak, right_eye_top)
-    
-    # Draw label on left side
-    label_x = left_brow_peak[0] - 10
-    label_y = (left_brow_peak[1] + left_eye_top[1]) // 2
-    text = f"田宅宫: {avg_tianzhai:.1f}px ({judgment})"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    bg_x = label_x - text_width - 4
-    bg_y = label_y - text_height // 2
-    draw.rectangle([bg_x - 4, bg_y - 4, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
-    draw.text((bg_x, bg_y), text, fill=GOLD, font=font)
+def draw_measurement_overlay(draw, landmarks, w, h, m, font):
+    hairline_y = m["hairlineY"]
+    brow_y = m["browY"]
+    nose_bottom_y = m["noseBottomY"]
+    chin_y = m["chinY"]
+
+    # 三停线（发际线估计 + 上中下分界）
+    for y in [hairline_y, brow_y, nose_bottom_y, chin_y]:
+        x = int(w * 0.08)
+        while x < int(w * 0.92):
+            draw.line([(x, y), (min(x + 8, int(w * 0.92)), y)], fill=GOLD_SOFT, width=1)
+            x += 12
+
+    # 右上角测量面板
+    panel_lines = [
+        f"三停(发际线估计): {m['三停比例']['上庭']}/{m['三停比例']['中庭']}/{m['三停比例']['下庭']}",
+        f"印堂: {m['印堂']['判断']} ({m['印堂']['相对眼距']})",
+        f"田宅宫: {m['田宅宫']['判断']} ({m['田宅宫']['相对眼宽']})",
+        f"横向三宽: {m['横向三宽']['形态']}",
+        f"鼻翼: {m['鼻翼']['判断']} ({m['鼻翼']['相对眼距']})",
+        f"面宽高比: {m['扩展测量']['面宽高比']}",
+    ]
+    y = 12
+    for line in panel_lines:
+        draw_label(draw, line, w - 12, y, font, align="right")
+        y += 22
 
 
-def visualize_cheekbone(draw, landmarks, width, height, font):
-    """Visualize 颧骨突出度 (Cheekbone Prominence)."""
-    left_cheekbone = get_point(landmarks, LM["leftCheekbone"], width, height)
-    right_cheekbone = get_point(landmarks, LM["rightCheekbone"], width, height)
-    left_jaw = get_point(landmarks, LM["leftJaw"], width, height)
-    right_jaw = get_point(landmarks, LM["rightJaw"], width, height)
-    
-    # Calculate widths
-    cheek_y = (left_cheekbone[1] + right_cheekbone[1]) // 2
-    jaw_y = (left_jaw[1] + right_jaw[1]) // 2
-    
-    cheek_width = dist(left_cheekbone, right_cheekbone)
-    jaw_width = dist(left_jaw, right_jaw)
-    
-    # Determine judgment
-    judgment = "突出" if cheek_width > jaw_width * 1.08 else "平和"
-    
-    # Draw width lines
-    draw.line([left_cheekbone, right_cheekbone], fill=GOLD, width=2)
-    draw.line([left_jaw, right_jaw], fill=GOLD, width=2)
-    
-    # Draw endpoints
-    for point in [left_cheekbone, right_cheekbone, left_jaw, right_jaw]:
-        draw.ellipse([point[0] - 3, point[1] - 3, point[0] + 3, point[1] + 3], fill=GOLD, outline=GOLD)
-    
-    # Draw label between lines
-    label_x = max(left_cheekbone[0], left_jaw[0]) + 10
-    label_y = (cheek_y + jaw_y) // 2
-    text = f"颧骨: {cheek_width:.1f}px vs 下颌: {jaw_width:.1f}px ({judgment})"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    bg_x = label_x
-    bg_y = label_y - text_height // 2
-    draw.rectangle([bg_x - 4, bg_y - 4, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
-    draw.text((bg_x, bg_y), text, fill=GOLD, font=font)
-
-
-def visualize_nose_wing(draw, landmarks, width, height, font):
-    """Visualize 鼻翼宽度 (Nose Wing Width)."""
-    left_nose_wing = get_point(landmarks, LM["leftNoseWing"], width, height)
-    right_nose_wing = get_point(landmarks, LM["rightNoseWing"], width, height)
-    
-    # Calculate width
-    nose_width = dist(left_nose_wing, right_nose_wing)
-    
-    # Get eye spacing for comparison
-    left_eye_inner = get_point(landmarks, LM["leftEyeInner"], width, height)
-    right_eye_inner = get_point(landmarks, LM["rightEyeInner"], width, height)
-    eye_spacing = dist(left_eye_inner, right_eye_inner)
-    
-    # Determine judgment
-    judgment = "饱满" if nose_width > eye_spacing * 0.85 else "适中"
-    
-    # Draw line
-    draw.line([left_nose_wing, right_nose_wing], fill=GOLD, width=2)
-    
-    # Draw label above midpoint
-    mid_x = (left_nose_wing[0] + right_nose_wing[0]) // 2
-    mid_y = (left_nose_wing[1] + right_nose_wing[1]) // 2
-    text = f"鼻翼: {nose_width:.1f}px ({judgment})"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    bg_x = mid_x - text_width // 2
-    bg_y = mid_y - text_height - 15
-    draw.rectangle([bg_x - 4, bg_y - 4, bg_x + text_width + 4, bg_y + text_height + 4], fill=BLACK_BG)
-    draw.text((bg_x, bg_y), text, fill=GOLD, font=font)
+def to_json(m):
+    out = {
+        k: v
+        for k, v in m.items()
+        if k not in {"hairlineY", "browY", "noseBottomY", "chinY"}
+    }
+    return json.dumps(out, ensure_ascii=False, indent=2)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Visualize facial measurements")
+    parser = argparse.ArgumentParser(
+        description="Privacy-safe facial contour and measurement visualization"
+    )
     parser.add_argument("image_path", type=Path, help="Path to input image")
-    parser.add_argument("--output", type=Path, help="Path to output image (default: <input>-visualized.jpg)")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output image path (default: <input>-visualized.jpg)",
+    )
+    parser.add_argument(
+        "--json", type=Path, help="Optional output path for measurement JSON"
+    )
     args = parser.parse_args()
-    
+
     if not args.image_path.exists():
         print(f"Error: Image not found: {args.image_path}", file=sys.stderr)
         sys.exit(1)
-    
-    # Determine output path
-    if args.output:
-        output_path = args.output
-    else:
-        output_path = args.image_path.parent / f"{args.image_path.stem}-visualized{args.image_path.suffix}"
-    
+
+    output_path = (
+        args.output
+        or args.image_path.parent
+        / f"{args.image_path.stem}-visualized{args.image_path.suffix}"
+    )
+
     print(f"Detecting landmarks in {args.image_path}...")
     try:
-        landmarks, width, height = detect_landmarks(args.image_path)
+        landmarks, w, h = detect_landmarks(args.image_path)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-    
-    print(f"Face detected: {width}x{height}")
-    print("Drawing visualizations...")
-    
-    # Load image
-    image = Image.open(args.image_path).convert("RGB")
+
+    image = create_privacy_canvas(w, h)
     draw = ImageDraw.Draw(image, "RGBA")
-    
-    # Load Chinese font with fallback chain
     font = load_chinese_font(14)
-    
-    # Draw all visualizations
-    visualize_santing(draw, landmarks, width, height, font)
-    visualize_yintang(draw, landmarks, width, height, font)
-    visualize_tianzhai(draw, landmarks, width, height, font)
-    visualize_cheekbone(draw, landmarks, width, height, font)
-    visualize_nose_wing(draw, landmarks, width, height, font)
-    
-    # Save result
+
+    dense_count = draw_contours(draw, landmarks, w, h)
+    m = measure(landmarks, w, h)
+    draw_measurement_overlay(draw, landmarks, w, h, m, font)
+
     image.save(output_path, quality=95)
     print(f"✓ Saved visualization to: {output_path}")
+    print(f"✓ Dense contour keypoints used: {dense_count}")
+
+    print("\nMeasurements:")
+    print(to_json(m))
+
+    if args.json:
+        args.json.write_text(to_json(m), encoding="utf-8")
+        print(f"✓ Saved measurements JSON to: {args.json}")
 
 
 if __name__ == "__main__":
