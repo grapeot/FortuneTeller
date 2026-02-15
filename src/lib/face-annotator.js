@@ -177,15 +177,44 @@ const CONTOUR_INDICES = {
 }
 
 function buildVisualizationData(landmarks, measurements) {
-  const points = landmarks.map((lm) => [
-    Math.round(lm.x * 10000) / 10000,
-    Math.round(lm.y * 10000) / 10000,
+  const rawPoints = landmarks.map((lm) => [lm.x, lm.y])
+
+  const [minX0, maxX0, minY0, maxY0] = rawPoints.reduce(
+    ([minX, maxX, minY, maxY], [x, y]) => [
+      Math.min(minX, x),
+      Math.max(maxX, x),
+      Math.min(minY, y),
+      Math.max(maxY, y),
+    ],
+    [1, 0, 1, 0],
+  )
+
+  const padRatio = 0.18
+  const w = Math.max(1e-5, maxX0 - minX0)
+  const h = Math.max(1e-5, maxY0 - minY0)
+  const minX = Math.max(0, minX0 - w * padRatio)
+  const maxX = Math.min(1, maxX0 + w * padRatio)
+  const minY = Math.max(0, minY0 - h * padRatio)
+  const maxY = Math.min(1, maxY0 + h * padRatio)
+
+  const boxW = Math.max(1e-5, maxX - minX)
+  const boxH = Math.max(1e-5, maxY - minY)
+
+  const points = rawPoints.map(([x, y]) => [
+    Math.round(((x - minX) / boxW) * 10000) / 10000,
+    Math.round(((y - minY) / boxH) * 10000) / 10000,
   ])
 
   return {
     landmarks: points,
     contour_indices: CONTOUR_INDICES,
     measurements,
+    face_bbox_norm: {
+      min_x: Math.round(minX * 10000) / 10000,
+      max_x: Math.round(maxX * 10000) / 10000,
+      min_y: Math.round(minY * 10000) / 10000,
+      max_y: Math.round(maxY * 10000) / 10000,
+    },
     version: 'v2',
     generated_at: new Date().toISOString(),
   }

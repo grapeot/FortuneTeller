@@ -20,9 +20,17 @@ const MEASUREMENT_LABELS = {
   eye_to_eyebrow_right: '右眉眼距离',
 }
 
+function getPoint(points, idx) {
+  const p = points[idx]
+  if (!p) return null
+  if (Array.isArray(p) && p.length >= 2) return [p[0], p[1]]
+  if (typeof p === 'object' && p !== null && 'x' in p && 'y' in p) return [p.x, p.y]
+  return null
+}
+
 function pointsToPath(points, indices, close = false) {
   const valid = indices
-    .map((idx) => points[idx])
+    .map((idx) => getPoint(points, idx))
     .filter(Boolean)
     .map(([x, y]) => `${x * 1000},${y * 1000}`)
 
@@ -31,32 +39,40 @@ function pointsToPath(points, indices, close = false) {
   return close ? `${cmd} Z` : cmd
 }
 
-export default function LandmarkVisualization({ visualizationData }) {
+export function normalizeMeasurementRows(measurements) {
+  const formatValue = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => formatValue(v))
+        .join(' / ')
+    }
+    if (typeof value === 'number') return value.toFixed(3)
+    if (typeof value === 'object' && value !== null) {
+      return Object.entries(value)
+        .map(([k, v]) => `${k}:${formatValue(v)}`)
+        .join(' | ')
+    }
+    return String(value)
+  }
+
+  if (!measurements) return []
+  return Object.entries(measurements)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => ({
+      key,
+      label: MEASUREMENT_LABELS[key] || key,
+      value: formatValue(value),
+    }))
+}
+
+export default function LandmarkVisualization({ visualizationData, showLabel = true, showMeasurements = true }) {
   const points = visualizationData?.landmarks
   const contours = visualizationData?.contour_indices || DEFAULT_CONTOURS
   const measurements = visualizationData?.measurements || null
 
   if (!points || points.length === 0) return null
 
-  const formatValue = (value) => {
-    if (Array.isArray(value)) {
-      return value
-        .map((v) => (typeof v === 'number' ? v.toFixed(3) : String(v)))
-        .join(' / ')
-    }
-    if (typeof value === 'number') return value.toFixed(3)
-    return String(value)
-  }
-
-  const measurementRows = measurements
-    ? Object.entries(measurements)
-        .filter(([, value]) => value !== undefined && value !== null)
-        .map(([key, value]) => ({
-          key,
-          label: MEASUREMENT_LABELS[key] || key,
-          value: formatValue(value),
-        }))
-    : []
+  const measurementRows = normalizeMeasurementRows(measurements)
 
   return (
     <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
@@ -78,8 +94,8 @@ export default function LandmarkVisualization({ visualizationData }) {
           )
         })}
       </svg>
-      <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">隐私轮廓图（HTML/SVG 渲染）</p>
-      {measurementRows.length > 0 && (
+      {showLabel && <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">隐私轮廓图</p>}
+      {showMeasurements && measurementRows.length > 0 && (
         <div className="mt-3 rounded-lg border border-yellow-400/15 bg-black/25 px-2 py-2">
           <p className="text-[11px] text-yellow-300/70 font-serif-cn mb-1">测量结果</p>
           <div className="space-y-1">

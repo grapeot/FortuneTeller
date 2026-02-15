@@ -127,7 +127,8 @@ describe('ResultOverlay', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('隐私轮廓图（HTML/SVG 渲染）')).toBeInTheDocument()
+      expect(screen.getByText('影像轮廓图')).toBeInTheDocument()
+      expect(screen.getByText('测量结果')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: '查看面相轮廓大图' }))

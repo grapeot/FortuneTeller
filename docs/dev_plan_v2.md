@@ -317,3 +317,24 @@ Phase D（评估与调参）
 #### 本轮验证
 - 后端：`pytest tests/test_api.py` 通过（24 passed）。
 - 前端：`npm test` 通过（86 passed）。
+
+#### 本轮增量修复（视觉与存储）
+- 可视化比例修复：
+  - `captureAndAnnotate` 在生成 `visualization_data` 时先按人脸包围盒裁切并重归一化，再输出轮廓点，避免整帧坐标导致 SVG 拉伸变窄。
+- 快速结果页重排：
+  - `ResultOverlay` 改为 2×2 布局：影像轮廓图 / 测量结果 / 像素画像 / 二维码，结果文案置于下方。
+  - 轮廓图下方去掉“HTML/SVG 渲染”技术性说明，对用户仅保留业务语义标签。
+  - 测量结果格式化修复，避免对象直接渲染成 `[object Object]`。
+- Prompt 文案修复：
+  - 去除 `face` 结尾强制“——”要求，解决输出尾部破折号问题。
+- Firestore 持久化兼容增强：
+  - `visualization_data.landmarks` 写入前转为 `{x, y}` 对象数组，读取时再还原为 `[x, y]`，规避 Firestore 对嵌套数组实体的限制；
+  - 浮点统一保留 5 位小数（同时前端 landmarks 本身为 4 位），降低 payload 体积并减少写入/传输延迟。
+- 首页 idle 动效调整：
+  - 检测到人脸时隐藏标题块；
+  - 无人脸但已就绪时标题块移动到右下区域；
+  - 未就绪时保持居中展示，并保留过渡动画。
+
+#### 本轮验证补充
+- 后端：`pytest tests/test_api.py` 通过（26 passed）。
+- 前端：`npm test` 通过（86 passed）。

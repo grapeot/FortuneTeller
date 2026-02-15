@@ -47,10 +47,46 @@ def _sanitize_for_firestore(value):
     if isinstance(value, tuple):
         return [_sanitize_for_firestore(v) for v in value]
     if isinstance(value, float):
-        return value if math.isfinite(value) else None
+        if not math.isfinite(value):
+            return None
+        return round(value, 5)
     if isinstance(value, (int, bool, str)) or value is None:
         return value
     return str(value)
+
+
+def _encode_visualization_for_firestore(value):
+    """Convert visualization payload into Firestore-compatible structure."""
+    sanitized = _sanitize_for_firestore(value)
+    if not isinstance(sanitized, dict):
+        return sanitized
+
+    landmarks = sanitized.get("landmarks")
+    if isinstance(landmarks, list):
+        converted = []
+        for point in landmarks:
+            if isinstance(point, (list, tuple)) and len(point) >= 2:
+                converted.append({"x": point[0], "y": point[1]})
+            elif isinstance(point, dict) and "x" in point and "y" in point:
+                converted.append({"x": point["x"], "y": point["y"]})
+        sanitized["landmarks"] = converted
+
+    return sanitized
+
+
+def _decode_visualization_from_firestore(value):
+    """Convert Firestore-safe visualization back to frontend shape."""
+    if not isinstance(value, dict):
+        return value
+
+    landmarks = value.get("landmarks")
+    if isinstance(landmarks, list):
+        value["landmarks"] = [
+            [point.get("x"), point.get("y")]
+            for point in landmarks
+            if isinstance(point, dict) and "x" in point and "y" in point
+        ]
+    return value
 
 
 # ── POST /api/fortune ────────────────────────────────────────────────────────
@@ -154,7 +190,9 @@ async def create_share(req: ShareRequest):
 
     doc = {
         "pixelated_image": req.pixelated_image,
-        "visualization_data": _sanitize_for_firestore(req.visualization_data),
+        "visualization_data": _encode_visualization_for_firestore(
+            req.visualization_data
+        ),
         "fortunes": fortunes_data,
     }
 
@@ -192,7 +230,9 @@ async def get_share(share_id: str):
 
     return {
         "pixelated_image": data.get("pixelated_image"),
-        "visualization_data": data.get("visualization_data"),
+        "visualization_data": _decode_visualization_from_firestore(
+            data.get("visualization_data")
+        ),
         "fortunes": fortunes,
     }
 

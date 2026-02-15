@@ -10,6 +10,7 @@ const MODEL_ROTATION = ['Gemini 3 Flash', 'DeepSeek', 'Kimi K2.5']
  */
 export default function IdleOverlay({ faceCount, isReady, onStart }) {
   const [modelIndex, setModelIndex] = useState(0)
+  const hasFace = faceCount > 0
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -26,7 +27,18 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
       className="absolute inset-0 flex flex-col items-center justify-between py-4 sm:py-8 md:py-12 pointer-events-none px-4"
     >
       {/* Top: Avatar + Title + subtitle */}
-      <div className="text-center flex flex-col items-center mt-14 sm:mt-16 md:mt-20">
+      <motion.div
+        initial={undefined}
+        animate={
+          hasFace
+            ? { opacity: 0, scale: 0.92, y: 30 }
+            : isReady
+              ? { opacity: 1, scale: 0.9, x: '34vw', y: '28vh' }
+              : { opacity: 1, scale: 1, x: 0, y: 0 }
+        }
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+        className="text-center flex flex-col items-center mt-14 sm:mt-16 md:mt-20"
+      >
         <img
           src="/assets/fortune-teller.jpg"
           alt="AI相面"
@@ -39,11 +51,11 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
           <span className="block font-calligraphy text-5xl sm:text-6xl md:text-7xl lg:text-8xl">相面</span>
         </h1>
         <p className="font-serif-cn text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200/70 mt-2 sm:mt-3 tracking-wide">{BRAND.tagline}</p>
-      </div>
+      </motion.div>
 
       {/* Middle: Face detection status */}
       <div className="flex flex-col items-center gap-4">
-        {faceCount > 0 ? (
+        {hasFace ? (
           <p className="font-serif-cn text-base sm:text-lg md:text-xl text-green-400 animate-pulse">
             ✨ 检测到 {faceCount} 张面相 ✨
           </p>

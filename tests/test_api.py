@@ -34,6 +34,29 @@ def test_sanitize_for_firestore_nested_payload():
     assert cleaned["landmarks"] == [[0.1, 0.2], [0.3, 0.4]]
 
 
+def test_sanitize_for_firestore_rounds_float_precision():
+    cleaned = server_routes._sanitize_for_firestore({"score": 0.123456789})
+    assert isinstance(cleaned, dict)
+    assert cleaned.get("score") == 0.12346
+
+
+def test_encode_decode_visualization_for_firestore_landmarks():
+    raw = {
+        "landmarks": [[0.1, 0.2], [0.3, 0.4]],
+        "measurements": {"three_parts": [0.33, 0.34, 0.33]},
+    }
+
+    encoded = server_routes._encode_visualization_for_firestore(raw)
+    assert isinstance(encoded, dict)
+    encoded_landmarks = encoded.get("landmarks")
+    assert encoded_landmarks == [{"x": 0.1, "y": 0.2}, {"x": 0.3, "y": 0.4}]
+
+    decoded = server_routes._decode_visualization_from_firestore(encoded)
+    assert isinstance(decoded, dict)
+    decoded_landmarks = decoded.get("landmarks")
+    assert decoded_landmarks == [[0.1, 0.2], [0.3, 0.4]]
+
+
 # ── GET /api/health ──────────────────────────────────────────────────────────
 
 
@@ -181,7 +204,7 @@ async def test_share_persists_visualization_data(client, mock_firestore):
     mock_firestore.collection.return_value.document.return_value.set = set_mock
 
     payload = {
-        "landmarks": [{"x": 0.1, "y": 0.2}],
+        "landmarks": [[0.1, 0.2]],
         "contour_indices": {"face_outline": [10, 338, 297]},
         "measurements": {"three_parts": [0.33, 0.34, 0.33]},
     }
@@ -203,7 +226,12 @@ async def test_share_persists_visualization_data(client, mock_firestore):
     assert resp.status_code == 200
     assert set_mock.call_count == 1
     saved_doc = set_mock.call_args.args[0]
-    assert saved_doc["visualization_data"] == payload
+    assert saved_doc["visualization_data"]["landmarks"] == [{"x": 0.1, "y": 0.2}]
+    assert saved_doc["visualization_data"]["measurements"]["three_parts"] == [
+        0.33,
+        0.34,
+        0.33,
+    ]
 
 
 @pytest.mark.asyncio

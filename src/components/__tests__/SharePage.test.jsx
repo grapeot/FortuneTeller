@@ -90,7 +90,7 @@ describe('SharePage', () => {
     render(<SharePage shareId="test123" />)
 
     await waitFor(() => {
-      expect(screen.getAllByText('隐私轮廓图（HTML/SVG 渲染）').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('隐私轮廓图').length).toBeGreaterThan(0)
     })
   })
 
