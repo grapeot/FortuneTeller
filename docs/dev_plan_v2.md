@@ -248,3 +248,54 @@ Phase D（评估与调参）
   - 可输出 measurements JSON。
 
 验收样例：`test-assets/test-face-1-visualized-privacy.jpg`
+
+---
+
+## 四、实施日志（原 `working.md` 并入）
+
+### 2026-02-15
+
+#### 已完成
+- 完成 standalone 可视化隐私改造：仅语义轮廓线、无真人像素、保留测量输出。
+- 修正轮廓绘制语义分组，去除跨区域错误连线。
+- 将颧骨强断言改为“横向三宽”趋势表达，降低误判风险。
+- 将 Prompt 架构改为模板化：`guideline + evidence + task template`。
+- 新增并更新开发计划文档：`docs/dev_plan_v2.md`（含三 Tab 设计与 Test Plan）。
+
+#### 本次更新
+- 细化 `server/prompt_templates/parts/face_reading_guideline.txt`：
+  - 新增“特征 -> 性格/阶段运势”具体映射；
+  - 补充眉、眼、鼻、口、田宅宫、横向三宽、三停阶段窗口的具体解释模板；
+  - 明确命运类措辞边界（倾向表达，禁止绝对断言）。
+
+#### 推进与落地
+- `App.jsx` 已接入三 Tab 容器，支持 `?tab=guide` / `?tab=inside` 状态。
+- 新增 L2 后端接口：`POST /api/analysis/l2`（按 share_id 生成/读取 Gemini 3 Flash 详版）。
+- `SharePage` 已改为三层表达：
+  - 现场速览（Grok）
+  - 扫码详版（Gemini 3 Flash，异步拉取）
+  - 邮箱三模型（Gemini 3 Flash / DeepSeek / Kimi K2.5）
+- 分享链路支持结构化可视化存储：
+  - `captureAndAnnotate` 返回 `visualizationData`（landmarks + contour_indices + measurements）；
+  - `/api/share` 持久化 `visualization_data`；
+  - `SharePage` 通过 `LandmarkVisualization` 进行 HTML/SVG 渲染，不依赖位图。
+- 三层 presentation 均新增隐私可视化入口（小图 + modal 大图）：
+  - L1 现场速览、L2 扫码详版、L3 邮箱三模型全部可查看轮廓与测量；
+  - 大图依然是 HTML/SVG 渲染，非位图。
+- UI/文案修正：
+  - 指南页 Markdown 行内语法（粗体/斜体/代码）按语义元素渲染；
+  - 内部实现页文案去引号并重写；
+  - 首页模型轮播并入主标题，节奏调整为 5 秒/次；
+  - 顶部 Tab 与首页 logo 遮挡问题已修复；
+  - 二维码文案更新为“扫码获取更详细的 AI 解读”。
+
+#### 验证结果
+- 前端测试：`npm test` 全量通过（85 passed）。
+- 前端构建：`npm run build` 通过。
+- 后端语法：`python -m py_compile server/routes.py server/models.py` 通过。
+- 后端测试：`pytest tests/test_api.py` 通过（23 passed）。
+
+#### 下一步（按本计划继续）
+1. 继续优化前端分包（若仍有 chunk 告警，拆分首屏逻辑与检测逻辑）。
+2. 评估 `/api/analysis/l2` 在 AI 失败时的后端回退策略（当前依赖 `generate_deep_analysis` 的失败文案兜底）。
+3. 清理仓库中与当前任务无关的历史改动（待确认来源后再处理）。
