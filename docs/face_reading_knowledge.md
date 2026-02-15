@@ -37,7 +37,7 @@
 - 目标：让用户明显感知“比现场更深入、更有证据链”
 
 ### L3 邮件深度版（订阅后）
-- 模型：`DeepSeek + Grok + Gemini` 三模型并行
+- 模型：`Gemini 3 Flash + DeepSeek + Kimi K2.5` 三模型并行
 - 字数：每模型 500-800 字，外加 1 段聚合总结
 - 结构：模型独立报告 + 共识/分歧对照 + 可执行建议清单
 - 输入：统一事实包（landmarks+measurements+image context）
@@ -184,7 +184,7 @@
 - 语言避免恐吓，保持鼓励和建设性
 ```
 
-### 5.3 L3 邮件三模型 Prompt（DeepSeek / Grok / Gemini）
+### 5.3 L3 邮件三模型 Prompt（Gemini 3 Flash / DeepSeek / Kimi K2.5）
 
 统一输入包，分别调用三模型，并要求输出统一结构：
 
@@ -210,12 +210,12 @@
 - `扫码获取 Gemini 3 Flash 详细解读`
 
 分享页邮箱 CTA：
-- `留邮箱查看 DeepSeek、Grok、Gemini 三模型完整解读`
+- `留邮箱查看 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型完整解读`
 
 品牌/副标题滚动文案（动态轮播）：
-- `Gemini AI · 深度结构化解读`
-- `Grok AI · 直觉风格补充分析`
-- `DeepSeek AI · 逻辑链路推断`
+- `Gemini 3 Flash · 深度结构化解读`
+- `DeepSeek · 逻辑链路推断`
+- `Kimi K2.5 · 长上下文补充分析`
 
 ---
 

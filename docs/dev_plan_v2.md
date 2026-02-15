@@ -1,4 +1,4 @@
-# 面相系统升级 PRD + RFC（评审稿）
+# 面相系统升级开发计划 v2（PRD + RFC）
 
 本文档覆盖三个升级方向：
 1) 隐私化可视化（仅关键点轮廓 + 保留测量）；
@@ -26,14 +26,14 @@
 #### Layer 2：扫码详版（拉开信息差）
 - 输入：同一份结构化事实包
 - 输出：Gemini 3 Flash 详细报告 + 交叉验证说明
-- CTA：`输入邮箱查看 DeepSeek、Grok、Gemini 三模型完整解读`
+- CTA：`输入邮箱查看 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型完整解读`
 
 #### Layer 3：邮箱深度版（价值交付）
 - 输入：share_id 关联事实包 + 三模型并行推理
 - 输出：三份独立报告 + 聚合共识/分歧摘要（邮件送达）
 
 ### 3. 文案与品牌展示
-- CTA 一次性明确三模型全名：DeepSeek、Grok、Gemini；
+- CTA 一次性明确三模型全名：Gemini 3 Flash、DeepSeek、Kimi K2.5；
 - App 名称区域可做动态轮播（一次显示一个模型，循环切换）；
 - 视觉层“主标题简洁、模型名动态”，避免信息噪音。
 
@@ -42,6 +42,30 @@
 - 邮箱提交率（L2→L3）
 - 结果页平均停留时长
 - 用户对“专业度/可信度”的主观评分
+
+### 5. 信息架构升级（三 Tab）
+
+Tab 1：`相面`
+- 保持现有主流程：拍照 -> 测量 -> 可视化 -> 解读。
+- 承载 L1/L2/L3 分层能力，不改主交互节奏。
+
+Tab 2：`相面学指南`
+- 目标：展示系统性知识，强化“可学习、可验证”的专业感。
+- 内容源：`docs/Face_Reading_Mastery.md`。
+- 版式：
+  - 左栏：章节索引（目录树，可折叠，支持当前章节高亮）；
+  - 右栏：Markdown 正文渲染区（点击索引后滚动/跳转到对应章节锚点）。
+- 交互：
+  - 支持锚点 URL（可直接分享某章）；
+  - 移动端降级为顶部章节下拉 + 正文单栏。
+
+Tab 3：`内部实现`
+- 目标：展示项目来源与实现透明度。
+- 内容卡片：
+  - 本项目基于 AI Builder Space 构建：`https://space.ai-builders.com/`
+  - 开源代码：`https://github.com/grapeot/FortuneTeller.git`
+  - 学习路径：想了解如何在三小时内构建完整 app，欢迎参与课程：`https://ai-builders.com/`
+- 当前先放链接版，不单独新增 demo 页。
 
 ---
 
@@ -58,7 +82,7 @@
 Capture -> Landmark Detection -> Measurement Engine -> Fact Bundle
                                               |-> L1 Prompt (Grok)
                                               |-> L2 Prompt (Gemini 3 Flash)
-                                              |-> L3 Prompts (DeepSeek/Grok/Gemini)
+                                              |-> L3 Prompts (Gemini 3 Flash/DeepSeek/Kimi K2.5)
                                               |-> HTML/SVG Wireframe Renderer
 ```
 
@@ -103,12 +127,21 @@ Capture -> Landmark Detection -> Measurement Engine -> Fact Bundle
 ### 6. Prompt 编排与调用策略
 
 建议把 prompt 模板拆为：
-- `prompt_common_evidence.txt`（证据规则、风格约束）
-- `prompt_l1_grok.txt`
-- `prompt_l2_gemini_flash.txt`
-- `prompt_l3_deepseek.txt` / `prompt_l3_grok.txt` / `prompt_l3_gemini.txt`
+- `server/prompt_templates/parts/evidence_contract.txt`
+- `server/prompt_templates/parts/face_reading_guideline.txt`
+- `server/prompt_templates/system_prompt.j2`（L1/L2）
+- `server/prompt_templates/deep_analysis_prompt.j2`（L3）
 
-并统一注入：
+新版注入顺序（强约束）：
+1. `face_reading_guideline.txt`（固定长前缀，约 2k-3k 字）
+2. `evidence_contract.txt`
+3. 任务层模板（L1/L2/L3 的输出格式与角色约束）
+
+说明：
+- `face_reading_guideline.txt` 必须放在 system prompt 最前面，保持跨请求前缀稳定，便于利用 prompt caching；
+- 业务上下文（`fact_bundle`、`measurement_summary`、`uncertainty_flags`）放在后部，避免破坏稳定前缀。
+
+运行时统一注入：
 - `fact_bundle`
 - `measurement_summary`
 - `uncertainty_flags`
@@ -129,6 +162,9 @@ Capture -> Landmark Detection -> Measurement Engine -> Fact Bundle
 - `SharePage.jsx`：默认展示 L2 详版 + 邮箱 CTA 指向三模型；
 - 新增 `VisualizationCanvas/Svg` 组件：直接渲染 `visualization_data`；
 - App 标题区域加入模型名轮播动效。
+- 新增 `AppTabs` 容器：`相面 / 相面学指南 / 内部实现` 三 Tab。
+- 新增 `FaceReadingGuidePage`：双栏导航 + Markdown 渲染 + 章节锚点联动。
+- 新增 `InsidePage`：项目来源、开源地址、课程入口链接。
 
 ### 9. 分阶段实施计划
 
@@ -152,6 +188,53 @@ Phase D（评估与调参）
 - 发际线误差：短期“估计+标注”，中期接入分割；
 - 模型风格漂移：通过固定输出 schema 与证据约束抑制；
 - 前端性能：SVG 节点数控制在可见轮廓，避免全网格渲染。
+
+### 11. Test Plan（新增）
+
+单元测试（Python）：
+- `tools/visualize_face.py`
+  - `measure()`：
+    - 三停比例总和恒等于 100；
+    - 田宅宫字段包含 `相对眼宽倍数`、`占脸高`、`判断`；
+    - 横向三宽字段包含额颞/中面/下颌三值；
+  - `draw_contours()`：
+    - 仅绘制语义分组路径（左眼、右眼、眉、鼻、唇、脸轮廓），无跨区域连线。
+- `server/prompts.py`
+  - Jinja 渲染成功（`SYSTEM_PROMPT`、`DEEP_ANALYSIS_PROMPT` 非空）；
+  - 渲染结果必须包含 `Evidence Contract` 与 `Face Reading Guideline` 片段。
+
+接口测试（FastAPI）：
+- `/api/fortune`：
+  - 输入 measurements 时，返回结构仍为 `{gemini: null, grok: ...}`；
+  - JSON 结构完整（face/career/blessing）。
+- `/api/share` & `/api/share/{id}`：
+  - 能正确保存并读取扩展后的 measurements 文本；
+  - 分享页数据兼容旧字段（回归）。
+
+前端集成测试（Vitest/RTL）：
+- `ResultOverlay`：二维码 CTA 文案与当前模型策略一致；
+- `SharePage`：邮箱 CTA 展示三模型名称（Gemini 3 Flash、DeepSeek、Kimi K2.5）；
+- 可视化组件（后续接入 HTML/SVG 后）：输入 landmarks 能稳定渲染，不依赖位图。
+- `AppTabs`：
+  - 默认落在 Tab1（相面）；
+  - 点击 Tab2/Tab3 正常切换且 URL 状态可追踪。
+- `FaceReadingGuidePage`：
+  - 左侧目录点击后，右侧滚动到正确章节；
+  - 首屏可正确渲染 `Face_Reading_Mastery.md` 目录和正文。
+- `InsidePage`：
+  - 三个外部链接可见且 URL 正确。
+
+视觉回归与人工验收：
+- 基准样例：`test-assets/test-face-1-visualized-privacy.jpg`；
+- 检查项：
+  - 无真实人脸像素；
+  - 左右眼、左右眉、鼻、唇互不错误串线；
+  - 田宅宫显示为“x眼宽”而非误导性百分比。
+
+上线前 smoke checklist：
+- Prompt 模板文件存在且可加载；
+- 三模型配置与文档一致（Gemini 3 Flash / DeepSeek / Kimi K2.5）；
+- 核心页面加载时间与结果返回时间无明显回退。
 
 ---
 
