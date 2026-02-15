@@ -31,10 +31,8 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
         initial={undefined}
         animate={
           hasFace
-            ? { opacity: 0, scale: 0.92, y: 30 }
-            : isReady
-              ? { opacity: 1, scale: 0.9, x: '34vw', y: '28vh' }
-              : { opacity: 1, scale: 1, x: 0, y: 0 }
+            ? { opacity: 1, scale: 0.9, x: '34vw', y: '28vh' }
+            : { opacity: 1, scale: 1, x: 0, y: 0 }
         }
         transition={{ duration: 0.45, ease: 'easeInOut' }}
         className="text-center flex flex-col items-center mt-14 sm:mt-16 md:mt-20"
