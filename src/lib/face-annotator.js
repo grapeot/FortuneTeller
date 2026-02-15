@@ -99,7 +99,7 @@ const LM = {
  * @param {object} [options]
  * @param {number} [options.maxWidth=640]
  * @param {number} [options.quality=0.85]
- * @returns {Promise<{originalDataUrl, annotatedDataUrl, measurements}|null>}
+ * @returns {Promise<{originalDataUrl, annotatedDataUrl, measurements, visualizationData}|null>}
  */
 export async function captureAndAnnotate(videoEl, options = {}) {
   const { maxWidth = 640, quality = 0.85 } = options
@@ -140,14 +140,16 @@ export async function captureAndAnnotate(videoEl, options = {}) {
   // Create annotated image + measurements
   let annotatedDataUrl = null
   let measurements = null
+  let visualizationData = null
 
   if (landmarks) {
     const annotatedCanvas = drawAnnotations(rawCanvas, landmarks, cw, ch)
     annotatedDataUrl = annotatedCanvas.toDataURL('image/jpeg', quality)
     measurements = calculateMeasurements(landmarks, cw, ch)
+    visualizationData = buildVisualizationData(landmarks, measurements)
   }
 
-  return { originalDataUrl, annotatedDataUrl, measurements }
+  return { originalDataUrl, annotatedDataUrl, measurements, visualizationData }
 }
 
 // ── Face wireframe landmark sequences ─────────────────────────────────────
@@ -161,6 +163,33 @@ const UPPER_LIP = [61,185,40,39,37,0,267,269,270,409,291]
 const LOWER_LIP = [61,146,91,181,84,17,314,405,321,375,291]
 const NOSE_BRIDGE = [6,197,195,5,4,1]
 const NOSE_BOTTOM = [48,4,278]
+
+const CONTOUR_INDICES = {
+  face_oval: FACE_OVAL,
+  left_brow: LEFT_BROW,
+  right_brow: RIGHT_BROW,
+  left_eye: LEFT_EYE,
+  right_eye: RIGHT_EYE,
+  nose_bridge: NOSE_BRIDGE,
+  nose_wings: [48, 115, 220, 45, 4, 275, 440, 344, 278],
+  upper_lip: UPPER_LIP,
+  lower_lip: LOWER_LIP,
+}
+
+function buildVisualizationData(landmarks, measurements) {
+  const points = landmarks.map((lm) => [
+    Math.round(lm.x * 10000) / 10000,
+    Math.round(lm.y * 10000) / 10000,
+  ])
+
+  return {
+    landmarks: points,
+    contour_indices: CONTOUR_INDICES,
+    measurements,
+    version: 'v2',
+    generated_at: new Date().toISOString(),
+  }
+}
 
 // ── Annotation drawing ────────────────────────────────────────────────────
 

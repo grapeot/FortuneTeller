@@ -22,6 +22,7 @@ class ShareRequest(BaseModel):
     """Request body for /api/share."""
 
     pixelated_image: str | None = None
+    visualization_data: dict | None = None
     fortunes: dict | None = None
     fortune: dict | None = None  # legacy single-model format
 

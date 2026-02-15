@@ -33,6 +33,10 @@
   - 扫码详版（Gemini 3 Flash，异步拉取）
   - 邮箱三模型（Gemini 3 Flash / DeepSeek / Kimi K2.5）
 - `ResultOverlay` 二维码提示文案已更新为“扫码获取 Gemini 3 Flash 详细解读”。
+- 分享链路已支持结构化可视化存储：
+  - `captureAndAnnotate` 返回 `visualizationData`（landmarks + contour_indices + measurements）；
+  - `/api/share` 持久化 `visualization_data`；
+  - `SharePage` 增加 `LandmarkVisualization`（SVG HTML 渲染），不依赖位图展示轮廓。
 
 ### 验证结果
 - 前端测试：`npm test` 全量通过（80 tests）。

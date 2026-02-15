@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import FortuneCard from './FortuneCard'
+import LandmarkVisualization from './LandmarkVisualization'
 
 /**
  * SharePage - displays a shared Grok fortune result.
@@ -120,17 +121,25 @@ export default function SharePage({ shareId }) {
         <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
 
         {/* Pixelated avatar */}
-        {data?.pixelated_image && (
-          <div className="flex flex-col items-center gap-1">
-            <div className="p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
-              <img
-                src={data.pixelated_image}
-                alt="像素画像"
-                className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg"
-                style={{ imageRendering: 'pixelated' }}
-              />
-            </div>
-            <span className="text-xs text-yellow-400/50 font-serif-cn">像素画像</span>
+        {(data?.pixelated_image || data?.visualization_data) && (
+          <div className="flex flex-wrap items-end justify-center gap-4">
+            {data?.pixelated_image && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
+                  <img
+                    src={data.pixelated_image}
+                    alt="像素画像"
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </div>
+                <span className="text-xs text-yellow-400/50 font-serif-cn">像素画像</span>
+              </div>
+            )}
+
+            {data?.visualization_data && (
+              <LandmarkVisualization visualizationData={data.visualization_data} />
+            )}
           </div>
         )}
 

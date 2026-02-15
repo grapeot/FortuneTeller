@@ -10,6 +10,7 @@ import FortuneCard from './FortuneCard'
 export default function ResultOverlay({
   fortunes,  // { gemini: null, grok: {...} }
   pixelatedImage,
+  visualizationData,
   onDismiss,
 }) {
   const [shareQr, setShareQr] = useState(null)
@@ -27,10 +28,11 @@ export default function ResultOverlay({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            pixelated_image: pixelatedImage || null,
-            fortunes: {
-              gemini: null,
-              grok: fortunes.grok ? { face: fortunes.grok.face, career: fortunes.grok.career, blessing: fortunes.grok.blessing } : null,
+              pixelated_image: pixelatedImage || null,
+              visualization_data: visualizationData || null,
+              fortunes: {
+                gemini: null,
+                grok: fortunes.grok ? { face: fortunes.grok.face, career: fortunes.grok.career, blessing: fortunes.grok.blessing } : null,
             },
           }),
         })

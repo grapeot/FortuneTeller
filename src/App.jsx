@@ -40,6 +40,7 @@ export default function App() {
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [fortunes, setFortunes] = useState(null) // { gemini: null, grok: {...} }
   const [pixelatedImage, setPixelatedImage] = useState(null)
+  const [visualizationData, setVisualizationData] = useState(null)
   const [activeTab, setActiveTab] = useState(getInitialTab)
 
   // Face detection is active only during IDLE phase
@@ -68,6 +69,7 @@ export default function App() {
     setPhase(PHASE.IDLE)
     setFortunes(null)
     setPixelatedImage(null)
+    setVisualizationData(null)
   }, [activeTab])
 
   // Dismiss result and return to idle
@@ -76,6 +78,7 @@ export default function App() {
     setPhase(PHASE.IDLE)
     setFortunes(null)
     setPixelatedImage(null)
+    setVisualizationData(null)
   }, [phase])
 
   // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
@@ -96,6 +99,7 @@ export default function App() {
       
       const originalImage = captureResult.originalDataUrl || null
       const measurements = captureResult.measurements || null
+      const vizData = captureResult.visualizationData || null
 
       setPhase(PHASE.ANALYZING)
 
@@ -118,6 +122,7 @@ export default function App() {
       ])
 
       setPixelatedImage(pixelated)
+      setVisualizationData(vizData)
       setFortunes(multiModelFortunes) // { gemini: {...}, grok: {...} }
       setPhase(PHASE.RESULT)
     } catch (err) {
@@ -187,6 +192,7 @@ export default function App() {
                 key="result"
                 fortunes={fortunes}
                 pixelatedImage={pixelatedImage}
+                visualizationData={visualizationData}
                 onDismiss={dismissResult}
               />
             )}

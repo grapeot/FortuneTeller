@@ -128,6 +128,7 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
 
     doc = {
         "pixelated_image": req.pixelated_image,
+        "visualization_data": req.visualization_data,
         "fortunes": fortunes_data,
     }
 
@@ -168,6 +169,7 @@ async def get_share(share_id: str):
 
     return {
         "pixelated_image": data.get("pixelated_image"),
+        "visualization_data": data.get("visualization_data"),
         "fortunes": fortunes,
     }
 
