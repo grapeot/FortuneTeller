@@ -17,20 +17,26 @@ def build_user_content(req: FortuneRequest | None) -> list:
     has_image = req and req.image
 
     if has_image:
-        user_content.append({
-            "type": "image_url",
-            "image_url": {"url": req.image},
-        })
+        user_content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": req.image},
+            }
+        )
         measure_text = f"\n\n{req.measurements}" if req.measurements else ""
-        user_content.append({
-            "type": "text",
-            "text": f"请仔细观察这位贵客的面相。{measure_text}\n\n请根据你的面相学知识和实际观察给出具体的论断。",
-        })
+        user_content.append(
+            {
+                "type": "text",
+                "text": f"请仔细观察这位贵客的面相。{measure_text}\n\n请根据你的面相学知识和实际观察给出具体的论断。",
+            }
+        )
     else:
-        user_content.append({
-            "type": "text",
-            "text": "请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）",
-        })
+        user_content.append(
+            {
+                "type": "text",
+                "text": "请给这位贵客相个面。（无法获取面部图像，请基于随机面相特征生成具体论断）",
+            }
+        )
     return user_content
 
 
@@ -50,14 +56,19 @@ async def call_model(model_name: str, model_id: str, user_content: list) -> dict
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": user_content},
                     ],
-                    "temperature": 1.0,
+                    "temperature": 0.6,
                     "max_tokens": 1200,
                 },
             )
             resp.raise_for_status()
 
         data = resp.json()
-        text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+        text = (
+            (data.get("choices") or [{}])[0]
+            .get("message", {})
+            .get("content", "")
+            .strip()
+        )
         if not text:
             print(f"⚠ {model_name}: empty response")
             return None
@@ -94,7 +105,9 @@ def _build_deep_context(fortunes: dict) -> str:
     return "（无前次分析结果）"
 
 
-async def _call_deep_model(display_name: str, model_id: str, user_msg: str) -> tuple[str, str | None]:
+async def _call_deep_model(
+    display_name: str, model_id: str, user_msg: str
+) -> tuple[str, str | None]:
     """Call one model for deep analysis. Returns (display_name, text_or_None)."""
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -117,7 +130,12 @@ async def _call_deep_model(display_name: str, model_id: str, user_msg: str) -> t
             resp.raise_for_status()
 
         data = resp.json()
-        text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+        text = (
+            (data.get("choices") or [{}])[0]
+            .get("message", {})
+            .get("content", "")
+            .strip()
+        )
         if text:
             return (display_name, text)
         print(f"⚠ Deep analysis {display_name}: empty response")
