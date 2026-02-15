@@ -206,6 +206,16 @@ export function buildVisualizationData(landmarks, measurements) {
   const boxW = Math.max(1e-5, maxX - minX)
   const boxH = Math.max(1e-5, maxY - minY)
 
+  // Device-stable display aspect from key facial structures
+  const templeW = Math.abs(landmarks[LM.leftTemple].x - landmarks[LM.rightTemple].x)
+  const cheekW = Math.abs(landmarks[LM.leftCheekbone].x - landmarks[LM.rightCheekbone].x)
+  const jawW = Math.abs(landmarks[LM.leftJaw].x - landmarks[LM.rightJaw].x)
+  const browY = (landmarks[LM.leftBrowPeak].y + landmarks[LM.rightBrowPeak].y) / 2
+  const chinY = landmarks[LM.chin].y
+  const faceH = Math.max(1e-5, chinY - browY)
+  const stableWidth = cheekW * 0.5 + jawW * 0.3 + templeW * 0.2
+  const stableAspect = Math.min(0.9, Math.max(0.6, stableWidth / faceH))
+
   const points = rawPoints.map(([x, y]) => [
     Math.round(((x - minX) / boxW) * 10000) / 10000,
     Math.round(((y - minY) / boxH) * 10000) / 10000,
@@ -215,7 +225,8 @@ export function buildVisualizationData(landmarks, measurements) {
     landmarks: points,
     contour_indices: CONTOUR_INDICES,
     measurements,
-    aspect_ratio: Math.round((boxW / boxH) * 10000) / 10000,
+    aspect_ratio: Math.round(stableAspect * 10000) / 10000,
+    raw_aspect_ratio: Math.round((boxW / boxH) * 10000) / 10000,
     face_bbox_norm: {
       min_x: Math.round(minX * 10000) / 10000,
       max_x: Math.round(maxX * 10000) / 10000,

@@ -78,9 +78,9 @@ describe('buildVisualizationData', () => {
     const landmarks = makeSyntheticFaceLandmarks()
     const visualization = buildVisualizationData(landmarks, { three_parts: [0.33, 0.34, 0.33] })
 
-    expect(visualization.aspect_ratio).toBeGreaterThan(0.55)
-    expect(visualization.aspect_ratio).toBeLessThan(0.85)
-    expect(visualization.aspect_ratio).toBeCloseTo(2 / 3, 1)
+    expect(visualization.aspect_ratio).toBeGreaterThanOrEqual(0.6)
+    expect(visualization.aspect_ratio).toBeLessThanOrEqual(0.9)
+    expect(visualization.raw_aspect_ratio).toBeCloseTo(2 / 3, 1)
   })
 
   it('normalizes points into [0,1] range and preserves spread', () => {

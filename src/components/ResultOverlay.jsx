@@ -183,7 +183,7 @@ export default function ResultOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.4 }}
         transition={{ delay: 1.5 }}
-        className="absolute bottom-4 text-xs text-gray-600 font-serif-cn"
+        className="mt-1 pb-2 text-xs text-gray-600 font-serif-cn shrink-0"
       >
         Superlinear Academy · 马年大吉
       </motion.p>

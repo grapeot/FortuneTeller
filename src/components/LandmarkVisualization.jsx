@@ -37,6 +37,9 @@ const KEY_LM = {
   rightEyeTop: 386,
 }
 
+const ANNO_TEXT_SIZE = 28
+const ANNO_STROKE = 2
+
 function getPoint(points, idx) {
   const p = points[idx]
   if (!p) return null
@@ -163,14 +166,14 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
                 x2={svgWidth * 0.92}
                 y1={y}
                 y2={y}
-                stroke="rgba(255,215,0,0.35)"
-                strokeWidth="1"
+              stroke="rgba(255,215,0,0.35)"
+                strokeWidth="1.3"
                 strokeDasharray="8 6"
               />
             ))}
-            <text x={svgWidth * 0.93} y={(forehead.y + browY) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">上庭{upperPct !== null ? ` ${upperPct}%` : ''}</text>
-            <text x={svgWidth * 0.93} y={(browY + noseBottom.y) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">中庭{middlePct !== null ? ` ${middlePct}%` : ''}</text>
-            <text x={svgWidth * 0.93} y={(noseBottom.y + chin.y) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">下庭{lowerPct !== null ? ` ${lowerPct}%` : ''}</text>
+            <text x={svgWidth * 0.93} y={(forehead.y + browY) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>上庭{upperPct !== null ? ` ${upperPct}%` : ''}</text>
+            <text x={svgWidth * 0.93} y={(browY + noseBottom.y) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>中庭{middlePct !== null ? ` ${middlePct}%` : ''}</text>
+            <text x={svgWidth * 0.93} y={(noseBottom.y + chin.y) / 2} fill="rgba(255,215,0,0.9)" fontSize={ANNO_TEXT_SIZE}>下庭{lowerPct !== null ? ` ${lowerPct}%` : ''}</text>
           </g>
         )}
 
@@ -183,7 +186,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x2={rightBrowInner.x}
               y2={Math.min(leftBrowInner.y, rightBrowInner.y) - 26}
               stroke="rgba(255,215,0,0.85)"
-              strokeWidth="1.5"
+              strokeWidth={ANNO_STROKE}
               markerStart="url(#dim-arrow)"
               markerEnd="url(#dim-arrow)"
             />
@@ -191,7 +194,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x={(leftBrowInner.x + rightBrowInner.x) / 2 - 40}
               y={Math.min(leftBrowInner.y, rightBrowInner.y) - 34}
               fill="rgba(255,215,0,0.9)"
-              fontSize="20"
+              fontSize={ANNO_TEXT_SIZE}
             >
               印堂
             </text>
@@ -207,7 +210,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x2={rightNoseWing.x}
               y2={Math.max(leftNoseWing.y, rightNoseWing.y) + 22}
               stroke="rgba(255,215,0,0.85)"
-              strokeWidth="1.5"
+              strokeWidth={ANNO_STROKE}
               markerStart="url(#dim-arrow)"
               markerEnd="url(#dim-arrow)"
             />
@@ -215,7 +218,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x={(leftNoseWing.x + rightNoseWing.x) / 2 - 40}
               y={Math.max(leftNoseWing.y, rightNoseWing.y) + 44}
               fill="rgba(255,215,0,0.9)"
-              fontSize="20"
+              fontSize={ANNO_TEXT_SIZE}
             >
               鼻翼
             </text>
@@ -231,7 +234,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x2={leftEyeTop.x - 18}
               y2={leftEyeTop.y}
               stroke="rgba(255,215,0,0.85)"
-              strokeWidth="1.5"
+              strokeWidth={ANNO_STROKE}
               markerStart="url(#dim-arrow)"
               markerEnd="url(#dim-arrow)"
             />
@@ -241,7 +244,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x2={rightEyeTop.x + 18}
               y2={rightEyeTop.y}
               stroke="rgba(255,215,0,0.85)"
-              strokeWidth="1.5"
+              strokeWidth={ANNO_STROKE}
               markerStart="url(#dim-arrow)"
               markerEnd="url(#dim-arrow)"
             />
@@ -249,7 +252,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               x={(leftEyeTop.x + rightEyeTop.x) / 2 - 44}
               y={Math.min(leftBrowPeak.y, rightBrowPeak.y) - 18}
               fill="rgba(255,215,0,0.9)"
-              fontSize="20"
+              fontSize={ANNO_TEXT_SIZE}
             >
               田宅宫
             </text>
