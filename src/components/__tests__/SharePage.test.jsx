@@ -16,6 +16,7 @@ vi.mock('framer-motion', () => ({
 
 const mockShareData = {
   pixelated_image: 'data:image/png;base64,px123',
+  visualization_data: null,
   fortunes: {
     gemini: null,
     grok: {
@@ -69,6 +70,27 @@ describe('SharePage', () => {
       const img = screen.getByAltText('像素画像')
       expect(img).toBeInTheDocument()
       expect(img.src).toBe(mockShareData.pixelated_image)
+    })
+  })
+
+  it('renders privacy landmark visualization when visualization_data exists', async () => {
+    const withViz = {
+      ...mockShareData,
+      visualization_data: {
+        landmarks: Array.from({ length: 478 }, (_, i) => [0.5 + (i % 10) * 0.001, 0.4 + (i % 7) * 0.001]),
+        contour_indices: { face_oval: [10, 338, 297, 332, 284] },
+      },
+    }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => withViz,
+    })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('隐私轮廓图（HTML/SVG 渲染）')).toBeInTheDocument()
     })
   })
 
