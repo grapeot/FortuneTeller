@@ -120,16 +120,14 @@ describe('SharePage', () => {
     render(<SharePage shareId="test123" />)
 
     await waitFor(() => {
-      expect(screen.getAllByText('点击查看大图')).toHaveLength(3)
+      expect(screen.getAllByText('点击查看大图')).toHaveLength(1)
     })
 
-    fireEvent.click(screen.getByRole('button', { name: '现场速览 查看面相轮廓大图' }))
+    fireEvent.click(screen.getByRole('button', { name: '查看面相轮廓大图' }))
 
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: '面相轮廓图大图' })).toBeInTheDocument()
     })
-
-    expect(screen.getByText('该图为前端 HTML/SVG 渲染，不是位图文件。')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '关闭' }))
     await waitFor(() => {
@@ -147,8 +145,28 @@ describe('SharePage', () => {
       expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
     })
     expect(screen.getByPlaceholderText('姓名/昵称（选填）')).toBeInTheDocument()
-    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('留邮箱查看 Gemini 3 Flash'))).toBeInTheDocument()
+    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('留下邮箱查看 Gemini 3 Flash'))).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /留邮箱获取三模型完整解读/ })).toBeInTheDocument()
+  })
+
+  it('renders Gemini analysis title and markdown sections', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockShareData,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ analysis: '## 证据摘要\n- 第一条\n- 第二条' }),
+      })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Gemini 3 分析')).toBeInTheDocument()
+      expect(screen.getByText('证据摘要')).toBeInTheDocument()
+      expect(screen.getByText(/第一条/)).toBeInTheDocument()
+    })
   })
 
   it('submits the subscription form and shows success', async () => {

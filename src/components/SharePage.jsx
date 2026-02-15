@@ -2,6 +2,42 @@ import { useState, useEffect } from 'react'
 import FortuneCard from './FortuneCard'
 import LandmarkVisualization from './LandmarkVisualization'
 
+function renderInlineMarkdown(text) {
+  const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+  return tokens.map((token, idx) => {
+    if (!token) return null
+    if (token.startsWith('**') && token.endsWith('**')) {
+      return <strong key={idx} className="text-yellow-100 font-semibold">{token.slice(2, -2)}</strong>
+    }
+    if (token.startsWith('`') && token.endsWith('`')) {
+      return <code key={idx} className="px-1 py-0.5 rounded bg-black/35 text-yellow-200 text-xs">{token.slice(1, -1)}</code>
+    }
+    return <span key={idx}>{token}</span>
+  })
+}
+
+function renderMarkdownBlock(markdown) {
+  if (!markdown) return null
+  const lines = markdown.split('\n')
+  return lines.map((line, idx) => {
+    const trimmed = line.trim()
+    if (!trimmed) return <div key={idx} className="h-2" />
+    if (trimmed.startsWith('### ')) {
+      return <h4 key={idx} className="text-yellow-200 text-base font-serif-cn mt-2">{renderInlineMarkdown(trimmed.slice(4))}</h4>
+    }
+    if (trimmed.startsWith('## ')) {
+      return <h3 key={idx} className="text-yellow-200 text-lg font-serif-cn mt-3">{renderInlineMarkdown(trimmed.slice(3))}</h3>
+    }
+    if (/^\d+\.\s+/.test(trimmed)) {
+      return <p key={idx} className="text-yellow-100/85 text-sm leading-7">{renderInlineMarkdown(trimmed)}</p>
+    }
+    if (trimmed.startsWith('- ')) {
+      return <p key={idx} className="text-yellow-100/85 text-sm leading-7">• {renderInlineMarkdown(trimmed.slice(2))}</p>
+    }
+    return <p key={idx} className="text-yellow-100/85 text-sm leading-7">{renderInlineMarkdown(trimmed)}</p>
+  })
+}
+
 /**
  * SharePage - displays a shared Grok fortune result.
  * Accessed via /share/{id} URL.
@@ -121,23 +157,6 @@ export default function SharePage({ shareId }) {
     setVizModalLayer('')
   }
 
-  const renderVizCard = (layerLabel) => {
-    if (!hasVisualization) return null
-    return (
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => openVizModal(layerLabel)}
-          className="w-full max-w-sm text-left cursor-pointer"
-          aria-label={`${layerLabel} 查看面相轮廓大图`}
-        >
-          <LandmarkVisualization visualizationData={data.visualization_data} />
-          <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
       <div className="flex flex-col items-center w-full max-w-3xl gap-5 py-8">
@@ -168,7 +187,15 @@ export default function SharePage({ shareId }) {
             )}
 
             {hasVisualization && (
-              <LandmarkVisualization visualizationData={data.visualization_data} />
+              <button
+                type="button"
+                onClick={() => openVizModal('面相特征检测结果')}
+                className="w-full max-w-sm text-left cursor-pointer"
+                aria-label="查看面相轮廓大图"
+              >
+                <LandmarkVisualization visualizationData={data.visualization_data} />
+                <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
+              </button>
             )}
           </div>
         )}
@@ -178,7 +205,6 @@ export default function SharePage({ shareId }) {
           <div className="w-full">
             <h2 className="font-serif-cn text-yellow-300 text-base mb-2 text-center">现场速览（Grok）</h2>
             <FortuneCard fortune={activeFortune} />
-            {renderVizCard('现场速览')}
           </div>
         ) : (
           <p className="font-serif-cn text-gray-400 text-center">该模型暂无结果</p>
@@ -186,17 +212,16 @@ export default function SharePage({ shareId }) {
 
         {/* Layer 2 detailed analysis */}
         <div className="w-full max-w-3xl mt-2 rounded-xl border border-yellow-400/15 bg-white/5 p-4 sm:p-5">
-          <h2 className="font-serif-cn text-yellow-300 text-lg">扫码详版（Gemini 3 Flash）</h2>
+          <h2 className="font-serif-cn text-yellow-300 text-lg">Gemini 3 分析</h2>
           {l2Status === 'loading' && (
             <p className="mt-2 text-yellow-100/70 text-sm animate-pulse">正在生成详细解读...</p>
           )}
           {l2Status === 'ready' && l2Analysis && (
-            <div className="mt-2 text-yellow-100/85 text-sm leading-7 whitespace-pre-wrap">{l2Analysis}</div>
+            <div className="mt-2">{renderMarkdownBlock(l2Analysis)}</div>
           )}
           {l2Status === 'error' && (
             <p className="mt-2 text-yellow-100/60 text-sm">详细解读生成暂时失败，请稍后刷新重试。</p>
           )}
-          {renderVizCard('扫码详版')}
         </div>
 
         {/* Decorative divider before form */}
@@ -212,15 +237,14 @@ export default function SharePage({ shareId }) {
               <p className="font-serif-cn text-yellow-100/60 text-sm mt-2">
                 与此同时，您也会收到社区学员分享的项目更新。
               </p>
-              {renderVizCard('邮箱三模型')}
             </div>
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
-              <h3 className="font-calligraphy text-xl text-yellow-400/90 tracking-wide">
-                留邮箱查看 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型完整解读
+              <h3 className="font-serif-cn text-lg text-yellow-300/95 tracking-wide text-center leading-7">
+                留下邮箱查看 <span className="font-en">Gemini 3 Flash</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi K2.5</span> 三模型完整解读
               </h3>
               <p className="text-sm text-yellow-100/70 font-serif-cn text-center leading-relaxed px-1">
-                扫码版是 Gemini 3 Flash 详解；留邮箱后将收到 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型并行解读，并附共识与分歧视角，帮助你更全面理解结果。
+                留下邮箱后将收到三模型并行解读，并附共识与分歧视角，帮助你更全面理解结果。
               </p>
               <input
                 type="email"
@@ -250,7 +274,6 @@ export default function SharePage({ shareId }) {
               <p className="text-xs text-gray-500/70 font-serif-cn text-center leading-relaxed px-2">
                 同时加入 <span className="font-en">Superlinear AI</span> 社区，免费获取前沿 <span className="font-en">AI</span> 资讯和实战干货。
               </p>
-              {renderVizCard('邮箱三模型')}
             </form>
           )}
         </div>
@@ -292,7 +315,6 @@ export default function SharePage({ shareId }) {
               </button>
             </div>
             <LandmarkVisualization visualizationData={data.visualization_data} />
-            <p className="mt-2 text-xs text-yellow-100/60 font-serif-cn">该图为前端 HTML/SVG 渲染，不是位图文件。</p>
           </div>
         </div>
       )}
