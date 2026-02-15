@@ -23,6 +23,20 @@ const MEASUREMENT_LABELS = {
   eye_to_eyebrow_right: '右眉眼距离',
 }
 
+const KEY_LM = {
+  foreheadTop: 10,
+  leftBrowPeak: 105,
+  rightBrowPeak: 334,
+  noseBottom: 2,
+  chin: 152,
+  leftBrowInner: 70,
+  rightBrowInner: 300,
+  leftNoseWing: 48,
+  rightNoseWing: 278,
+  leftEyeTop: 159,
+  rightEyeTop: 386,
+}
+
 function getPoint(points, idx) {
   const p = points[idx]
   if (!p) return null
@@ -40,6 +54,24 @@ function pointsToPath(points, indices, width, height, close = false) {
   if (valid.length < 2) return ''
   const cmd = `M ${valid[0]} L ${valid.slice(1).join(' L ')}`
   return close ? `${cmd} Z` : cmd
+}
+
+function toCanvasPoint(points, idx, width, height) {
+  const p = getPoint(points, idx)
+  if (!p) return null
+  return { x: p[0] * width, y: p[1] * height }
+}
+
+function readThreeParts(measurements) {
+  const m = measurements || {}
+  const cn = m['三停比例']
+  if (cn && typeof cn === 'object') {
+    return [cn['上庭'], cn['中庭'], cn['下庭']].map((v) => (typeof v === 'number' ? v : null))
+  }
+  if (Array.isArray(m.three_parts) && m.three_parts.length >= 3) {
+    return m.three_parts.slice(0, 3).map((v) => (typeof v === 'number' ? Math.round(v * 100) : null))
+  }
+  return [null, null, null]
 }
 
 export function normalizeMeasurementRows(measurements) {
@@ -79,10 +111,31 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
   if (!points || points.length === 0) return null
 
   const measurementRows = normalizeMeasurementRows(measurements)
+  const [upperPct, middlePct, lowerPct] = readThreeParts(measurements)
+
+  const forehead = toCanvasPoint(points, KEY_LM.foreheadTop, svgWidth, svgHeight)
+  const leftBrowPeak = toCanvasPoint(points, KEY_LM.leftBrowPeak, svgWidth, svgHeight)
+  const rightBrowPeak = toCanvasPoint(points, KEY_LM.rightBrowPeak, svgWidth, svgHeight)
+  const browY = leftBrowPeak && rightBrowPeak ? (leftBrowPeak.y + rightBrowPeak.y) / 2 : null
+  const noseBottom = toCanvasPoint(points, KEY_LM.noseBottom, svgWidth, svgHeight)
+  const chin = toCanvasPoint(points, KEY_LM.chin, svgWidth, svgHeight)
+
+  const leftBrowInner = toCanvasPoint(points, KEY_LM.leftBrowInner, svgWidth, svgHeight)
+  const rightBrowInner = toCanvasPoint(points, KEY_LM.rightBrowInner, svgWidth, svgHeight)
+  const leftNoseWing = toCanvasPoint(points, KEY_LM.leftNoseWing, svgWidth, svgHeight)
+  const rightNoseWing = toCanvasPoint(points, KEY_LM.rightNoseWing, svgWidth, svgHeight)
+  const leftEyeTop = toCanvasPoint(points, KEY_LM.leftEyeTop, svgWidth, svgHeight)
+  const rightEyeTop = toCanvasPoint(points, KEY_LM.rightEyeTop, svgWidth, svgHeight)
 
   return (
     <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
       <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
+        <defs>
+          <marker id="dim-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="rgba(255,215,0,0.85)" />
+          </marker>
+        </defs>
+
         {Object.entries(contours).map(([name, indices]) => {
           const close = name.includes('eye') || name.includes('oval')
           const d = pointsToPath(points, indices, svgWidth, svgHeight, close)
@@ -99,6 +152,109 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
             />
           )
         })}
+
+        {/* 三庭工程标注 */}
+        {forehead && browY && noseBottom && chin && (
+          <g>
+            {[forehead.y, browY, noseBottom.y, chin.y].map((y, i) => (
+              <line
+                key={`guide-${i}`}
+                x1={svgWidth * 0.08}
+                x2={svgWidth * 0.92}
+                y1={y}
+                y2={y}
+                stroke="rgba(255,215,0,0.35)"
+                strokeWidth="1"
+                strokeDasharray="8 6"
+              />
+            ))}
+            <text x={svgWidth * 0.93} y={(forehead.y + browY) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">上庭{upperPct !== null ? ` ${upperPct}%` : ''}</text>
+            <text x={svgWidth * 0.93} y={(browY + noseBottom.y) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">中庭{middlePct !== null ? ` ${middlePct}%` : ''}</text>
+            <text x={svgWidth * 0.93} y={(noseBottom.y + chin.y) / 2} fill="rgba(255,215,0,0.85)" fontSize="22">下庭{lowerPct !== null ? ` ${lowerPct}%` : ''}</text>
+          </g>
+        )}
+
+        {/* 印堂宽度 */}
+        {leftBrowInner && rightBrowInner && (
+          <g>
+            <line
+              x1={leftBrowInner.x}
+              y1={Math.min(leftBrowInner.y, rightBrowInner.y) - 26}
+              x2={rightBrowInner.x}
+              y2={Math.min(leftBrowInner.y, rightBrowInner.y) - 26}
+              stroke="rgba(255,215,0,0.85)"
+              strokeWidth="1.5"
+              markerStart="url(#dim-arrow)"
+              markerEnd="url(#dim-arrow)"
+            />
+            <text
+              x={(leftBrowInner.x + rightBrowInner.x) / 2 - 40}
+              y={Math.min(leftBrowInner.y, rightBrowInner.y) - 34}
+              fill="rgba(255,215,0,0.9)"
+              fontSize="20"
+            >
+              印堂
+            </text>
+          </g>
+        )}
+
+        {/* 鼻翼宽度 */}
+        {leftNoseWing && rightNoseWing && (
+          <g>
+            <line
+              x1={leftNoseWing.x}
+              y1={Math.max(leftNoseWing.y, rightNoseWing.y) + 22}
+              x2={rightNoseWing.x}
+              y2={Math.max(leftNoseWing.y, rightNoseWing.y) + 22}
+              stroke="rgba(255,215,0,0.85)"
+              strokeWidth="1.5"
+              markerStart="url(#dim-arrow)"
+              markerEnd="url(#dim-arrow)"
+            />
+            <text
+              x={(leftNoseWing.x + rightNoseWing.x) / 2 - 40}
+              y={Math.max(leftNoseWing.y, rightNoseWing.y) + 44}
+              fill="rgba(255,215,0,0.9)"
+              fontSize="20"
+            >
+              鼻翼
+            </text>
+          </g>
+        )}
+
+        {/* 田宅宫（眉眼间距） */}
+        {leftBrowPeak && rightBrowPeak && leftEyeTop && rightEyeTop && (
+          <g>
+            <line
+              x1={leftEyeTop.x - 18}
+              y1={leftBrowPeak.y}
+              x2={leftEyeTop.x - 18}
+              y2={leftEyeTop.y}
+              stroke="rgba(255,215,0,0.85)"
+              strokeWidth="1.5"
+              markerStart="url(#dim-arrow)"
+              markerEnd="url(#dim-arrow)"
+            />
+            <line
+              x1={rightEyeTop.x + 18}
+              y1={rightBrowPeak.y}
+              x2={rightEyeTop.x + 18}
+              y2={rightEyeTop.y}
+              stroke="rgba(255,215,0,0.85)"
+              strokeWidth="1.5"
+              markerStart="url(#dim-arrow)"
+              markerEnd="url(#dim-arrow)"
+            />
+            <text
+              x={(leftEyeTop.x + rightEyeTop.x) / 2 - 44}
+              y={Math.min(leftBrowPeak.y, rightBrowPeak.y) - 18}
+              fill="rgba(255,215,0,0.9)"
+              fontSize="20"
+            >
+              田宅宫
+            </text>
+          </g>
+        )}
       </svg>
       {showLabel && <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">面相特征检测结果</p>}
       {showMeasurements && measurementRows.length > 0 && (
