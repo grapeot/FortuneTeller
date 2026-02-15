@@ -199,10 +199,13 @@ function buildVisualizationData(landmarks, measurements) {
 
   const boxW = Math.max(1e-5, maxX - minX)
   const boxH = Math.max(1e-5, maxY - minY)
+  const centerX = (minX + maxX) / 2
+  const centerY = (minY + maxY) / 2
+  const scale = Math.max(boxW, boxH)
 
   const points = rawPoints.map(([x, y]) => [
-    Math.round(((x - minX) / boxW) * 10000) / 10000,
-    Math.round(((y - minY) / boxH) * 10000) / 10000,
+    Math.round(Math.min(1, Math.max(0, ((x - centerX) / scale + 0.5))) * 10000) / 10000,
+    Math.round(Math.min(1, Math.max(0, ((y - centerY) / scale + 0.5))) * 10000) / 10000,
   ])
 
   return {

@@ -94,7 +94,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
           )
         })}
       </svg>
-      {showLabel && <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">隐私轮廓图</p>}
+      {showLabel && <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">面相特征检测结果</p>}
       {showMeasurements && measurementRows.length > 0 && (
         <div className="mt-3 rounded-lg border border-yellow-400/15 bg-black/25 px-2 py-2">
           <p className="text-[11px] text-yellow-300/70 font-serif-cn mb-1">测量结果</p>

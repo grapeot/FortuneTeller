@@ -69,7 +69,7 @@ export default function ResultOverlay({
       className="absolute inset-0 bg-gradient-to-b from-[#1a0a0a]/95 via-[#0f0f23]/90 to-[#1a0a0a]/95 flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto"
     >
       {/* Scrollable content */}
-      <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl gap-4 md:gap-5 py-6">
+      <div className="flex flex-col items-center justify-start w-full max-w-4xl gap-4 md:gap-5 pt-10 pb-6">
 
         {/* Title - calligraphy style */}
         <motion.h2
@@ -97,7 +97,7 @@ export default function ResultOverlay({
               <button
                 type="button"
                 onClick={() => setVizModalOpen(true)}
-                className="w-full text-left cursor-pointer"
+                className="w-2/3 min-w-[180px] mx-auto text-left cursor-pointer"
                 aria-label="查看面相轮廓大图"
               >
                 <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
