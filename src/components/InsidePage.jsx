@@ -18,7 +18,7 @@ export default function InsidePage() {
   ]
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-b from-[#13090f] via-[#0f0f23] to-[#131010] pt-20 pb-6 px-4 sm:px-6 md:px-10">
+    <div className="h-full w-full bg-gradient-to-b from-[#13090f] via-[#0f0f23] to-[#131010] pt-4 pb-6 px-4 sm:px-6 md:px-10">
       <div className="mx-auto max-w-4xl h-full rounded-2xl border border-yellow-400/20 bg-black/35 backdrop-blur p-6 sm:p-8 overflow-y-auto">
         <h1 className="font-calligraphy text-3xl sm:text-4xl text-yellow-300 text-glow-warm">内部实现</h1>
         <p className="mt-2 text-yellow-100/70 font-serif-cn text-sm sm:text-base">

@@ -153,9 +153,14 @@ export default function App() {
   }, [activeTab, phase, startFortune, dismissResult])
 
   return (
-    <div className="relative h-screen w-screen bg-black overflow-hidden select-none">
-      {activeTab === TAB.FORTUNE ? (
-        <>
+    <div className="h-screen w-screen bg-black overflow-hidden select-none flex flex-col">
+      <div className="relative z-50 shrink-0 pt-3 px-3 sm:px-4">
+        <AppTabs activeTab={activeTab} onChange={setActiveTab} />
+      </div>
+
+      <div className="relative flex-1 overflow-hidden">
+        {activeTab === TAB.FORTUNE ? (
+          <>
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
             style={{ backgroundImage: 'url(/assets/bg-cny.jpg)' }}
@@ -236,18 +241,17 @@ export default function App() {
               ✦ AI Generated
             </div>
           )}
-        </>
-      ) : activeTab === TAB.GUIDE ? (
-        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center text-yellow-200 font-serif-cn">加载指南中...</div>}>
-          <FaceReadingGuidePage />
-        </Suspense>
-      ) : (
-        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center text-yellow-200 font-serif-cn">加载页面中...</div>}>
-          <InsidePage />
-        </Suspense>
-      )}
-
-      <AppTabs activeTab={activeTab} onChange={setActiveTab} />
+          </>
+        ) : activeTab === TAB.GUIDE ? (
+          <Suspense fallback={<div className="h-full w-full flex items-center justify-center text-yellow-200 font-serif-cn">加载指南中...</div>}>
+            <FaceReadingGuidePage />
+          </Suspense>
+        ) : (
+          <Suspense fallback={<div className="h-full w-full flex items-center justify-center text-yellow-200 font-serif-cn">加载页面中...</div>}>
+            <InsidePage />
+          </Suspense>
+        )}
+      </div>
     </div>
   )
 }

@@ -35,6 +35,12 @@ const mockFortunes = {
   },
 }
 
+const mockVisualizationData = {
+  landmarks: Array.from({ length: 478 }, (_, i) => [0.5 + (i % 8) * 0.001, 0.4 + (i % 6) * 0.001]),
+  contour_indices: { face_oval: [10, 338, 297, 332, 284] },
+  measurements: { three_parts: [0.33, 0.34, 0.33] },
+}
+
 describe('ResultOverlay', () => {
   it('renders the result title', async () => {
     render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
@@ -109,5 +115,22 @@ describe('ResultOverlay', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled()
     })
+  })
+
+  it('renders visualization card and opens modal dialog', async () => {
+    render(
+      <ResultOverlay
+        fortunes={mockFortunes}
+        visualizationData={mockVisualizationData}
+        onDismiss={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('隐私轮廓图（HTML/SVG 渲染）')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '查看面相轮廓大图' }))
+    expect(screen.getByRole('dialog', { name: '面相轮廓图大图' })).toBeInTheDocument()
   })
 })

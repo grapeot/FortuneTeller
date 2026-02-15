@@ -125,7 +125,7 @@ export default function FaceReadingGuidePage() {
   }, [])
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-b from-[#140c17] via-[#0f1024] to-[#11131c] pt-20 pb-6 px-4 sm:px-6 md:px-10">
+    <div className="h-full w-full bg-gradient-to-b from-[#140c17] via-[#0f1024] to-[#11131c] pt-4 pb-6 px-4 sm:px-6 md:px-10">
       <div className="mx-auto max-w-6xl h-full rounded-2xl border border-yellow-400/20 bg-black/35 backdrop-blur overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] h-full">
           <aside className="hidden md:block border-r border-yellow-400/15 p-4 overflow-y-auto">

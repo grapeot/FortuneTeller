@@ -5,6 +5,7 @@ FastAPI route handlers.
 import asyncio
 import base64
 import io
+import math
 import os
 import uuid
 
@@ -25,6 +26,31 @@ from .firebase import get_db, get_mod, firestore_retry
 from . import ai
 from .pixelate import pixelate_image
 from . import email_service
+
+
+def _sanitize_firestore_key(key: str) -> str:
+    cleaned = key
+    for ch in (".", "/", "*", "[", "]", "~"):
+        cleaned = cleaned.replace(ch, "_")
+    return cleaned or "field"
+
+
+def _sanitize_for_firestore(value):
+    """Normalize nested payload into Firestore-safe JSON values."""
+    if isinstance(value, dict):
+        return {
+            _sanitize_firestore_key(str(k)): _sanitize_for_firestore(v)
+            for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_for_firestore(v) for v in value]
+    if isinstance(value, tuple):
+        return [_sanitize_for_firestore(v) for v in value]
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, (int, bool, str)) or value is None:
+        return value
+    return str(value)
 
 
 # ── POST /api/fortune ────────────────────────────────────────────────────────
@@ -111,8 +137,8 @@ async def pixelate_avatar(req: PixelateRequest):
 
 
 @app.post("/api/share")
-async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
-    """Save fortune to Firestore (async) and return a share URL immediately."""
+async def create_share(req: ShareRequest):
+    """Save fortune to Firestore and return a share URL."""
     db = get_db()
     if not db:
         raise HTTPException(
@@ -128,20 +154,17 @@ async def create_share(req: ShareRequest, background_tasks: BackgroundTasks):
 
     doc = {
         "pixelated_image": req.pixelated_image,
-        "visualization_data": req.visualization_data,
+        "visualization_data": _sanitize_for_firestore(req.visualization_data),
         "fortunes": fortunes_data,
     }
 
-    # Write to Firestore in background so the QR code appears instantly
-    def _write_to_firestore():
-        try:
-            firestore_retry(db.collection("fortunes").document(share_id).set, doc)
-        except Exception as e:
-            config.logger.error(
-                f"Firestore background write failed for {share_id}: {e}"
-            )
-
-    background_tasks.add_task(asyncio.to_thread, _write_to_firestore)
+    try:
+        await asyncio.to_thread(
+            firestore_retry, db.collection("fortunes").document(share_id).set, doc
+        )
+    except Exception as e:
+        config.logger.error(f"Firestore write failed for {share_id}: {e}")
+        raise HTTPException(status_code=502, detail="Failed to persist share data")
 
     return {"id": share_id, "url": f"/share/{share_id}"}
 

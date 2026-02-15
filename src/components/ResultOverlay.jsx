@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import FortuneCard from './FortuneCard'
+import LandmarkVisualization from './LandmarkVisualization'
 
 /**
  * ResultOverlay - displays Grok fortune results with Chinese-style design.
@@ -14,8 +15,10 @@ export default function ResultOverlay({
   onDismiss,
 }) {
   const [shareQr, setShareQr] = useState(null)
+  const [vizModalOpen, setVizModalOpen] = useState(false)
 
   const activeFortune = fortunes?.grok
+  const hasVisualization = Boolean(visualizationData?.landmarks?.length)
 
   // Auto-share: POST to /api/share and generate QR code
   useEffect(() => {
@@ -54,7 +57,7 @@ export default function ResultOverlay({
 
     autoShare()
     return () => { cancelled = true }
-  }, [fortunes, pixelatedImage])
+  }, [fortunes, pixelatedImage, visualizationData])
 
   return (
     <motion.div
@@ -117,6 +120,20 @@ export default function ResultOverlay({
           </motion.div>
         )}
 
+        {hasVisualization && (
+          <div className="w-full max-w-sm">
+            <button
+              type="button"
+              onClick={() => setVizModalOpen(true)}
+              className="w-full text-left cursor-pointer"
+              aria-label="查看面相轮廓大图"
+            >
+              <LandmarkVisualization visualizationData={visualizationData} />
+              <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
+            </button>
+          </div>
+        )}
+
         {/* Fortune text with Chinese styling */}
         <AnimatePresence mode="wait">
           {activeFortune && (
@@ -145,6 +162,34 @@ export default function ResultOverlay({
       >
         Superlinear Academy · 马年大吉
       </motion.p>
+
+      {vizModalOpen && hasVisualization && (
+        <div
+          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="面相轮廓图大图"
+          onClick={() => setVizModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <h3 className="font-serif-cn text-yellow-200 text-base sm:text-lg">现场速览 · 面相轮廓与测量</h3>
+              <button
+                type="button"
+                onClick={() => setVizModalOpen(false)}
+                className="px-2.5 py-1 text-xs rounded border border-yellow-400/30 text-yellow-200/80 hover:bg-white/10 cursor-pointer"
+              >
+                关闭
+              </button>
+            </div>
+            <LandmarkVisualization visualizationData={visualizationData} />
+            <p className="mt-2 text-xs text-yellow-100/60 font-serif-cn">该图为前端 HTML/SVG 渲染，不是位图文件。</p>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }

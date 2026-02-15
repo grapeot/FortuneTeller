@@ -12,6 +12,28 @@ from server import ai as server_ai
 from server import routes as server_routes
 
 
+# ── Firestore payload sanitization ──────────────────────────────────────────
+
+
+def test_sanitize_for_firestore_nested_payload():
+    raw = {
+        "measurements": {
+            "下巴/腮骨": "适中",
+            "田宅宫.判断": "宽广",
+        },
+        "landmarks": [(0.1, 0.2), (0.3, 0.4)],
+    }
+
+    cleaned = server_routes._sanitize_for_firestore(raw)
+    assert isinstance(cleaned, dict)
+    measurements = cleaned.get("measurements")
+    assert isinstance(measurements, dict)
+
+    assert measurements["下巴_腮骨"] == "适中"
+    assert measurements["田宅宫_判断"] == "宽广"
+    assert cleaned["landmarks"] == [[0.1, 0.2], [0.3, 0.4]]
+
+
 # ── GET /api/health ──────────────────────────────────────────────────────────
 
 

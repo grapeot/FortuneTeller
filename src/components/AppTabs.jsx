@@ -6,7 +6,7 @@ const TABS = [
 
 export default function AppTabs({ activeTab, onChange }) {
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+    <div className="flex justify-center">
       <div className="flex items-center gap-1 rounded-xl border border-yellow-400/30 bg-black/45 backdrop-blur px-1 py-1">
         {TABS.map((tab) => {
           const active = activeTab === tab.id
