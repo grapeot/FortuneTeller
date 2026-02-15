@@ -37,14 +37,15 @@
   - `captureAndAnnotate` 返回 `visualizationData`（landmarks + contour_indices + measurements）；
   - `/api/share` 持久化 `visualization_data`；
   - `SharePage` 增加 `LandmarkVisualization`（SVG HTML 渲染），不依赖位图展示轮廓。
+- 首页品牌区新增模型动态轮播：`Gemini 3 Flash / DeepSeek / Kimi K2.5`（`IdleOverlay`）。
 
 ### 验证结果
-- 前端测试：`npm test` 全量通过（80 tests）。
+- 前端测试：`npm test` 全量通过（81 tests）。
 - 前端构建：`npm run build` 通过。
 - 后端语法：`python -m py_compile server/routes.py server/models.py` 通过。
 
 ### 下一步（按 dev_plan_v2 执行）
-1. 实现三 Tab 容器与路由：相面 / 相面学指南 / 内部实现。
-2. 实现相面学指南双栏导航与章节锚点跳转（基于 `Face_Reading_Mastery.md`）。
-3. 实现内部实现页外链卡片（AI Builder Space / GitHub / 课程链接）。
-4. 补齐对应前端测试（Tab 切换、目录跳转、链接可达）。
+1. 为 `FaceReadingGuidePage` 增加移动端目录折叠/下拉切换体验。
+2. 为 `/api/analysis/l2` 增加后端单元测试与失败回退测试。
+3. 评估前端分包（code splitting）以降低主包体积告警。
+4. 清理仓库中与当前任务无关的历史改动（待确认来源后再处理）。

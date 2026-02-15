@@ -1,11 +1,23 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { BRAND } from '../lib/config'
+
+const MODEL_ROTATION = ['Gemini 3 Flash', 'DeepSeek', 'Kimi K2.5']
 
 /**
  * IdleOverlay - shown when the app is waiting for the user to start.
  * Displays title, face count indicator, privacy notice, and the start button.
  */
 export default function IdleOverlay({ faceCount, isReady, onStart }) {
+  const [modelIndex, setModelIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
+    }, 2200)
+    return () => window.clearInterval(timer)
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -24,6 +36,9 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
           <span className="font-en">AI</span><span className="font-calligraphy">相面</span>
         </h1>
         <p className="font-serif-cn text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200/70 mt-2 sm:mt-3 tracking-wide">{BRAND.tagline}</p>
+        <p className="font-serif-cn text-sm sm:text-base text-yellow-300/70 mt-1 tracking-wide" aria-live="polite">
+          {MODEL_ROTATION[modelIndex]} 模型支持
+        </p>
       </div>
 
       {/* Middle: Face detection status */}

@@ -22,6 +22,11 @@ describe('IdleOverlay', () => {
     expect(screen.getByText('马年大吉 · 马到成功')).toBeInTheDocument()
   })
 
+  it('renders rotating model support label', () => {
+    render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
+    expect(screen.getByText(/Gemini 3 Flash 模型支持/)).toBeInTheDocument()
+  })
+
   it('shows loading message when not ready', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
     expect(screen.getByText((_, el) => el.tagName === 'P' && el.textContent === '正在加载AI模型...')).toBeInTheDocument()
