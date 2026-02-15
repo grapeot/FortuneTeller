@@ -338,3 +338,16 @@ Phase D（评估与调参）
 #### 本轮验证补充
 - 后端：`pytest tests/test_api.py` 通过（26 passed）。
 - 前端：`npm test` 通过（86 passed）。
+
+#### 集成测试补充（默认跳过，显式触发）
+- 新增 `tests/test_integration_live.py`：
+  - 使用样例图与测量数据调用真实 `/api/fortune`（Grok）；
+  - 构建 payload 调用 `/api/share` 写入 Firestore；
+  - 访问分享页面路径 `/share/{id}`；
+  - 回读 `/api/share/{id}` 验证分享数据可取回。
+- 执行策略：
+  - 默认在本地与自动化中 `skip`；
+  - 仅在设置 `RUN_INTEGRATION_TESTS=1` 时运行。
+- 本轮实测：
+  - 默认模式：`pytest tests/test_integration_live.py` -> `1 skipped`；
+  - 显式模式：`RUN_INTEGRATION_TESTS=1 pytest tests/test_integration_live.py -q` -> `1 passed`（约 17s）。

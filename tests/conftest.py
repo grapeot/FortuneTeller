@@ -4,6 +4,7 @@ We import the server package and patch server.config for safe defaults.
 """
 
 import pytest
+import os
 from unittest.mock import MagicMock
 from httpx import AsyncClient, ASGITransport
 
@@ -12,9 +13,37 @@ from server import config
 from server import firebase
 
 
+def _is_live_integration_enabled(request) -> bool:
+    return bool(
+        request.node.get_closest_marker("integration_live")
+        and os.getenv("RUN_INTEGRATION_TESTS") == "1"
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "integration_live: run live e2e integration test (requires RUN_INTEGRATION_TESTS=1)",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if os.getenv("RUN_INTEGRATION_TESTS") == "1":
+        return
+    skip_marker = pytest.mark.skip(
+        reason="integration_live skipped by default; set RUN_INTEGRATION_TESTS=1 to run",
+    )
+    for item in items:
+        if item.get_closest_marker("integration_live"):
+            item.add_marker(skip_marker)
+
+
 @pytest.fixture(autouse=True)
-def _patch_env(monkeypatch):
+def _patch_env(monkeypatch, request):
     """Ensure safe defaults for all tests — no real external calls."""
+    if _is_live_integration_enabled(request):
+        return
+
     monkeypatch.setattr(config, "AI_TOKEN", "test-token")
     monkeypatch.setattr(config, "AI_API_BASE", "https://test.api.com/v1")
     monkeypatch.setattr(config, "RESEND_API_KEY", "test-resend-key")
