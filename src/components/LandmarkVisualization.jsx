@@ -8,7 +8,12 @@ const DEFAULT_CONTOURS = {
   nose_wings: [48, 115, 220, 45, 4, 275, 440, 344, 278],
   upper_lip: [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291],
   lower_lip: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291],
+  inner_upper_lip: [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308],
+  inner_lower_lip: [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308],
+  lip_seam: [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308],
 }
+
+const DISPLAY_X_SCALE = 1.5
 
 const MEASUREMENT_LABELS = {
   three_parts: '三停比例',
@@ -32,7 +37,10 @@ function pointsToPath(points, indices, width, height, close = false) {
   const valid = indices
     .map((idx) => getPoint(points, idx))
     .filter(Boolean)
-    .map(([x, y]) => `${x * width},${y * height}`)
+    .map(([x, y]) => {
+      const xStretched = Math.min(1, Math.max(0, (x - 0.5) * DISPLAY_X_SCALE + 0.5))
+      return `${xStretched * width},${y * height}`
+    })
 
   if (valid.length < 2) return ''
   const cmd = `M ${valid[0]} L ${valid.slice(1).join(' L ')}`
@@ -90,7 +98,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
               d={d}
               fill="none"
               stroke="rgba(255,215,0,0.78)"
-              strokeWidth={name.includes('face_oval') || name.includes('brow') ? 2.2 : 1.5}
+              strokeWidth={name.includes('face_oval') || name.includes('brow') ? 2.2 : name.includes('lip_seam') ? 1.8 : 1.5}
               strokeLinecap="round"
               strokeLinejoin="round"
             />

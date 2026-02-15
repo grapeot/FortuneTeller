@@ -161,6 +161,9 @@ const LEFT_BROW = [70,63,105,66,107]
 const RIGHT_BROW = [300,293,334,296,336]
 const UPPER_LIP = [61,185,40,39,37,0,267,269,270,409,291]
 const LOWER_LIP = [61,146,91,181,84,17,314,405,321,375,291]
+const INNER_UPPER_LIP = [78,191,80,81,82,13,312,311,310,415,308]
+const INNER_LOWER_LIP = [78,95,88,178,87,14,317,402,318,324,308]
+const LIP_SEAM = [78,95,88,178,87,14,317,402,318,324,308]
 const NOSE_BRIDGE = [6,197,195,5,4,1]
 const NOSE_BOTTOM = [48,4,278]
 
@@ -174,6 +177,9 @@ const CONTOUR_INDICES = {
   nose_wings: [48, 115, 220, 45, 4, 275, 440, 344, 278],
   upper_lip: UPPER_LIP,
   lower_lip: LOWER_LIP,
+  inner_upper_lip: INNER_UPPER_LIP,
+  inner_lower_lip: INNER_LOWER_LIP,
+  lip_seam: LIP_SEAM,
 }
 
 export function buildVisualizationData(landmarks, measurements) {
@@ -261,6 +267,9 @@ function drawAnnotations(sourceCanvas, landmarks, w, h) {
   drawPath(ctx, mapPx(NOSE_BOTTOM))
   drawPath(ctx, mapPx(UPPER_LIP))
   drawPath(ctx, mapPx(LOWER_LIP))
+  drawPath(ctx, mapPx(INNER_UPPER_LIP))
+  drawPath(ctx, mapPx(INNER_LOWER_LIP))
+  drawPath(ctx, mapPx(LIP_SEAM))
 
   // Key points (reuse px helper from wireframe above)
   const browY = (px(LM.leftBrowPeak).y + px(LM.rightBrowPeak).y) / 2
