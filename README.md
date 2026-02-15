@@ -38,9 +38,11 @@ npm install
 cp .env.example .env
 # 编辑 .env，填入 AI_BUILDER_TOKEN
 
-# 3. 安装后端依赖并启动（新终端）
-pip install -r requirements.txt
-python server.py  # 默认端口 8001
+# 3. 创建虚拟环境、安装后端依赖并启动（新终端）
+uv venv .venv              # 若无 .venv 则创建（项目目录下，避免路径错乱）
+source .venv/bin/activate  # 激活虚拟环境
+uv pip install -r requirements.txt
+uvicorn server:app --host 0.0.0.0 --port 8001
 
 # 4. 启动前端开发服务器
 npm run dev       # 默认端口 5173，自动代理 /api → 8001
@@ -93,7 +95,7 @@ Dockerfile 使用多阶段构建：Node.js 编译前端 → Python slim 运行 F
 ## 项目结构
 
 ```
-├── server.py              # FastAPI 后端 (AI 代理 + 像素化 + 分享 + 静态文件)
+├── server/                # FastAPI 后端 (AI 代理 + 像素化 + 分享 + 静态文件)
 ├── Dockerfile             # 多阶段构建
 ├── index.html             # 入口
 ├── vite.config.js         # Vite + Tailwind + dev proxy

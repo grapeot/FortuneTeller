@@ -6,6 +6,7 @@ RUN npm ci
 COPY index.html vite.config.js ./
 COPY src ./src
 COPY public ./public
+COPY docs ./docs
 RUN npm run build
 
 # Stage 2: Python backend (serves static + API)
