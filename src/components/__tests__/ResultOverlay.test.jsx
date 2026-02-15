@@ -83,6 +83,13 @@ describe('ResultOverlay', () => {
     })
   })
 
+  it('shows updated QR helper text', async () => {
+    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByText('扫码获取更详细的 AI 解读')).toBeInTheDocument()
+    })
+  })
+
   it('renders pixelated image when provided', async () => {
     const fakePixel = 'data:image/png;base64,pixel123'
     render(<ResultOverlay fortunes={mockFortunes} pixelatedImage={fakePixel} onDismiss={() => {}} />)

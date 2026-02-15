@@ -90,7 +90,50 @@ describe('SharePage', () => {
     render(<SharePage shareId="test123" />)
 
     await waitFor(() => {
-      expect(screen.getByText('隐私轮廓图（HTML/SVG 渲染）')).toBeInTheDocument()
+      expect(screen.getAllByText('隐私轮廓图（HTML/SVG 渲染）').length).toBeGreaterThan(0)
+    })
+  })
+
+  it('renders visualization cards in all three presentation layers and supports modal zoom', async () => {
+    const withViz = {
+      ...mockShareData,
+      visualization_data: {
+        landmarks: Array.from({ length: 478 }, (_, i) => [0.5 + (i % 10) * 0.001, 0.4 + (i % 7) * 0.001]),
+        contour_indices: { face_oval: [10, 338, 297, 332, 284] },
+        measurements: {
+          three_parts: [0.31, 0.35, 0.34],
+          tian_zhai_gong_height_eye_ratio: 0.69,
+        },
+      },
+    }
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => withViz,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ analysis: 'l2 ready' }),
+      })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getAllByText('点击查看大图')).toHaveLength(3)
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '现场速览 查看面相轮廓大图' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: '面相轮廓图大图' })).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('该图为前端 HTML/SVG 渲染，不是位图文件。')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '关闭' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: '面相轮廓图大图' })).not.toBeInTheDocument()
     })
   })
 

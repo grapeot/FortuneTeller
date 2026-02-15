@@ -10,6 +10,16 @@ const DEFAULT_CONTOURS = {
   lower_lip: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291],
 }
 
+const MEASUREMENT_LABELS = {
+  three_parts: '三停比例',
+  three_horizontal_sections: '横向三宽',
+  tian_zhai_gong_height_eye_ratio: '田宅宫（眼宽倍数）',
+  tian_zhai_gong_height_face_ratio: '田宅宫（脸高占比）',
+  eye_to_eyebrow_avg: '眉眼平均距离',
+  eye_to_eyebrow_left: '左眉眼距离',
+  eye_to_eyebrow_right: '右眉眼距离',
+}
+
 function pointsToPath(points, indices, close = false) {
   const valid = indices
     .map((idx) => points[idx])
@@ -24,11 +34,32 @@ function pointsToPath(points, indices, close = false) {
 export default function LandmarkVisualization({ visualizationData }) {
   const points = visualizationData?.landmarks
   const contours = visualizationData?.contour_indices || DEFAULT_CONTOURS
+  const measurements = visualizationData?.measurements || null
 
   if (!points || points.length === 0) return null
 
+  const formatValue = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => (typeof v === 'number' ? v.toFixed(3) : String(v)))
+        .join(' / ')
+    }
+    if (typeof value === 'number') return value.toFixed(3)
+    return String(value)
+  }
+
+  const measurementRows = measurements
+    ? Object.entries(measurements)
+        .filter(([, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => ({
+          key,
+          label: MEASUREMENT_LABELS[key] || key,
+          value: formatValue(value),
+        }))
+    : []
+
   return (
-    <div className="w-full max-w-sm rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
+    <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
       <svg viewBox="0 0 1000 1000" className="w-full h-auto">
         {Object.entries(contours).map(([name, indices]) => {
           const close = name.includes('eye') || name.includes('oval')
@@ -48,6 +79,19 @@ export default function LandmarkVisualization({ visualizationData }) {
         })}
       </svg>
       <p className="text-xs text-yellow-300/60 text-center mt-1 font-serif-cn">隐私轮廓图（HTML/SVG 渲染）</p>
+      {measurementRows.length > 0 && (
+        <div className="mt-3 rounded-lg border border-yellow-400/15 bg-black/25 px-2 py-2">
+          <p className="text-[11px] text-yellow-300/70 font-serif-cn mb-1">测量结果</p>
+          <div className="space-y-1">
+            {measurementRows.map((row) => (
+              <div key={row.key} className="flex items-start justify-between gap-2 text-[11px] leading-4">
+                <span className="text-yellow-100/70 font-serif-cn">{row.label}</span>
+                <span className="text-yellow-200/85 font-mono text-right">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

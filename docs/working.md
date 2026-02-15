@@ -51,6 +51,12 @@
   - 首页将模型轮播并入主标题，改为 `{模型名} AI + 相面` 组合展示；
   - 轮播节奏放慢到 5 秒/次，移除“模型支持”单独提示行；
   - 为避免顶部 Tab 遮挡首页 Logo，已将首页主视觉块整体下移。
+- 分享页（三层 presentation）已补齐隐私可视化交互：
+  - 明确确认 `visualization_data` 已落库并可从 `/api/share/{id}` 取回；
+  - 在 L1 现场速览、L2 扫码详版、L3 邮箱三模型三个层级都新增 HTML/SVG 轮廓小图入口；
+  - 小图支持点击进入 modal dialog 查看大图（仍为 HTML/SVG 渲染，不是位图）；
+  - 轮廓组件新增测量结果表（如三停、横向三宽、田宅宫比值等）同步展示。
+- 二维码文案已精简：移除“多 AI 详细报告生成中，扫码获取”，改为“扫码获取更详细的 AI 解读”。
 
 ### 验证结果
 - 前端测试：`npm test` 全量通过（83 tests）。
@@ -58,6 +64,7 @@
 - 后端语法：`python -m py_compile server/routes.py server/models.py` 通过。
 - 后端测试：`pytest tests/test_api.py` 通过（23 passed）。
 - 前端测试：`npm test` 全量通过（83 passed）。
+- 前端测试：`npm test` 全量通过（85 passed）。
 
 ### 下一步（按 dev_plan_v2 执行）
 1. 继续优化前端分包（若仍有 chunk 告警，拆分首屏逻辑与检测逻辑）。

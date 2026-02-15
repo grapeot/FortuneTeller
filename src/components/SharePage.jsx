@@ -13,6 +13,8 @@ export default function SharePage({ shareId }) {
   const [loading, setLoading] = useState(true)
   const [l2Analysis, setL2Analysis] = useState('')
   const [l2Status, setL2Status] = useState('idle') // idle | loading | ready | error
+  const [vizModalOpen, setVizModalOpen] = useState(false)
+  const [vizModalLayer, setVizModalLayer] = useState('')
 
   // Override body overflow-hidden (set in index.html for the camera view)
   // so this page can scroll on mobile
@@ -107,6 +109,34 @@ export default function SharePage({ shareId }) {
   }
 
   const activeFortune = data?.fortunes?.grok || null
+  const hasVisualization = Boolean(data?.visualization_data?.landmarks?.length)
+
+  const openVizModal = (layerLabel) => {
+    setVizModalLayer(layerLabel)
+    setVizModalOpen(true)
+  }
+
+  const closeVizModal = () => {
+    setVizModalOpen(false)
+    setVizModalLayer('')
+  }
+
+  const renderVizCard = (layerLabel) => {
+    if (!hasVisualization) return null
+    return (
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => openVizModal(layerLabel)}
+          className="w-full max-w-sm text-left cursor-pointer"
+          aria-label={`${layerLabel} 查看面相轮廓大图`}
+        >
+          <LandmarkVisualization visualizationData={data.visualization_data} />
+          <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
@@ -121,7 +151,7 @@ export default function SharePage({ shareId }) {
         <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
 
         {/* Pixelated avatar */}
-        {(data?.pixelated_image || data?.visualization_data) && (
+        {(data?.pixelated_image || hasVisualization) && (
           <div className="flex flex-wrap items-end justify-center gap-4">
             {data?.pixelated_image && (
               <div className="flex flex-col items-center gap-1">
@@ -137,7 +167,7 @@ export default function SharePage({ shareId }) {
               </div>
             )}
 
-            {data?.visualization_data && (
+            {hasVisualization && (
               <LandmarkVisualization visualizationData={data.visualization_data} />
             )}
           </div>
@@ -148,6 +178,7 @@ export default function SharePage({ shareId }) {
           <div className="w-full">
             <h2 className="font-serif-cn text-yellow-300 text-base mb-2 text-center">现场速览（Grok）</h2>
             <FortuneCard fortune={activeFortune} />
+            {renderVizCard('现场速览')}
           </div>
         ) : (
           <p className="font-serif-cn text-gray-400 text-center">该模型暂无结果</p>
@@ -165,6 +196,7 @@ export default function SharePage({ shareId }) {
           {l2Status === 'error' && (
             <p className="mt-2 text-yellow-100/60 text-sm">详细解读生成暂时失败，请稍后刷新重试。</p>
           )}
+          {renderVizCard('扫码详版')}
         </div>
 
         {/* Decorative divider before form */}
@@ -180,6 +212,7 @@ export default function SharePage({ shareId }) {
               <p className="font-serif-cn text-yellow-100/60 text-sm mt-2">
                 与此同时，您也会收到社区学员分享的项目更新。
               </p>
+              {renderVizCard('邮箱三模型')}
             </div>
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
@@ -217,6 +250,7 @@ export default function SharePage({ shareId }) {
               <p className="text-xs text-gray-500/70 font-serif-cn text-center leading-relaxed px-2">
                 同时加入 <span className="font-en">Superlinear AI</span> 社区，免费获取前沿 <span className="font-en">AI</span> 资讯和实战干货。
               </p>
+              {renderVizCard('邮箱三模型')}
             </form>
           )}
         </div>
@@ -234,6 +268,34 @@ export default function SharePage({ shareId }) {
           Superlinear Academy · 马年大吉
         </p>
       </div>
+
+      {vizModalOpen && hasVisualization && (
+        <div
+          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="面相轮廓图大图"
+          onClick={closeVizModal}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <h3 className="font-serif-cn text-yellow-200 text-base sm:text-lg">{vizModalLayer} · 面相轮廓与测量</h3>
+              <button
+                type="button"
+                onClick={closeVizModal}
+                className="px-2.5 py-1 text-xs rounded border border-yellow-400/30 text-yellow-200/80 hover:bg-white/10 cursor-pointer"
+              >
+                关闭
+              </button>
+            </div>
+            <LandmarkVisualization visualizationData={data.visualization_data} />
+            <p className="mt-2 text-xs text-yellow-100/60 font-serif-cn">该图为前端 HTML/SVG 渲染，不是位图文件。</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

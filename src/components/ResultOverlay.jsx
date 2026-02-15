@@ -111,8 +111,7 @@ export default function ResultOverlay({
                     className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-lg"
                   />
                 </div>
-                <span className="text-xs text-yellow-400/50 font-serif-cn">多 AI 详细报告生成中，扫码获取</span>
-                <span className="text-[11px] text-yellow-200/55 font-serif-cn">扫码获取 Gemini 3 Flash 详细解读</span>
+                <span className="text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
               </div>
             )}
           </motion.div>
