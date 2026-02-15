@@ -60,6 +60,25 @@ describe('ResultOverlay', () => {
     })
   })
 
+  it('renders grok markdown formatting', async () => {
+    const markdownFortunes = {
+      ...mockFortunes,
+      grok: {
+        face: '**三庭**结构清晰\n- 上庭略短',
+        career: '1. 先稳节奏\n2. 再扩团队',
+        blessing: '*龙马精神*',
+      },
+    }
+    render(<ResultOverlay fortunes={markdownFortunes} onDismiss={() => {}} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('三庭')).toBeInTheDocument()
+      expect(screen.getByText(/上庭略短/)).toBeInTheDocument()
+      expect(screen.getByText(/1. 先稳节奏/)).toBeInTheDocument()
+      expect(screen.getByText('龙马精神')).toBeInTheDocument()
+    })
+  })
+
   it('shows the dismiss hint', async () => {
     render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
     expect(screen.getByText(/按 空格键 继续下一位/)).toBeInTheDocument()
