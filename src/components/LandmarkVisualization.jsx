@@ -13,8 +13,6 @@ const DEFAULT_CONTOURS = {
   lip_seam: [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308],
 }
 
-const DISPLAY_X_SCALE = 1.5
-
 const MEASUREMENT_LABELS = {
   three_parts: '三停比例',
   three_horizontal_sections: '横向三宽',
@@ -37,10 +35,7 @@ function pointsToPath(points, indices, width, height, close = false) {
   const valid = indices
     .map((idx) => getPoint(points, idx))
     .filter(Boolean)
-    .map(([x, y]) => {
-      const xStretched = Math.min(1, Math.max(0, (x - 0.5) * DISPLAY_X_SCALE + 0.5))
-      return `${xStretched * width},${y * height}`
-    })
+    .map(([x, y]) => `${x * width},${y * height}`)
 
   if (valid.length < 2) return ''
   const cmd = `M ${valid[0]} L ${valid.slice(1).join(' L ')}`
