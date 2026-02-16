@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState, useCallback, useEffect } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
 import { useHolisticDetection } from './hooks/useHolisticDetection'
 import { generateAIFortune } from './lib/ai-fortune'
@@ -27,6 +27,8 @@ const TAB = {
   INSIDE: 'inside',
 }
 
+const MODEL_ROTATION = ['Gemini 3 Flash', 'DeepSeek', 'Kimi K2.5']
+
 function getInitialTab() {
   const tab = new URLSearchParams(window.location.search).get('tab')
   return Object.values(TAB).includes(tab) ? tab : TAB.FORTUNE
@@ -42,6 +44,7 @@ export default function App() {
   const [pixelatedImage, setPixelatedImage] = useState(null)
   const [visualizationData, setVisualizationData] = useState(null)
   const [activeTab, setActiveTab] = useState(getInitialTab)
+  const [modelIndex, setModelIndex] = useState(0)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
@@ -71,6 +74,14 @@ export default function App() {
     setPixelatedImage(null)
     setVisualizationData(null)
   }, [activeTab])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
+    }, 700)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   // Dismiss result and return to idle
   const dismissResult = useCallback(() => {
@@ -156,8 +167,19 @@ export default function App() {
       <div className="relative z-50 shrink-0 px-3 sm:px-4 py-2.5 border-b border-yellow-400/15 bg-black/65 backdrop-blur-sm">
         <div className="flex items-start justify-between gap-3">
           <h1 className="pl-1 flex items-baseline gap-2 sm:gap-3 whitespace-nowrap overflow-hidden">
-            <span className="font-en text-xs sm:text-sm md:text-base text-yellow-200/80 truncate">
-              Gemini 3 Flash · DeepSeek · Kimi K2.5
+            <span className="font-en text-xs sm:text-sm md:text-base text-yellow-200/80 min-w-[7.5rem] sm:min-w-[9.5rem] md:min-w-[11rem]">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={MODEL_ROTATION[modelIndex]}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="block"
+                >
+                  {MODEL_ROTATION[modelIndex]}
+                </motion.span>
+              </AnimatePresence>
             </span>
             <span className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm leading-none">
               AI相面
