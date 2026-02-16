@@ -4,9 +4,9 @@ const TABS = [
   { id: 'inside', label: '内部实现' },
 ]
 
-export default function AppTabs({ activeTab, onChange }) {
+export default function AppTabs({ activeTab, onChange, className = '' }) {
   return (
-    <div className="flex justify-center">
+    <div className={`flex justify-end ${className}`}>
       <div className="flex items-center gap-1 rounded-xl border border-yellow-400/30 bg-black/45 backdrop-blur px-1 py-1">
         {TABS.map((tab) => {
           const active = activeTab === tab.id
@@ -15,7 +15,7 @@ export default function AppTabs({ activeTab, onChange }) {
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`px-3 py-1.5 text-sm font-serif-cn rounded-lg transition-all duration-200 cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-serif-cn rounded-lg transition-all duration-200 cursor-pointer ${
                 active
                   ? 'text-yellow-200 bg-yellow-400/20 tab-active'
                   : 'text-yellow-100/70 hover:text-yellow-200 hover:bg-white/10'

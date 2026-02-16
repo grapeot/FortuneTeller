@@ -13,6 +13,9 @@ export default function ResultOverlay({
   pixelatedImage,
   visualizationData,
   onDismiss,
+  embedded = false,
+  showTitle = true,
+  showFooter = true,
 }) {
   const [shareQr, setShareQr] = useState(null)
   const [shareUrl, setShareUrl] = useState('')
@@ -70,23 +73,27 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="absolute inset-0 bg-gradient-to-b from-[#1a0a0a]/95 via-[#0f0f23]/90 to-[#1a0a0a]/95 flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto"
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-gradient-to-b from-[#1a0a0a]/95 via-[#0f0f23]/90 to-[#1a0a0a]/95 flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
     >
       {/* Scrollable content */}
       <div className="flex flex-col items-center justify-start w-full max-w-4xl gap-4 md:gap-5 pt-10 pb-6">
 
-        {/* Title - calligraphy style */}
-        <motion.h2
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm tracking-wider shrink-0"
-        >
-          相面结果
-        </motion.h2>
+        {showTitle && (
+          <>
+            {/* Title - calligraphy style */}
+            <motion.h2
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm tracking-wider shrink-0"
+            >
+              相面结果
+            </motion.h2>
 
-        {/* Decorative divider */}
-        <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
+            {/* Decorative divider */}
+            <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
+          </>
+        )}
 
         {/* 2x2 preview grid */}
         <motion.div
@@ -192,15 +199,16 @@ export default function ResultOverlay({
         </motion.button>
       </div>
 
-      {/* Brand footer */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 1.5 }}
-        className="mt-1 pb-2 text-xs text-gray-600 font-serif-cn shrink-0"
-      >
-        Superlinear Academy · 马年大吉
-      </motion.p>
+      {showFooter && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          transition={{ delay: 1.5 }}
+          className="absolute bottom-4 text-xs text-gray-600 font-serif-cn"
+        >
+          Superlinear Academy · 马年大吉
+        </motion.p>
+      )}
 
       {vizModalOpen && hasVisualization && (
         <div

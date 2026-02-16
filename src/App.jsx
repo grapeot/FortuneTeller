@@ -9,7 +9,6 @@ import CameraView from './components/CameraView'
 import IdleOverlay from './components/IdleOverlay'
 import AnalyzingOverlay from './components/AnalyzingOverlay'
 import ResultOverlay from './components/ResultOverlay'
-import QRCodeIcon from './components/QRCodeIcon'
 import AppTabs from './components/AppTabs'
 
 const FaceReadingGuidePage = lazy(() => import('./components/FaceReadingGuidePage'))
@@ -154,93 +153,77 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen bg-black overflow-hidden select-none flex flex-col">
-      <div className="relative z-50 shrink-0 pt-3 px-3 sm:px-4">
-        <AppTabs activeTab={activeTab} onChange={setActiveTab} />
+      <div className="relative z-50 shrink-0 px-3 sm:px-4 py-2.5 border-b border-yellow-400/15 bg-black/65 backdrop-blur-sm">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="pl-1 flex items-baseline gap-2 sm:gap-3 whitespace-nowrap overflow-hidden">
+            <span className="font-en text-xs sm:text-sm md:text-base text-yellow-200/80 truncate">
+              Gemini 3 Flash · DeepSeek · Kimi K2.5
+            </span>
+            <span className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm leading-none">
+              AI相面
+            </span>
+          </h1>
+          <AppTabs activeTab={activeTab} onChange={setActiveTab} />
+        </div>
       </div>
 
       <div className="relative flex-1 overflow-hidden">
         {activeTab === TAB.FORTUNE ? (
           <>
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
-            style={{ backgroundImage: 'url(/assets/bg-cny.jpg)' }}
-          />
-          <CameraView videoRef={videoRef} canvasRef={canvasRef} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
+              style={{ backgroundImage: 'url(/assets/bg-cny.jpg)' }}
+            />
 
-          <img
-            src="/assets/lantern.png"
-            alt=""
-            className="absolute top-0 left-4 w-40 opacity-60 pointer-events-none"
-            onError={(e) => { e.target.style.display = 'none' }}
-          />
-          <img
-            src="/assets/lantern.png"
-            alt=""
-            className="absolute top-0 right-4 w-40 opacity-60 pointer-events-none"
-            onError={(e) => { e.target.style.display = 'none' }}
-          />
-
-          <AnimatePresence mode="wait">
-            {phase === PHASE.IDLE && (
-              <IdleOverlay
-                key="idle"
-                faceCount={faceCount}
-                isReady={isReady}
-                onStart={startFortune}
-              />
-            )}
-
-            {phase === PHASE.ANALYZING && <AnalyzingOverlay key="analyzing" />}
-
-            {phase === PHASE.RESULT && fortunes && (
+            {phase === PHASE.RESULT && fortunes ? (
               <ResultOverlay
                 key="result"
                 fortunes={fortunes}
                 pixelatedImage={pixelatedImage}
                 visualizationData={visualizationData}
                 onDismiss={dismissResult}
+                embedded
+                showTitle={false}
+                showFooter={false}
               />
+            ) : (
+              <>
+                <CameraView videoRef={videoRef} canvasRef={canvasRef} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
+
+                <img
+                  src="/assets/lantern.png"
+                  alt=""
+                  className="absolute top-0 left-4 w-40 opacity-60 pointer-events-none"
+                  onError={(e) => { e.target.style.display = 'none' }}
+                />
+                <img
+                  src="/assets/lantern.png"
+                  alt=""
+                  className="absolute top-0 right-4 w-40 opacity-60 pointer-events-none"
+                  onError={(e) => { e.target.style.display = 'none' }}
+                />
+
+                <AnimatePresence mode="wait">
+                  {phase === PHASE.IDLE && (
+                    <IdleOverlay
+                      key="idle"
+                      faceCount={faceCount}
+                      isReady={isReady}
+                      onStart={startFortune}
+                    />
+                  )}
+
+                  {phase === PHASE.ANALYZING && <AnalyzingOverlay key="analyzing" />}
+                </AnimatePresence>
+
+                {error && (
+                  <div className="absolute top-4 left-4 right-4 bg-red-900/80 text-red-200 px-4 py-2 rounded-lg text-sm">
+                    ⚠️ {error}
+                  </div>
+                )}
+              </>
             )}
-          </AnimatePresence>
-
-          {error && (
-            <div className="absolute top-16 left-4 right-4 bg-red-900/80 text-red-200 px-4 py-2 rounded-lg text-sm">
-              ⚠️ {error}
-            </div>
-          )}
-
-          {phase === PHASE.IDLE && (
-            <div className="absolute bottom-3 right-4 text-xs text-gray-600 flex items-center gap-2">
-              {BRAND.name} · MediaPipe Face Detection
-            </div>
-          )}
-
-          <div className="absolute bottom-3 left-4 flex items-center gap-3">
-            <a
-              href="https://github.com/grapeot/FortuneTeller"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 hover:text-gray-300 transition-colors opacity-60 hover:opacity-90"
-              aria-label="View on GitHub"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-            </a>
-            <QRCodeIcon />
-          </div>
-
-          {fortunes?.grok?.source === 'ai' && phase === PHASE.RESULT && (
-            <div className="absolute top-14 right-4 text-xs text-green-700">
-              ✦ AI Generated
-            </div>
-          )}
           </>
         ) : activeTab === TAB.GUIDE ? (
           <Suspense fallback={<div className="h-full w-full flex items-center justify-center text-yellow-200 font-serif-cn">加载指南中...</div>}>
@@ -251,6 +234,17 @@ export default function App() {
             <InsidePage />
           </Suspense>
         )}
+      </div>
+
+      <div className="shrink-0 border-t border-yellow-400/10 bg-black/70 px-3 sm:px-4 py-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+          <p className="font-serif-cn text-[11px] sm:text-xs text-gray-400">
+            本过程会获取一帧影像用于面相分析，分析后立即销毁，不会保存。分享仅使用匿名化、像素化风格图像。
+          </p>
+          <p className="font-serif-cn text-[11px] sm:text-xs text-gray-500">
+            {BRAND.name} · MediaPipe Face Detection
+          </p>
+        </div>
       </div>
     </div>
   )

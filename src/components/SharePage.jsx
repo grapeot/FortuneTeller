@@ -264,7 +264,7 @@ export default function SharePage({ shareId }) {
               <button
                 type="submit"
                 disabled={subscribeStatus === 'submitting' || !email.includes('@')}
-                className="w-full py-2.5 bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/20 text-yellow-400 font-serif-cn text-sm rounded-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3 bg-yellow-400 hover:bg-yellow-300 border border-yellow-300 text-[#2a1a00] font-serif-cn font-semibold text-sm rounded-lg transition-all duration-200 shadow-[0_8px_24px_rgba(250,204,21,0.25)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 {subscribeStatus === 'submitting' ? '提交中...' : '留邮箱获取三模型完整解读'}
               </button>
@@ -281,7 +281,7 @@ export default function SharePage({ shareId }) {
         {/* CTA */}
         <a
           href="/"
-          className="mt-4 px-6 py-3 bg-white/10 hover:bg-white/15 border border-white/20 text-yellow-200/80 hover:text-yellow-200 text-lg font-calligraphy rounded-xl transition-all duration-200 hover:scale-105 tracking-wider"
+          className="mt-3 px-4 py-2 text-yellow-100/55 hover:text-yellow-100/80 text-sm font-serif-cn rounded-lg transition-colors underline underline-offset-4"
         >
           我也要相面 →
         </a>
