@@ -7,7 +7,8 @@ COPY index.html vite.config.js ./
 COPY src ./src
 COPY public ./public
 COPY docs ./docs
-RUN npm run build
+ARG BUILD_VERSION
+RUN VITE_BUILD_VERSION=${BUILD_VERSION:-$(date -u +%Y%m%d.%H%M%S)} npm run build
 
 # Stage 2: Python backend (serves static + API)
 FROM python:3.11-slim

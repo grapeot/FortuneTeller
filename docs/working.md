@@ -2,6 +2,10 @@
 
 ## 2026-02-16
 
+- L1（Grok）结果页版式调整：改为品字形三卡布局（上：面相特征检测大图；下左：像素画像；下右：二维码），移除“测量结果”卡片，并以下方 Fortune 文本宽度收窄整体容器：更新 `src/components/ResultOverlay.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
+- L1 覆盖层不透明度提高：结果页背景改为更深纯色（接近全遮挡），尽量不透出后景视频画面：更新 `src/components/ResultOverlay.jsx`。
+- Grok 超时策略放宽：后端模型调用超时从 25s 调整到 40s；前端整体 AI 超时从 30s 调整到 50s，降低冷启动或弱网时误触发 fallback 概率：更新 `server/ai.py`、`src/lib/config.js`。
+- 增加构建版本展示：右下角品牌文案改为 `Superlinear Academy, v...`；Docker 前端构建阶段默认注入 `VITE_BUILD_VERSION=$(date -u +%Y%m%d.%H%M%S)`（支持 `BUILD_VERSION` 覆盖）：更新 `src/App.jsx`、`src/lib/config.js`、`Dockerfile`、`README.md`。
 - 相面学指南移动端交互优化：将原下拉选择改为 hamburger 目录抽屉（点击右上角“目录”弹出章节索引，可关闭、可点章节跳转），解决手机端滚动后无法便捷跳转问题：更新 `src/components/FaceReadingGuidePage.jsx`、`src/components/__tests__/FaceReadingGuidePage.test.jsx`。
 - 修复短结果页反复创建分享链接问题：`onShareCreated` 的回调引用变化会触发 `ResultOverlay` 反复执行 `/api/share`，导致二维码“狂变”；已在 `App` 中改为 `ref` 去重，并在 `ResultOverlay` 增加分享签名去重，保证单次结果只发一次 share 请求：更新 `src/App.jsx`、`src/components/ResultOverlay.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
 - 顶部标题布局微调：模型轮播与 `AI相面` 改为右对齐并收紧左侧留白；底部右下角移除 `MediaPipe Face Detection` 文案，仅保留品牌：更新 `src/App.jsx`。

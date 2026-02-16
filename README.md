@@ -21,6 +21,7 @@
 - 结果出现时直接替换预览区，不使用半透明覆盖
 - 短结果页使用 `history.state` 支持后退/前进恢复 overlay（不依赖 URL 参数）
 - 分享数据创建后会后台异步回填 Gemini L2 分析；分享页优先读取缓存，未命中再实时生成
+- 右下角显示构建版本：`Superlinear Academy, v<build_version>`（Docker 默认使用 UTC 构建时间 `yyyyMMdd.HHmmss`）
 
 ## 过程文档维护
 

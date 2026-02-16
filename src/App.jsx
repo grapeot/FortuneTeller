@@ -363,7 +363,7 @@ export default function App() {
             本过程会获取一帧影像用于面相分析，分析后立即销毁，不会保存。分享仅使用匿名化、像素化风格图像。
           </p>
           <p className="font-serif-cn text-[11px] sm:text-xs text-gray-500">
-            {BRAND.name}
+            {BRAND.name}, v{BRAND.version}
           </p>
         </div>
       </div>
