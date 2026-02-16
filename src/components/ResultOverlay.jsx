@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import FortuneCard from './FortuneCard'
-import LandmarkVisualization, { normalizeMeasurementRows } from './LandmarkVisualization'
+import LandmarkVisualization from './LandmarkVisualization'
 
 /**
  * ResultOverlay - displays Grok fortune results with Chinese-style design.
@@ -25,7 +25,6 @@ export default function ResultOverlay({
 
   const activeFortune = fortunes?.grok
   const hasVisualization = Boolean(visualizationData?.landmarks?.length)
-  const measurementRows = normalizeMeasurementRows(visualizationData?.measurements)
 
   // Auto-share: POST to /api/share and generate QR code
   useEffect(() => {
@@ -87,10 +86,10 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-[#0f0f23] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-[#0b0d1a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
     >
       {/* Scrollable content */}
-      <div className="flex flex-col items-center justify-start w-full max-w-4xl gap-4 md:gap-5 pt-10 pb-6">
+      <div className="flex flex-col items-center justify-start w-full max-w-3xl gap-4 md:gap-5 pt-10 pb-6">
 
         {showTitle && (
           <>
@@ -109,20 +108,20 @@ export default function ResultOverlay({
           </>
         )}
 
-        {/* 2x2 preview grid */}
+        {/* Preview cards */}
         <motion.div
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-          className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+          className="w-full max-w-3xl space-y-3 md:space-y-4"
         >
-          <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3">
+          <div className="rounded-xl border border-yellow-400/20 bg-[#141826] p-3">
             <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">面相特征检测结果</p>
             {hasVisualization ? (
               <button
                 type="button"
                 onClick={() => setVizModalOpen(true)}
-                className="w-2/3 min-w-[180px] mx-auto text-left cursor-pointer"
+                className="w-full max-w-[420px] mx-auto text-left cursor-pointer"
                 aria-label="查看面相轮廓大图"
               >
                 <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
@@ -133,63 +132,49 @@ export default function ResultOverlay({
             )}
           </div>
 
-          <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3">
-            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">测量结果</p>
-            {measurementRows.length > 0 ? (
-              <div className="space-y-1.5">
-                {measurementRows.map((row) => (
-                  <div key={row.key} className="flex items-start justify-between gap-2 text-xs leading-5">
-                    <span className="text-yellow-100/75 font-serif-cn">{row.label}</span>
-                    <span className="text-yellow-200/90 font-mono text-right">{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-yellow-100/55 font-serif-cn">暂无测量数据</p>
-            )}
-          </div>
-
-          <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3 flex flex-col items-center justify-center">
-            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">像素画像</p>
-            {pixelatedImage ? (
-              <div className="relative p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
-                <img
-                  src={pixelatedImage}
-                  alt="像素画像"
-                  className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              </div>
-            ) : (
-              <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
-            )}
-          </div>
-
-          <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3 flex flex-col items-center justify-center">
-            {shareQr ? (
-              <>
-                <div className="relative p-2 bg-white/10 rounded-xl border border-yellow-400/20 backdrop-blur-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            <div className="rounded-xl border border-yellow-400/20 bg-[#141826] p-3 flex flex-col items-center justify-center">
+              {pixelatedImage ? (
+                <div className="relative p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
                   <img
-                    src={shareQr}
-                    alt="分享二维码"
+                    src={pixelatedImage}
+                    alt="像素画像"
                     className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg"
+                    style={{ imageRendering: 'pixelated' }}
                   />
                 </div>
-                <span className="mt-1 text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
-                {shareUrl && (
-                  <a
-                    href={shareUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] text-yellow-300/80 underline underline-offset-2 hover:text-yellow-200 transition-colors font-en"
-                  >
-                    直接访问链接
-                  </a>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
-            )}
+              ) : (
+                <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
+              )}
+              <p className="text-xs text-yellow-300/70 font-serif-cn mt-2">像素画像</p>
+            </div>
+
+            <div className="rounded-xl border border-yellow-400/20 bg-[#141826] p-3 flex flex-col items-center justify-center">
+              {shareQr ? (
+                <>
+                  <div className="relative p-2 bg-white/10 rounded-xl border border-yellow-400/20 backdrop-blur-sm">
+                    <img
+                      src={shareQr}
+                      alt="分享二维码"
+                      className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg"
+                    />
+                  </div>
+                  <span className="mt-1 text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
+                  {shareUrl && (
+                    <a
+                      href={shareUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] text-yellow-300/80 underline underline-offset-2 hover:text-yellow-200 transition-colors font-en"
+                    >
+                      直接访问链接
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
+              )}
+            </div>
           </div>
         </motion.div>
 

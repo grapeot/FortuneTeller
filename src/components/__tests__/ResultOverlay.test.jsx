@@ -191,9 +191,7 @@ describe('ResultOverlay', () => {
 
     await waitFor(() => {
       expect(screen.getByText('面相特征检测结果')).toBeInTheDocument()
-      expect(screen.getByText('测量结果')).toBeInTheDocument()
-      expect(screen.getByText('田宅宫')).toBeInTheDocument()
-      expect(screen.getByText('印堂')).toBeInTheDocument()
+      expect(screen.getByText('像素画像')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: '查看面相轮廓大图' }))
