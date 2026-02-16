@@ -22,6 +22,15 @@
 - L1 再次加固：最外层可滚动容器也强制实色底并禁用背景图层，按“最蠢但可靠”的方式彻底消除透底。
 - 新增 `/api/share` 分段耗时日志（编码、序列化、写库、总耗时及负载体积），便于线上直接定位慢点是否出在 Firestore 写入。
 - L1 层级顺序修正：将 Year of the Horse 背景层固定在 `z-0`，结果/相机内容提升到 `z-10`，避免背景图在图片加载后反压到前景造成“先正常后变透明”。
+- 新增 share 存储抽象层 `ShareStorage`：路由与邮件订阅流程不再直接依赖 Firebase SDK，统一通过存储接口读写。
+- 存储层新增 PostgreSQL 实现 `PostgresShareStorage`，支持与 Firebase 并存切换，环境变量可控制后端类型。
+- 新增环境变量约定：`SHARE_STORAGE_BACKEND`（`auto|firebase|postgres`）与 `SHARE_DATABASE_URL`，并更新 `.env.example`（使用占位连接串）。
+- 为 Koyeb/Neon 风格连接串增加自动兼容：默认追加 `sslmode=require`，并自动补充 `options=endpoint=<ep-...>` 以避免 SNI/endpoint 报错。
+- 新增 backfill 脚本 `scripts/backfill_firebase_to_postgres.py`，可将 Firestore 的 `fortunes` 集合迁移到 Postgres。
+- 新增 `tests/test_storage.py` 并补充接口切换测试与 URL 规范化测试；当前全量测试通过（`71 passed, 1 skipped`）。
+- backfill 脚本升级为批处理与弱网容错：改用 `list_documents` + 分批处理、单文档重试、批间节流、实时进度日志，并新增 `--batch-size`、`--sleep-between-batches`、`--max-docs` 参数。
+- 新增真实 Postgres 存储集成测试 `tests/test_storage_integration_live.py`（默认跳过，仅在 `RUN_INTEGRATION_TESTS=1` 时启用），覆盖 create/get/update/异常分支并做测试数据清理。
+- 验证了新集成测试可在显式启用时通过（`RUN_INTEGRATION_TESTS=1 pytest tests/test_storage_integration_live.py`）。
 
 ### Future Work
 

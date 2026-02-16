@@ -10,3 +10,4 @@ mistune
 mediapipe
 opencv-python
 jinja2
+psycopg[binary]
