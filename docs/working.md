@@ -2,6 +2,11 @@
 
 ## 2026-02-16
 
+- 新增短结果页浏览器历史能力：生成结果后写入 `history.state`（含 `shareId`），支持后退/前进恢复 overlay；不依赖 URL 参数：更新 `src/App.jsx`、`src/components/ResultOverlay.jsx`。
+- 新增前端回归测试覆盖：验证 `history.state` 下结果页可恢复行为；并补充二维码创建回调测试：更新 `src/__tests__/AppHistory.test.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
+- 后端在 `/api/share` 写入成功后异步回填 Gemini L2（fire-and-forget），并在 `/api/analysis/l2` 统一走“优先缓存、未命中再生成再写回”逻辑：更新 `server/routes.py`。
+- 分享页兼容优化：`/api/share/{id}` 返回 `analysis_l2` 时直接展示，不再重复调用 `/api/analysis/l2`；若无缓存仍保持实时生成 fallback：更新 `src/components/SharePage.jsx`、`src/components/__tests__/SharePage.test.jsx`。
+
 - 根据现场反馈优化首页可读性：顶部标题改为黑体风格，`AI相面` 与模型名使用同字号体系并贴近排布；模型展示改为轮播单模型（`Gemini 3 Flash` / `DeepSeek` / `Kimi K2.5`），避免一次性长串文本：更新 `src/App.jsx`、`src/index.css`。
 - 去掉主画面左右灯笼装饰，降低顶部噪点，避免误判为布局错位：更新 `src/App.jsx`。
 - 将“开始相面”按钮从中部移到下边栏上方，并增加下边栏高度，避免遮挡预览主体：更新 `src/App.jsx`、`src/components/IdleOverlay.jsx`。
