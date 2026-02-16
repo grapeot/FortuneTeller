@@ -277,7 +277,7 @@ async def create_share(req: ShareRequest):
         if isinstance(landmarks, list):
             viz_landmarks = len(landmarks)
 
-    config.logger.info(
+    config.logger.warning(
         "/api/share ok id=%s total_ms=%.1f encode_ms=%.1f serialize_ms=%.1f firestore_ms=%.1f pixelated_chars=%d viz_landmarks=%d doc_bytes=%d",
         share_id,
         total_ms,
