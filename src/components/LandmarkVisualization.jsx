@@ -138,7 +138,7 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
   const rightEyeTop = toCanvasPoint(points, KEY_LM.rightEyeTop, svgWidth, svgHeight)
 
   return (
-    <div className="w-full rounded-xl border border-yellow-400/20 bg-[#141826] p-3">
+    <div className="w-full rounded-xl border border-yellow-400/20 p-3" style={{ backgroundColor: '#141826' }}>
       <svg viewBox={`${viewLeft} ${viewTop} ${viewWidth} ${viewHeight}`} className="w-full h-auto">
         <rect
           x={viewLeft}
