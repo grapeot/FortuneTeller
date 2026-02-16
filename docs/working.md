@@ -2,11 +2,15 @@
 
 ## 2026-02-16
 
-- 根据现场反馈优化首页可读性：顶部标题改为静态模型列表（不轮播），并将 `AI相面` 改为黑体风格，和模型名使用同字号体系，减少视觉跳动：更新 `src/App.jsx`、`src/index.css`。
+- 根据现场反馈优化首页可读性：顶部标题改为黑体风格，`AI相面` 与模型名使用同字号体系并贴近排布；模型展示改为轮播单模型（`Gemini 3 Flash` / `DeepSeek` / `Kimi K2.5`），避免一次性长串文本：更新 `src/App.jsx`、`src/index.css`。
 - 去掉主画面左右灯笼装饰，降低顶部噪点，避免误判为布局错位：更新 `src/App.jsx`。
 - 将“开始相面”按钮从中部移到下边栏上方，并增加下边栏高度，避免遮挡预览主体：更新 `src/App.jsx`、`src/components/IdleOverlay.jsx`。
 - 调整 IdleOverlay 测试用例以匹配按钮位置变更：更新 `src/components/__tests__/IdleOverlay.test.jsx`。
 - 使用 Playwright 做本地移动端/桌面端截图复核，确认顶部栏与主内容不再相互挤压（临时截图输出到 `/tmp`）。
+- 结果页可读性增强：短结果页背景改为完全不透明覆盖，移除“分享二维码”标题文案，交互提示改为“按空格键或点击此处继续下一位”：更新 `src/components/ResultOverlay.jsx`。
+- 修复“面相特征检测结果”大图弹层在小屏不可滚动问题：为结果页和分享页弹层增加滚动能力（`overflow-y-auto` + `max-h`）：更新 `src/components/ResultOverlay.jsx`、`src/components/SharePage.jsx`。
+- 邮件模板品牌文案统一：邮件头部“相面先生”调整为“AI相面”：更新 `server/email_service.py`。
+- 讨论项（暂不改代码）：结果页 URL 回退与 Gemini 3 Flash 缓存/预回填方案，等待本轮 UX 全部稳定后单独设计。
 
 ## 2026-02-15
 
