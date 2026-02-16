@@ -15,7 +15,7 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
-    }, 5000)
+    }, 1000)
     return () => window.clearInterval(timer)
   }, [])
 
@@ -44,8 +44,9 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
         />
         <h1 className="text-yellow-400 text-glow-warm tracking-wide" aria-live="polite">
           <span className="block font-en text-xl sm:text-2xl md:text-3xl lg:text-4xl">
-            {MODEL_ROTATION[modelIndex]} AI
+            {MODEL_ROTATION[modelIndex]}
           </span>
+          <span className="block font-en text-base sm:text-lg md:text-xl lg:text-2xl mt-1">AI</span>
           <span className="block font-calligraphy text-5xl sm:text-6xl md:text-7xl lg:text-8xl">相面</span>
         </h1>
         <p className="font-serif-cn text-base sm:text-lg md:text-xl lg:text-2xl text-yellow-200/70 mt-2 sm:mt-3 tracking-wide">{BRAND.tagline}</p>

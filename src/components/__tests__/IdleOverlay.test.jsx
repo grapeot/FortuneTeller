@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import IdleOverlay from '../IdleOverlay'
 
 // Mock framer-motion to avoid animation issues in tests
@@ -14,8 +14,23 @@ describe('IdleOverlay', () => {
   it('renders rotating model title', () => {
     render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
     const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading.textContent).toContain('Gemini 3 Flash AI')
+    expect(heading.textContent).toContain('Gemini 3 Flash')
+    expect(heading.textContent).toContain('AI')
     expect(heading.textContent).toContain('相面')
+  })
+
+  it('rotates model name every second', () => {
+    vi.useFakeTimers()
+    render(<IdleOverlay faceCount={0} isReady={false} onStart={() => {}} />)
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toContain('Gemini 3 Flash')
+
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toContain('DeepSeek')
+
+    vi.useRealTimers()
   })
 
   it('renders the subtitle', () => {
