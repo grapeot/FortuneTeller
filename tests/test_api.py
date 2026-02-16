@@ -10,6 +10,7 @@ from unittest.mock import patch, MagicMock
 from server import config
 from server import ai as server_ai
 from server import routes as server_routes
+from server.storage import ShareStorage, set_share_storage_for_testing
 
 
 # ── Firestore payload sanitization ──────────────────────────────────────────
@@ -209,19 +210,14 @@ async def test_share_persists_visualization_data(client, mock_firestore):
         "measurements": {"three_parts": [0.33, 0.34, 0.33]},
     }
 
-    with patch.object(
-        server_routes,
-        "firestore_retry",
-        side_effect=lambda fn, *args, **kwargs: fn(*args, **kwargs),
-    ):
-        resp = await client.post(
-            "/api/share",
-            json={
-                "pixelated_image": "data:image/png;base64,px",
-                "visualization_data": payload,
-                "fortunes": {"grok": {"face": "a", "career": "b", "blessing": "c"}},
-            },
-        )
+    resp = await client.post(
+        "/api/share",
+        json={
+            "pixelated_image": "data:image/png;base64,px",
+            "visualization_data": payload,
+            "fortunes": {"grok": {"face": "a", "career": "b", "blessing": "c"}},
+        },
+    )
 
     assert resp.status_code == 200
     assert set_mock.call_count == 1
@@ -395,12 +391,7 @@ async def test_analysis_l2_generates_and_updates_cache(client, mock_firestore):
     with patch.object(
         server_ai, "generate_deep_analysis", return_value="new-l2-analysis"
     ) as generate_mock:
-        with patch.object(
-            server_routes,
-            "firestore_retry",
-            side_effect=lambda fn, *args, **kwargs: fn(*args, **kwargs),
-        ):
-            resp = await client.post("/api/analysis/l2", json={"share_id": "abc123"})
+        resp = await client.post("/api/analysis/l2", json={"share_id": "abc123"})
 
     assert resp.status_code == 200
     data = resp.json()
@@ -408,6 +399,51 @@ async def test_analysis_l2_generates_and_updates_cache(client, mock_firestore):
     assert data["cached"] is False
     generate_mock.assert_called_once()
     doc_ref.update.assert_called_once_with({"analysis_l2": "new-l2-analysis"})
+
+
+class InMemoryShareStorage(ShareStorage):
+    def __init__(self):
+        self._rows = {}
+
+    def is_available(self) -> bool:
+        return True
+
+    def create_share(self, share_id: str, data):
+        self._rows[share_id] = dict(data)
+
+    def get_share(self, share_id: str):
+        value = self._rows.get(share_id)
+        return dict(value) if value else None
+
+    def update_share(self, share_id: str, updates):
+        if share_id not in self._rows:
+            raise KeyError(share_id)
+        self._rows[share_id].update(updates)
+
+    def server_timestamp(self):
+        return "mock-ts"
+
+
+@pytest.mark.asyncio
+async def test_share_endpoints_work_with_storage_interface(client):
+    storage = InMemoryShareStorage()
+    set_share_storage_for_testing(storage)
+
+    create_resp = await client.post(
+        "/api/share",
+        json={
+            "pixelated_image": "data:image/png;base64,px",
+            "fortunes": {"grok": {"face": "a", "career": "b", "blessing": "c"}},
+        },
+    )
+    assert create_resp.status_code == 200
+
+    share_id = create_resp.json()["id"]
+    get_resp = await client.get(f"/api/share/{share_id}")
+    assert get_resp.status_code == 200
+    data = get_resp.json()
+    assert data["pixelated_image"] == "data:image/png;base64,px"
+    assert data["fortunes"]["grok"]["career"] == "b"
 
 
 # ── POST /api/subscribe ─────────────────────────────────────────────────────

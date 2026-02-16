@@ -11,6 +11,7 @@ from httpx import AsyncClient, ASGITransport
 from server import app
 from server import config
 from server import firebase
+from server.storage import FirebaseShareStorage, set_share_storage_for_testing
 
 
 def _is_live_integration_enabled(request) -> bool:
@@ -52,6 +53,7 @@ def _patch_env(monkeypatch, request):
     # Firestore disabled by default; individual tests opt in
     monkeypatch.setattr(firebase, "_firestore_db", None)
     monkeypatch.setattr(firebase, "_firestore_mod", None)
+    set_share_storage_for_testing(FirebaseShareStorage())
 
 
 @pytest.fixture

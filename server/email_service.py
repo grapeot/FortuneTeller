@@ -7,7 +7,7 @@ import re
 import mistune
 
 from . import config
-from .firebase import get_db, get_mod, firestore_retry
+from .storage import get_share_storage
 from .ai import generate_deep_analysis, generate_multi_model_analysis
 
 
@@ -317,14 +317,10 @@ async def subscribe_background(email: str, name: str, share_id: str):
         # Step 2: Fetch share data from Firestore
         fortunes = {}
         pixelated_image = None
-        db = get_db()
-        mod = get_mod()
-        if db:
-            doc = await asyncio.to_thread(
-                firestore_retry, db.collection("fortunes").document(share_id).get
-            )
-            if doc.exists:
-                share_data = doc.to_dict()
+        storage = get_share_storage()
+        if storage.is_available():
+            share_data = await asyncio.to_thread(storage.get_share, share_id)
+            if share_data:
                 fortunes = share_data.get("fortunes") or {}
                 pixelated_image = share_data.get("pixelated_image")
 
@@ -345,18 +341,14 @@ async def subscribe_background(email: str, name: str, share_id: str):
         email_id = await asyncio.to_thread(send_resend_email, email, html)
 
         # Step 5: Update Firestore with subscription info
-        if db and email_id:
-            update_data = {
-                "subscribed_email": email,
-                "email_sent_at": mod.SERVER_TIMESTAMP,
-            }
+        if storage.is_available() and email_id:
+            update_data = {"subscribed_email": email}
+            server_ts = storage.server_timestamp()
+            if server_ts is not None:
+                update_data["email_sent_at"] = server_ts
             if name:
                 update_data["subscribed_name"] = name
-            await asyncio.to_thread(
-                firestore_retry,
-                db.collection("fortunes").document(share_id).update,
-                update_data,
-            )
+            await asyncio.to_thread(storage.update_share, share_id, update_data)
 
         config.logger.info(f"Subscribe pipeline complete for {email} (share={share_id})")
 

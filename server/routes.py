@@ -25,7 +25,7 @@ from .models import (
     SubscribeRequest,
     AnalysisRequest,
 )
-from .firebase import get_db, get_mod, firestore_retry
+from .storage import get_share_storage
 from . import ai
 from .pixelate import pixelate_image
 from . import email_service
@@ -101,17 +101,14 @@ def _normalize_fortunes_payload(data: dict) -> dict:
 
 async def _compute_and_cache_l2_analysis(share_id: str) -> Tuple[Optional[str], bool]:
     """Return (analysis, cached) for a share id, caching when needed."""
-    db = get_db()
-    if not db or not config.AI_TOKEN:
+    storage = get_share_storage()
+    if not storage.is_available() or not config.AI_TOKEN:
         return None, False
 
-    doc = await asyncio.to_thread(
-        firestore_retry, db.collection("fortunes").document(share_id).get
-    )
-    if not doc.exists:
+    data = await asyncio.to_thread(storage.get_share, share_id)
+    if not data:
         return None, False
 
-    data = doc.to_dict() or {}
     cached = data.get("analysis_l2")
     if cached:
         return cached, True
@@ -122,11 +119,7 @@ async def _compute_and_cache_l2_analysis(share_id: str) -> Tuple[Optional[str], 
 
     analysis = await ai.generate_deep_analysis(fortunes)
 
-    await asyncio.to_thread(
-        firestore_retry,
-        db.collection("fortunes").document(share_id).update,
-        {"analysis_l2": analysis},
-    )
+    await asyncio.to_thread(storage.update_share, share_id, {"analysis_l2": analysis})
 
     return analysis, False
 
@@ -227,8 +220,8 @@ async def pixelate_avatar(req: PixelateRequest):
 @app.post("/api/share")
 async def create_share(req: ShareRequest):
     """Save fortune to Firestore and return a share URL."""
-    db = get_db()
-    if not db:
+    storage = get_share_storage()
+    if not storage.is_available():
         raise HTTPException(
             status_code=503,
             detail="Share feature not available (Firestore not configured)",
@@ -258,9 +251,7 @@ async def create_share(req: ShareRequest):
 
     try:
         firestore_start = time.perf_counter()
-        await asyncio.to_thread(
-            firestore_retry, db.collection("fortunes").document(share_id).set, doc
-        )
+        await asyncio.to_thread(storage.create_share, share_id, doc)
         firestore_ms = (time.perf_counter() - firestore_start) * 1000.0
     except Exception as e:
         elapsed_ms = (time.perf_counter() - total_start) * 1000.0
@@ -307,17 +298,14 @@ async def create_share(req: ShareRequest):
 @app.get("/api/share/{share_id}")
 async def get_share(share_id: str):
     """Retrieve a shared fortune from Firestore."""
-    db = get_db()
-    if not db:
+    storage = get_share_storage()
+    if not storage.is_available():
         raise HTTPException(status_code=503, detail="Share feature not available")
 
-    doc = await asyncio.to_thread(
-        firestore_retry, db.collection("fortunes").document(share_id).get
-    )
-    if not doc.exists:
+    data = await asyncio.to_thread(storage.get_share, share_id)
+    if not data:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    data = doc.to_dict()
     fortunes = _normalize_fortunes_payload(data)
 
     return {
@@ -361,8 +349,8 @@ async def generate_l2_analysis(req: AnalysisRequest):
     if not config.AI_TOKEN:
         raise HTTPException(status_code=503, detail="AI token not configured")
 
-    db = get_db()
-    if not db:
+    storage = get_share_storage()
+    if not storage.is_available():
         raise HTTPException(status_code=503, detail="Share feature not available")
 
     analysis, cached = await _compute_and_cache_l2_analysis(req.share_id)
@@ -381,7 +369,7 @@ async def health():
         "status": "ok",
         "models": config.MODELS,
         "token_configured": bool(config.AI_TOKEN),
-        "firestore_configured": get_db() is not None,
+        "firestore_configured": get_share_storage().is_available(),
         "email_configured": bool(config.RESEND_API_KEY),
         "circle_configured": bool(config.CIRCLE_V2_TOKEN),
     }
