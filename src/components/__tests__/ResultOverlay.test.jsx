@@ -115,6 +115,16 @@ describe('ResultOverlay', () => {
     })
   })
 
+  it('renders a direct share link under QR helper text', async () => {
+    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
+
+    await waitFor(() => {
+      const link = screen.getByRole('link', { name: '直接访问链接' })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', 'http://localhost:3000/share/abc123')
+    })
+  })
+
   it('renders pixelated image when provided', async () => {
     const fakePixel = 'data:image/png;base64,pixel123'
     render(<ResultOverlay fortunes={mockFortunes} pixelatedImage={fakePixel} onDismiss={() => {}} />)

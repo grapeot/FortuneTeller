@@ -15,6 +15,7 @@ export default function ResultOverlay({
   onDismiss,
 }) {
   const [shareQr, setShareQr] = useState(null)
+  const [shareUrl, setShareUrl] = useState('')
   const [vizModalOpen, setVizModalOpen] = useState(false)
 
   const activeFortune = fortunes?.grok
@@ -50,7 +51,10 @@ export default function ResultOverlay({
         const shareUrl = `${window.location.origin}/share/${data.id}`
         const qrDataUrl = await QRCode.toDataURL(shareUrl, { width: 200, margin: 2 })
         console.log('[QR Code] Generated QR code for:', shareUrl)
-        if (!cancelled) setShareQr(qrDataUrl)
+        if (!cancelled) {
+          setShareQr(qrDataUrl)
+          setShareUrl(shareUrl)
+        }
       } catch (err) {
         console.error('[QR Code] Share failed:', err)
       }
@@ -152,6 +156,16 @@ export default function ResultOverlay({
                   />
                 </div>
                 <span className="mt-1 text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
+                {shareUrl && (
+                  <a
+                    href={shareUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-yellow-300/80 underline underline-offset-2 hover:text-yellow-200 transition-colors font-en"
+                  >
+                    直接访问链接
+                  </a>
+                )}
               </>
             ) : (
               <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
