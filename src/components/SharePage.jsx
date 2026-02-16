@@ -75,6 +75,12 @@ export default function SharePage({ shareId }) {
         const result = await resp.json()
         setData(result)
 
+        if (result.analysis_l2) {
+          setL2Analysis(result.analysis_l2)
+          setL2Status('ready')
+          return
+        }
+
         // Layer 2: request detailed analysis (Gemini 3 Flash)
         setL2Status('loading')
         try {

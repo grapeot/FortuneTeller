@@ -8,6 +8,7 @@ import io
 import math
 import os
 import uuid
+from typing import Optional, Tuple
 
 import httpx
 from fastapi import HTTPException, BackgroundTasks
@@ -89,11 +90,60 @@ def _decode_visualization_from_firestore(value):
     return value
 
 
+def _normalize_fortunes_payload(data: dict) -> dict:
+    fortunes = data.get("fortunes")
+    if not fortunes and data.get("fortune"):
+        fortunes = {"gemini": data["fortune"], "grok": None}
+    return fortunes or {}
+
+
+async def _compute_and_cache_l2_analysis(share_id: str) -> Tuple[Optional[str], bool]:
+    """Return (analysis, cached) for a share id, caching when needed."""
+    db = get_db()
+    if not db or not config.AI_TOKEN:
+        return None, False
+
+    doc = await asyncio.to_thread(
+        firestore_retry, db.collection("fortunes").document(share_id).get
+    )
+    if not doc.exists:
+        return None, False
+
+    data = doc.to_dict() or {}
+    cached = data.get("analysis_l2")
+    if cached:
+        return cached, True
+
+    fortunes = _normalize_fortunes_payload(data)
+    if not fortunes:
+        return None, False
+
+    analysis = await ai.generate_deep_analysis(fortunes)
+
+    await asyncio.to_thread(
+        firestore_retry,
+        db.collection("fortunes").document(share_id).update,
+        {"analysis_l2": analysis},
+    )
+
+    return analysis, False
+
+
+async def _backfill_l2_analysis(share_id: str):
+    """Fire-and-forget L2 generation after share creation."""
+    try:
+        await _compute_and_cache_l2_analysis(share_id)
+    except Exception as exc:
+        config.logger.warning(
+            "L2 backfill failed for share %s: %s", share_id, exc
+        )
+
+
 # ── POST /api/fortune ────────────────────────────────────────────────────────
 
 
 @app.post("/api/fortune")
-async def generate_fortune(req: FortuneRequest | None = None):
+async def generate_fortune(req: Optional[FortuneRequest] = None):
     """Call Grok only, return result in multi-model format for compatibility."""
     if not config.AI_TOKEN:
         raise HTTPException(
@@ -204,6 +254,9 @@ async def create_share(req: ShareRequest):
         config.logger.error(f"Firestore write failed for {share_id}: {e}")
         raise HTTPException(status_code=502, detail="Failed to persist share data")
 
+    if config.AI_TOKEN:
+        asyncio.create_task(_backfill_l2_analysis(share_id))
+
     return {"id": share_id, "url": f"/share/{share_id}"}
 
 
@@ -224,9 +277,7 @@ async def get_share(share_id: str):
         raise HTTPException(status_code=404, detail="Share not found")
 
     data = doc.to_dict()
-    fortunes = data.get("fortunes")
-    if not fortunes and data.get("fortune"):
-        fortunes = {"gemini": data["fortune"], "grok": None}
+    fortunes = _normalize_fortunes_payload(data)
 
     return {
         "pixelated_image": data.get("pixelated_image"),
@@ -234,6 +285,7 @@ async def get_share(share_id: str):
             data.get("visualization_data")
         ),
         "fortunes": fortunes,
+        "analysis_l2": data.get("analysis_l2"),
     }
 
 
@@ -272,33 +324,11 @@ async def generate_l2_analysis(req: AnalysisRequest):
     if not db:
         raise HTTPException(status_code=503, detail="Share feature not available")
 
-    doc = await asyncio.to_thread(
-        firestore_retry, db.collection("fortunes").document(req.share_id).get
-    )
-    if not doc.exists:
+    analysis, cached = await _compute_and_cache_l2_analysis(req.share_id)
+    if analysis is None:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    data = doc.to_dict() or {}
-    cached = data.get("analysis_l2")
-    if cached:
-        return {"analysis": cached, "cached": True}
-
-    fortunes = data.get("fortunes")
-    if not fortunes and data.get("fortune"):
-        fortunes = {"gemini": data["fortune"], "grok": None}
-    fortunes = fortunes or {}
-
-    analysis = await ai.generate_deep_analysis(fortunes)
-
-    update_data = {"analysis_l2": analysis}
-
-    await asyncio.to_thread(
-        firestore_retry,
-        db.collection("fortunes").document(req.share_id).update,
-        update_data,
-    )
-
-    return {"analysis": analysis, "cached": False}
+    return {"analysis": analysis, "cached": cached}
 
 
 # ── GET /api/health ──────────────────────────────────────────────────────────

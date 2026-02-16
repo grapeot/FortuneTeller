@@ -169,6 +169,26 @@ describe('SharePage', () => {
     })
   })
 
+  it('uses cached Gemini analysis from share payload when available', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...mockShareData,
+        analysis_l2: '## 缓存命中\n- 来自 Firestore',
+      }),
+    })
+
+    render(<SharePage shareId="test123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('缓存命中')).toBeInTheDocument()
+      expect(screen.getByText(/来自 Firestore/)).toBeInTheDocument()
+    })
+
+    const l2Calls = mockFetch.mock.calls.filter((call) => call[0] === '/api/analysis/l2')
+    expect(l2Calls).toHaveLength(0)
+  })
+
   it('submits the subscription form and shows success', async () => {
     // First call: fetch share data
     mockFetch.mockResolvedValueOnce({
