@@ -121,10 +121,12 @@ export default function ResultOverlay({
               <button
                 type="button"
                 onClick={() => setVizModalOpen(true)}
-                className="w-full max-w-[420px] mx-auto text-left cursor-pointer"
+                className="w-full max-w-[420px] mx-auto flex justify-center text-left cursor-pointer"
                 aria-label="查看面相轮廓大图"
               >
-                <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
+                <div className="w-full">
+                  <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
+                </div>
                 <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
               </button>
             ) : (

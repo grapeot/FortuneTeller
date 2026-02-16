@@ -51,7 +51,7 @@ export default function FortuneCard({ fortune }) {
       transition={{ duration: 0.3 }}
       className="w-full max-w-3xl px-3 sm:px-4"
     >
-      <div className="relative bg-gradient-to-b from-white/[0.04] to-transparent rounded-2xl border border-yellow-400/10 px-5 sm:px-8 py-5 sm:py-7 space-y-4 sm:space-y-5">
+      <div className="relative bg-[#141826] rounded-2xl border border-yellow-400/20 px-5 sm:px-8 py-5 sm:py-7 space-y-4 sm:space-y-5">
 
         {/* Decorative top line */}
         <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent" />
