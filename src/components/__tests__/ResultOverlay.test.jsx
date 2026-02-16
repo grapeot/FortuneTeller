@@ -81,7 +81,7 @@ describe('ResultOverlay', () => {
 
   it('shows the dismiss hint', async () => {
     render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
-    expect(screen.getByText(/按 空格键 继续下一位/)).toBeInTheDocument()
+    expect(screen.getByText(/按空格键或点击此处继续下一位/)).toBeInTheDocument()
     // Wait for async operations to complete
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled()
@@ -95,7 +95,7 @@ describe('ResultOverlay', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled()
     })
-    fireEvent.click(screen.getByText(/按 空格键 继续下一位/))
+    fireEvent.click(screen.getByText(/按空格键或点击此处继续下一位/))
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 

@@ -73,7 +73,7 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-gradient-to-b from-[#1a0a0a]/95 via-[#0f0f23]/90 to-[#1a0a0a]/95 flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-[#0f0f23] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
     >
       {/* Scrollable content */}
       <div className="flex flex-col items-center justify-start w-full max-w-4xl gap-4 md:gap-5 pt-10 pb-6">
@@ -152,7 +152,6 @@ export default function ResultOverlay({
           </div>
 
           <div className="rounded-xl border border-yellow-400/20 bg-black/25 p-3 flex flex-col items-center justify-center">
-            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">分享二维码</p>
             {shareQr ? (
               <>
                 <div className="relative p-2 bg-white/10 rounded-xl border border-yellow-400/20 backdrop-blur-sm">
@@ -195,7 +194,7 @@ export default function ResultOverlay({
           onClick={onDismiss}
           className="mt-2 text-base text-gray-500 hover:text-gray-300 transition-colors cursor-pointer shrink-0 font-serif-cn"
         >
-          按 空格键 继续下一位 →
+          按空格键或点击此处继续下一位 →
         </motion.button>
       </div>
 
@@ -212,14 +211,14 @@ export default function ResultOverlay({
 
       {vizModalOpen && hasVisualization && (
         <div
-          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="面相轮廓图大图"
           onClick={() => setVizModalOpen(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3 gap-3">
