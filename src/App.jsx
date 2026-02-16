@@ -47,6 +47,7 @@ export default function App() {
   const [modelIndex, setModelIndex] = useState(0)
   const [resultShareId, setResultShareId] = useState(null)
   const resultCacheRef = useRef(new Map())
+  const resultShareIdRef = useRef(null)
   const restoringRef = useRef(false)
 
   // Face detection is active only during IDLE phase
@@ -76,6 +77,8 @@ export default function App() {
     setFortunes(null)
     setPixelatedImage(null)
     setVisualizationData(null)
+    setResultShareId(null)
+    resultShareIdRef.current = null
   }, [activeTab])
 
   useEffect(() => {
@@ -105,6 +108,7 @@ export default function App() {
     setPixelatedImage(null)
     setVisualizationData(null)
     setResultShareId(null)
+    resultShareIdRef.current = null
   }, [phase])
 
   const openResultFromShare = useCallback(async (shareId) => {
@@ -117,9 +121,10 @@ export default function App() {
         setFortunes(cached.fortunes)
         setPixelatedImage(cached.pixelatedImage)
         setVisualizationData(cached.visualizationData)
-        setResultShareId(shareId)
-        setPhase(PHASE.RESULT)
-        return
+      setResultShareId(shareId)
+      resultShareIdRef.current = shareId
+      setPhase(PHASE.RESULT)
+      return
       }
 
       const resp = await fetch(`/api/share/${shareId}`)
@@ -136,6 +141,7 @@ export default function App() {
       setPixelatedImage(restored.pixelatedImage)
       setVisualizationData(restored.visualizationData)
       setResultShareId(shareId)
+      resultShareIdRef.current = shareId
       setPhase(PHASE.RESULT)
     } catch {
       setPhase(PHASE.IDLE)
@@ -143,6 +149,7 @@ export default function App() {
       setPixelatedImage(null)
       setVisualizationData(null)
       setResultShareId(null)
+      resultShareIdRef.current = null
     } finally {
       restoringRef.current = false
     }
@@ -162,6 +169,7 @@ export default function App() {
       setPixelatedImage(null)
       setVisualizationData(null)
       setResultShareId(null)
+      resultShareIdRef.current = null
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -169,9 +177,10 @@ export default function App() {
   }, [openResultFromShare])
 
   const handleShareCreated = useCallback((shareId) => {
-    if (!shareId || shareId === resultShareId) return
+    if (!shareId || shareId === resultShareIdRef.current) return
 
     setResultShareId(shareId)
+    resultShareIdRef.current = shareId
     resultCacheRef.current.set(shareId, {
       fortunes,
       pixelatedImage,
@@ -181,7 +190,7 @@ export default function App() {
     if (window.history.state?.view !== 'result' || window.history.state?.shareId !== shareId) {
       window.history.pushState({ view: 'result', shareId }, '')
     }
-  }, [fortunes, pixelatedImage, resultShareId, visualizationData])
+  }, [fortunes, pixelatedImage, visualizationData])
 
   // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
@@ -257,8 +266,8 @@ export default function App() {
     <div className="h-screen w-screen bg-black overflow-hidden select-none flex flex-col">
       <div className="relative z-50 shrink-0 px-3 sm:px-4 py-2.5 border-b border-yellow-400/15 bg-black/65 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-          <h1 className="pl-1 flex flex-1 min-w-0 items-baseline gap-2 sm:gap-2.5 whitespace-nowrap">
-            <span className="font-hei-cn font-semibold text-base sm:text-2xl text-yellow-200/85 w-[9.8rem] sm:w-[13rem] shrink-0">
+          <h1 className="pr-1 flex flex-1 min-w-0 items-baseline justify-end gap-1.5 sm:gap-2 whitespace-nowrap text-right">
+            <span className="font-hei-cn font-semibold text-base sm:text-2xl text-yellow-200/85 w-[9.2rem] sm:w-[12.2rem] shrink-0 text-right">
               <AnimatePresence mode="wait">
                 <motion.span
                   key={MODEL_ROTATION[modelIndex]}
@@ -354,7 +363,7 @@ export default function App() {
             本过程会获取一帧影像用于面相分析，分析后立即销毁，不会保存。分享仅使用匿名化、像素化风格图像。
           </p>
           <p className="font-serif-cn text-[11px] sm:text-xs text-gray-500">
-            {BRAND.name} · MediaPipe Face Detection
+            {BRAND.name}
           </p>
         </div>
       </div>

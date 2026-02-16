@@ -142,6 +142,23 @@ describe('ResultOverlay', () => {
     })
   })
 
+  it('does not re-post share when callback identity changes', async () => {
+    const baseCalls = mockFetch.mock.calls.length
+    const first = vi.fn()
+    const { rerender } = render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} onShareCreated={first} />)
+
+    await waitFor(() => {
+      expect(mockFetch.mock.calls.length).toBe(baseCalls + 1)
+    })
+
+    const second = vi.fn()
+    rerender(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} onShareCreated={second} />)
+
+    await waitFor(() => {
+      expect(mockFetch.mock.calls.length).toBe(baseCalls + 1)
+    })
+  })
+
   it('renders pixelated image when provided', async () => {
     const fakePixel = 'data:image/png;base64,pixel123'
     render(<ResultOverlay fortunes={mockFortunes} pixelatedImage={fakePixel} onDismiss={() => {}} />)

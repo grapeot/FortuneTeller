@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import FortuneCard from './FortuneCard'
 import LandmarkVisualization, { normalizeMeasurementRows } from './LandmarkVisualization'
@@ -21,6 +21,7 @@ export default function ResultOverlay({
   const [shareQr, setShareQr] = useState(null)
   const [shareUrl, setShareUrl] = useState('')
   const [vizModalOpen, setVizModalOpen] = useState(false)
+  const lastSharedSignatureRef = useRef('')
 
   const activeFortune = fortunes?.grok
   const hasVisualization = Boolean(visualizationData?.landmarks?.length)
@@ -29,6 +30,17 @@ export default function ResultOverlay({
   // Auto-share: POST to /api/share and generate QR code
   useEffect(() => {
     if (!fortunes?.grok) return
+
+    const shareSignature = JSON.stringify({
+      face: fortunes.grok.face,
+      career: fortunes.grok.career,
+      blessing: fortunes.grok.blessing,
+      pixelatedImage,
+      hasViz: Boolean(visualizationData),
+    })
+    if (lastSharedSignatureRef.current === shareSignature) return
+    lastSharedSignatureRef.current = shareSignature
+
     let cancelled = false
 
     async function autoShare() {
