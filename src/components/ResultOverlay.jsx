@@ -13,6 +13,7 @@ export default function ResultOverlay({
   pixelatedImage,
   visualizationData,
   onDismiss,
+  onShareCreated,
   embedded = false,
   showTitle = true,
   showFooter = true,
@@ -57,6 +58,7 @@ export default function ResultOverlay({
         if (!cancelled) {
           setShareQr(qrDataUrl)
           setShareUrl(shareUrl)
+          if (onShareCreated) onShareCreated(data.id)
         }
       } catch (err) {
         console.error('[QR Code] Share failed:', err)
@@ -65,7 +67,7 @@ export default function ResultOverlay({
 
     autoShare()
     return () => { cancelled = true }
-  }, [fortunes, pixelatedImage, visualizationData])
+  }, [fortunes, pixelatedImage, visualizationData, onShareCreated])
 
   return (
     <motion.div

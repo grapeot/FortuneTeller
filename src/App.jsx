@@ -45,6 +45,9 @@ export default function App() {
   const [visualizationData, setVisualizationData] = useState(null)
   const [activeTab, setActiveTab] = useState(getInitialTab)
   const [modelIndex, setModelIndex] = useState(0)
+  const [resultShareId, setResultShareId] = useState(null)
+  const resultCacheRef = useRef(new Map())
+  const restoringRef = useRef(false)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
@@ -76,6 +79,13 @@ export default function App() {
   }, [activeTab])
 
   useEffect(() => {
+    const state = window.history.state
+    if (!state || state.view !== 'idle') {
+      window.history.replaceState({ view: 'idle' }, '')
+    }
+  }, [])
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
     }, 700)
@@ -86,11 +96,92 @@ export default function App() {
   // Dismiss result and return to idle
   const dismissResult = useCallback(() => {
     if (phase !== PHASE.RESULT) return
+    if (window.history.state?.view === 'result') {
+      window.history.back()
+      return
+    }
     setPhase(PHASE.IDLE)
     setFortunes(null)
     setPixelatedImage(null)
     setVisualizationData(null)
+    setResultShareId(null)
   }, [phase])
+
+  const openResultFromShare = useCallback(async (shareId) => {
+    if (!shareId || restoringRef.current) return
+    restoringRef.current = true
+
+    try {
+      const cached = resultCacheRef.current.get(shareId)
+      if (cached) {
+        setFortunes(cached.fortunes)
+        setPixelatedImage(cached.pixelatedImage)
+        setVisualizationData(cached.visualizationData)
+        setResultShareId(shareId)
+        setPhase(PHASE.RESULT)
+        return
+      }
+
+      const resp = await fetch(`/api/share/${shareId}`)
+      if (!resp.ok) throw new Error('share not found')
+      const data = await resp.json()
+      const restored = {
+        fortunes: data.fortunes || null,
+        pixelatedImage: data.pixelated_image || null,
+        visualizationData: data.visualization_data || null,
+      }
+
+      resultCacheRef.current.set(shareId, restored)
+      setFortunes(restored.fortunes)
+      setPixelatedImage(restored.pixelatedImage)
+      setVisualizationData(restored.visualizationData)
+      setResultShareId(shareId)
+      setPhase(PHASE.RESULT)
+    } catch {
+      setPhase(PHASE.IDLE)
+      setFortunes(null)
+      setPixelatedImage(null)
+      setVisualizationData(null)
+      setResultShareId(null)
+    } finally {
+      restoringRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    async function handlePopState(e) {
+      const state = e.state || {}
+      if (state.view === 'result' && state.shareId) {
+        setActiveTab(TAB.FORTUNE)
+        await openResultFromShare(state.shareId)
+        return
+      }
+
+      setPhase(PHASE.IDLE)
+      setFortunes(null)
+      setPixelatedImage(null)
+      setVisualizationData(null)
+      setResultShareId(null)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [openResultFromShare])
+
+  const handleShareCreated = useCallback((shareId) => {
+    if (!shareId || shareId === resultShareId) return
+
+    setResultShareId(shareId)
+    resultCacheRef.current.set(shareId, {
+      fortunes,
+      pixelatedImage,
+      visualizationData,
+    })
+
+    if (window.history.state?.view !== 'result' || window.history.state?.shareId !== shareId) {
+      window.history.pushState({ view: 'result', shareId }, '')
+    }
+  }, [fortunes, pixelatedImage, resultShareId, visualizationData])
 
   // Start fortune telling — capture face + annotate, then AI call runs in parallel with animation
   const startFortune = useCallback(async () => {
@@ -204,6 +295,7 @@ export default function App() {
                 pixelatedImage={pixelatedImage}
                 visualizationData={visualizationData}
                 onDismiss={dismissResult}
+                onShareCreated={handleShareCreated}
                 embedded
                 showTitle={false}
                 showFooter={false}

@@ -125,6 +125,23 @@ describe('ResultOverlay', () => {
     })
   })
 
+  it('calls onShareCreated with generated share id', async () => {
+    const onShareCreated = vi.fn()
+    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} onShareCreated={onShareCreated} />)
+
+    await waitFor(() => {
+      expect(onShareCreated).toHaveBeenCalledWith('abc123')
+    })
+  })
+
+  it('does not show QR section title text', async () => {
+    render(<ResultOverlay fortunes={mockFortunes} onDismiss={() => {}} />)
+
+    await waitFor(() => {
+      expect(screen.queryByText('分享二维码')).not.toBeInTheDocument()
+    })
+  })
+
   it('renders pixelated image when provided', async () => {
     const fakePixel = 'data:image/png;base64,pixel123'
     render(<ResultOverlay fortunes={mockFortunes} pixelatedImage={fakePixel} onDismiss={() => {}} />)
