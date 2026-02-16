@@ -5,8 +5,10 @@ FastAPI route handlers.
 import asyncio
 import base64
 import io
+import json
 import math
 import os
+import time
 import uuid
 from typing import Optional, Tuple
 
@@ -232,30 +234,69 @@ async def create_share(req: ShareRequest):
             detail="Share feature not available (Firestore not configured)",
         )
 
+    total_start = time.perf_counter()
+
     share_id = uuid.uuid4().hex[:8]
 
     fortunes_data = req.fortunes
     if not fortunes_data and req.fortune:
         fortunes_data = {"gemini": req.fortune, "grok": None}
 
+    encode_start = time.perf_counter()
+    encoded_viz = _encode_visualization_for_firestore(req.visualization_data)
+    encode_ms = (time.perf_counter() - encode_start) * 1000.0
+
     doc = {
         "pixelated_image": req.pixelated_image,
-        "visualization_data": _encode_visualization_for_firestore(
-            req.visualization_data
-        ),
+        "visualization_data": encoded_viz,
         "fortunes": fortunes_data,
     }
 
+    serialize_start = time.perf_counter()
+    doc_bytes = len(json.dumps(doc, ensure_ascii=False).encode("utf-8"))
+    serialize_ms = (time.perf_counter() - serialize_start) * 1000.0
+
     try:
+        firestore_start = time.perf_counter()
         await asyncio.to_thread(
             firestore_retry, db.collection("fortunes").document(share_id).set, doc
         )
+        firestore_ms = (time.perf_counter() - firestore_start) * 1000.0
     except Exception as e:
-        config.logger.error(f"Firestore write failed for {share_id}: {e}")
+        elapsed_ms = (time.perf_counter() - total_start) * 1000.0
+        config.logger.error(
+            "/api/share failed id=%s elapsed_ms=%.1f encode_ms=%.1f serialize_ms=%.1f pixelated_chars=%d doc_bytes=%d error=%s",
+            share_id,
+            elapsed_ms,
+            encode_ms,
+            serialize_ms,
+            len(req.pixelated_image or ""),
+            doc_bytes,
+            e,
+        )
         raise HTTPException(status_code=502, detail="Failed to persist share data")
 
     if config.AI_TOKEN:
         asyncio.create_task(_backfill_l2_analysis(share_id))
+
+    total_ms = (time.perf_counter() - total_start) * 1000.0
+    viz_landmarks = 0
+    if isinstance(req.visualization_data, dict):
+        landmarks = req.visualization_data.get("landmarks")
+        if isinstance(landmarks, list):
+            viz_landmarks = len(landmarks)
+
+    config.logger.info(
+        "/api/share ok id=%s total_ms=%.1f encode_ms=%.1f serialize_ms=%.1f firestore_ms=%.1f pixelated_chars=%d viz_landmarks=%d doc_bytes=%d",
+        share_id,
+        total_ms,
+        encode_ms,
+        serialize_ms,
+        firestore_ms,
+        len(req.pixelated_image or ""),
+        viz_landmarks,
+        doc_bytes,
+    )
 
     return {"id": share_id, "url": f"/share/{share_id}"}
 
