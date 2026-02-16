@@ -2,6 +2,7 @@
 
 ## 2026-02-16
 
+- 例行维护：复核 `docs/working.md` 是否遗漏近期改动，确认并补记本轮 L1 布局重排、超时参数调整、构建版本号注入与移动端指南目录优化，保证后续可追溯。
 - L1（Grok）结果页版式调整：改为品字形三卡布局（上：面相特征检测大图；下左：像素画像；下右：二维码），移除“测量结果”卡片，并以下方 Fortune 文本宽度收窄整体容器：更新 `src/components/ResultOverlay.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
 - L1 覆盖层不透明度提高：结果页背景改为更深纯色（接近全遮挡），尽量不透出后景视频画面：更新 `src/components/ResultOverlay.jsx`。
 - Grok 超时策略放宽：后端模型调用超时从 25s 调整到 40s；前端整体 AI 超时从 30s 调整到 50s，降低冷启动或弱网时误触发 fallback 概率：更新 `server/ai.py`、`src/lib/config.js`。
