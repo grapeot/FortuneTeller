@@ -2,9 +2,9 @@ import { motion } from 'framer-motion'
 
 /**
  * IdleOverlay - shown when the app is waiting for the user to start.
- * Displays readiness status and start button.
+ * Displays readiness status.
  */
-export default function IdleOverlay({ faceCount, isReady, onStart }) {
+export default function IdleOverlay({ faceCount, isReady }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -31,16 +31,6 @@ export default function IdleOverlay({ faceCount, isReady, onStart }) {
               正在加载<span className="font-en">AI</span>模型...
             </p>
           )}
-        </div>
-
-        <div className="pointer-events-auto flex flex-col items-center gap-3 mt-5">
-          <button
-            onClick={onStart}
-            disabled={!isReady}
-            className="relative px-8 py-4 sm:px-12 sm:py-5 md:px-16 md:py-7 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-calligraphy text-2xl sm:text-3xl md:text-4xl lg:text-5xl rounded-xl sm:rounded-2xl shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 animate-pulse-ring tracking-widest"
-          >
-            开始相面
-          </button>
         </div>
       </div>
     </motion.div>

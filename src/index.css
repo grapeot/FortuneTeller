@@ -9,6 +9,10 @@
   font-family: 'Noto Serif SC', 'STSongti-SC', 'Songti SC', serif;
 }
 
+.font-hei-cn {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', sans-serif;
+}
+
 /* Clean English font for mixed CJK/Latin text */
 .font-en {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
