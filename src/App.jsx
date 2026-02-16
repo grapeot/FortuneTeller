@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState, useCallback, useEffect } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useFaceDetection } from './hooks/useFaceDetection'
 import { useHolisticDetection } from './hooks/useHolisticDetection'
 import { generateAIFortune } from './lib/ai-fortune'
@@ -27,7 +27,7 @@ const TAB = {
   INSIDE: 'inside',
 }
 
-const MODEL_LABEL = 'Gemini 3 Flash · DeepSeek · Kimi K2.5'
+const MODEL_ROTATION = ['Gemini 3 Flash', 'DeepSeek', 'Kimi K2.5']
 
 function getInitialTab() {
   const tab = new URLSearchParams(window.location.search).get('tab')
@@ -44,6 +44,7 @@ export default function App() {
   const [pixelatedImage, setPixelatedImage] = useState(null)
   const [visualizationData, setVisualizationData] = useState(null)
   const [activeTab, setActiveTab] = useState(getInitialTab)
+  const [modelIndex, setModelIndex] = useState(0)
 
   // Face detection is active only during IDLE phase
   const { isReady, faceCount, error } = useFaceDetection(videoRef, canvasRef, {
@@ -73,6 +74,14 @@ export default function App() {
     setPixelatedImage(null)
     setVisualizationData(null)
   }, [activeTab])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setModelIndex((prev) => (prev + 1) % MODEL_ROTATION.length)
+    }, 700)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   // Dismiss result and return to idle
   const dismissResult = useCallback(() => {
@@ -157,11 +166,22 @@ export default function App() {
     <div className="h-screen w-screen bg-black overflow-hidden select-none flex flex-col">
       <div className="relative z-50 shrink-0 px-3 sm:px-4 py-2.5 border-b border-yellow-400/15 bg-black/65 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-          <h1 className="pl-1 flex flex-1 min-w-0 items-baseline gap-1.5 sm:gap-3 whitespace-nowrap">
-            <span className="font-hei-cn text-sm sm:text-lg md:text-xl text-yellow-200/85 truncate">
-              {MODEL_LABEL}
+          <h1 className="pl-1 flex flex-1 min-w-0 items-baseline gap-2 sm:gap-2.5 whitespace-nowrap">
+            <span className="font-hei-cn font-semibold text-base sm:text-2xl text-yellow-200/85 w-[9.8rem] sm:w-[13rem] shrink-0">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={MODEL_ROTATION[modelIndex]}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="block truncate"
+                >
+                  {MODEL_ROTATION[modelIndex]}
+                </motion.span>
+              </AnimatePresence>
             </span>
-            <span className="font-hei-cn font-bold text-sm sm:text-lg md:text-xl text-yellow-400 leading-none">
+            <span className="font-hei-cn font-black text-base sm:text-2xl text-yellow-400 leading-none">
               AI相面
             </span>
           </h1>
