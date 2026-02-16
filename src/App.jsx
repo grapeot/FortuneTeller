@@ -165,9 +165,9 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-black overflow-hidden select-none flex flex-col">
       <div className="relative z-50 shrink-0 px-3 sm:px-4 py-2.5 border-b border-yellow-400/15 bg-black/65 backdrop-blur-sm">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="pl-1 flex items-baseline gap-2 sm:gap-3 whitespace-nowrap overflow-hidden">
-            <span className="font-en text-xs sm:text-sm md:text-base text-yellow-200/80 min-w-[7.5rem] sm:min-w-[9.5rem] md:min-w-[11rem]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+          <h1 className="pl-1 flex flex-1 min-w-0 items-baseline gap-1.5 sm:gap-3 whitespace-nowrap">
+            <span className="font-en text-xs sm:text-sm md:text-base text-yellow-200/80 w-[7.5rem] sm:w-[9.5rem] md:w-[11rem] shrink-0">
               <AnimatePresence mode="wait">
                 <motion.span
                   key={MODEL_ROTATION[modelIndex]}
@@ -175,17 +175,17 @@ export default function App() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="block"
+                  className="block truncate"
                 >
                   {MODEL_ROTATION[modelIndex]}
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm leading-none">
+            <span className="font-calligraphy text-2xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm leading-none">
               AI相面
             </span>
           </h1>
-          <AppTabs activeTab={activeTab} onChange={setActiveTab} />
+          <AppTabs activeTab={activeTab} onChange={setActiveTab} className="shrink-0" />
         </div>
       </div>
 
