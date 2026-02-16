@@ -294,14 +294,14 @@ export default function SharePage({ shareId }) {
 
       {vizModalOpen && hasVisualization && (
         <div
-          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="面相轮廓图大图"
           onClick={closeVizModal}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3 gap-3">

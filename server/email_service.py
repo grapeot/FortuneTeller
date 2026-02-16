@@ -176,7 +176,7 @@ def build_email_html(
 
         <!-- Header: warm brown tone -->
         <tr><td class="email-header" style="background-color:#3d3028;padding:28px 30px 24px;text-align:center;">
-          <h1 class="email-title" style="font-size:28px;color:#e8d5b0;margin:0 0 4px;letter-spacing:6px;font-weight:bold;">相面先生</h1>
+          <h1 class="email-title" style="font-size:28px;color:#e8d5b0;margin:0 0 4px;letter-spacing:6px;font-weight:bold;">AI相面</h1>
           <p class="email-subtitle" style="font-size:13px;color:#a89878;margin:0;letter-spacing:2px;">Superlinear Academy · 丙午马年新春</p>
         </td></tr>
 
