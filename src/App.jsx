@@ -271,11 +271,12 @@ export default function App() {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={MODEL_ROTATION[modelIndex]}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{ opacity: 0, rotateX: -70, y: -6 }}
+                  animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                  exit={{ opacity: 0, rotateX: 70, y: 6 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
                   className="block truncate"
+                  style={{ transformOrigin: '50% 50%' }}
                 >
                   {MODEL_ROTATION[modelIndex]}
                 </motion.span>

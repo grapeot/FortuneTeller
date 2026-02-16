@@ -64,7 +64,14 @@ export default function ResultOverlay({
         const data = await resp.json()
         console.log('[QR Code] Share API success:', data)
         const shareUrl = `${window.location.origin}/share/${data.id}`
-        const qrDataUrl = await QRCode.toDataURL(shareUrl, { width: 200, margin: 2 })
+        const qrDataUrl = await QRCode.toDataURL(shareUrl, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF',
+          },
+        })
         console.log('[QR Code] Generated QR code for:', shareUrl)
         if (!cancelled) {
           setShareQr(qrDataUrl)
@@ -158,7 +165,7 @@ export default function ResultOverlay({
                     <img
                       src={shareQr}
                       alt="分享二维码"
-                      className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg"
+                      className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg bg-white"
                     />
                   </div>
                   <span className="mt-1 text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
