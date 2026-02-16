@@ -2,6 +2,7 @@
 
 ## 2026-02-16
 
+- 相面学指南移动端交互优化：将原下拉选择改为 hamburger 目录抽屉（点击右上角“目录”弹出章节索引，可关闭、可点章节跳转），解决手机端滚动后无法便捷跳转问题：更新 `src/components/FaceReadingGuidePage.jsx`、`src/components/__tests__/FaceReadingGuidePage.test.jsx`。
 - 修复短结果页反复创建分享链接问题：`onShareCreated` 的回调引用变化会触发 `ResultOverlay` 反复执行 `/api/share`，导致二维码“狂变”；已在 `App` 中改为 `ref` 去重，并在 `ResultOverlay` 增加分享签名去重，保证单次结果只发一次 share 请求：更新 `src/App.jsx`、`src/components/ResultOverlay.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
 - 顶部标题布局微调：模型轮播与 `AI相面` 改为右对齐并收紧左侧留白；底部右下角移除 `MediaPipe Face Detection` 文案，仅保留品牌：更新 `src/App.jsx`。
 - CI 修复：后端测试 `tests/test_helpers.py::TestBuildEmailHtml::test_basic_output` 期望值仍是旧标题“相面先生”，与邮件模板新文案“AI相面”不一致；已更新断言并复跑前端/后端/Docker 流程。

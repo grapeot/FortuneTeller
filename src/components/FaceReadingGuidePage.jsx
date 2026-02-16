@@ -80,6 +80,7 @@ export default function FaceReadingGuidePage() {
   const sections = useMemo(() => parseMarkdown(masteryMarkdown), [])
   const toc = useMemo(() => sections.filter((s) => s.level <= 2), [sections])
   const [activeId, setActiveId] = useState(toc[0]?.id || '')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const contentRef = useRef(null)
 
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function FaceReadingGuidePage() {
       container.scrollTop = el.offsetTop
     }
     setActiveId(id)
+    setMobileMenuOpen(false)
     const url = new URL(window.location.href)
     url.hash = id
     window.history.replaceState({}, '', url.toString())
@@ -150,24 +152,21 @@ export default function FaceReadingGuidePage() {
           </aside>
 
           <main ref={contentRef} className="overflow-y-auto p-5 sm:p-6 md:p-8">
-            <h1 className="font-calligraphy text-3xl sm:text-4xl text-yellow-300 text-glow-warm mb-4">相面学指南</h1>
-            <p className="text-yellow-100/70 text-sm mb-6">基于 Face Reading Mastery 内容，支持按章节跳读。</p>
-
-            <div className="md:hidden mb-5">
-              <label htmlFor="chapter-select" className="block text-yellow-200/80 text-sm mb-2">章节跳转</label>
-              <select
-                id="chapter-select"
-                className="w-full bg-black/40 border border-yellow-400/20 rounded-lg px-3 py-2 text-yellow-100"
-                value={activeId}
-                onChange={(e) => jumpTo(e.target.value)}
+            <div className="md:hidden mb-4 flex items-center justify-between gap-3">
+              <h1 className="font-calligraphy text-3xl text-yellow-300 text-glow-warm">相面学指南</h1>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-yellow-400/25 bg-black/40 px-3 py-2 text-yellow-100/90 text-sm font-serif-cn cursor-pointer"
+                aria-label="打开章节目录"
               >
-                {toc.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.level === 2 ? `  - ${item.title}` : item.title}
-                  </option>
-                ))}
-              </select>
+                <span className="text-base leading-none">☰</span>
+                <span>目录</span>
+              </button>
             </div>
+
+            <h1 className="hidden md:block font-calligraphy text-3xl sm:text-4xl text-yellow-300 text-glow-warm mb-4">相面学指南</h1>
+            <p className="text-yellow-100/70 text-sm mb-6">基于 Face Reading Mastery 内容，支持按章节跳读。</p>
 
             {sections.map((s) => (
               <section key={s.id} id={s.id} className="mb-8 scroll-mt-4">
@@ -180,6 +179,46 @@ export default function FaceReadingGuidePage() {
           </main>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="章节目录">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="关闭章节目录"
+          />
+          <div className="absolute top-0 right-0 h-full w-[84%] max-w-xs border-l border-yellow-400/20 bg-[#0f1024] p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-serif-cn text-yellow-300 text-lg">章节目录</h2>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-2 py-1 rounded border border-yellow-400/30 text-yellow-100/85 text-xs"
+              >
+                关闭
+              </button>
+            </div>
+            <nav className="space-y-1.5">
+              {toc.map((item) => {
+                const active = activeId === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => jumpTo(item.id)}
+                    className={`w-full text-left px-2 py-2 rounded text-sm transition-colors cursor-pointer ${
+                      active ? 'bg-yellow-400/20 text-yellow-100' : 'text-yellow-100/70 hover:bg-white/10'
+                    } ${item.level === 2 ? 'pl-5' : ''}`}
+                  >
+                    {item.title}
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
