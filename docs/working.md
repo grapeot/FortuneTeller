@@ -2,6 +2,7 @@
 
 ## 2026-02-16
 
+- CI 修复：后端测试 `tests/test_helpers.py::TestBuildEmailHtml::test_basic_output` 期望值仍是旧标题“相面先生”，与邮件模板新文案“AI相面”不一致；已更新断言并复跑前端/后端/Docker 流程。
 - 新增短结果页浏览器历史能力：生成结果后写入 `history.state`（含 `shareId`），支持后退/前进恢复 overlay；不依赖 URL 参数：更新 `src/App.jsx`、`src/components/ResultOverlay.jsx`。
 - 新增前端回归测试覆盖：验证 `history.state` 下结果页可恢复行为；并补充二维码创建回调测试：更新 `src/__tests__/AppHistory.test.jsx`、`src/components/__tests__/ResultOverlay.test.jsx`。
 - 后端在 `/api/share` 写入成功后异步回填 Gemini L2（fire-and-forget），并在 `/api/analysis/l2` 统一走“优先缓存、未命中再生成再写回”逻辑：更新 `server/routes.py`。

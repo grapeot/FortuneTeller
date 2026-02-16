@@ -89,7 +89,7 @@ class TestBuildEmailHtml:
         assert "<!DOCTYPE html>" in html
         assert "五官详解" in html
         assert "这是测试内容" in html
-        assert "相面先生" in html
+        assert "AI相面" in html
         assert "Superlinear Academy" in html
 
     def test_greeting_with_name(self):
