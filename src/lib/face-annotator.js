@@ -519,7 +519,13 @@ function calculateMeasurements(landmarks, w, h) {
     },
     脸型: faceShape,
     面部宽高比: Math.round(widthRatio * 100) / 100,
-    印堂宽度: yintangWidth > eyeSpacing * 0.7 ? '开阔' : yintangWidth > eyeSpacing * 0.5 ? '适中' : '较窄',
+    印堂宽度: yintangWidth > eyeSpacing * 0.95
+      ? '过宽'
+      : yintangWidth > eyeSpacing * 0.7
+        ? '开阔'
+        : yintangWidth > eyeSpacing * 0.5
+          ? '适中'
+          : '较窄',
     田宅宫: (leftTianZhai + rightTianZhai) / 2 > leftEyeWidth * 0.4 ? '宽广' : '较窄',
     颧骨: cheekWidth > jawWidth * 1.08 ? '突出' : '平和',
     鼻翼宽度: noseWidth > eyeSpacing * 0.85 ? '饱满' : '适中',

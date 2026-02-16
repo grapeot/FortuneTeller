@@ -170,8 +170,9 @@ else faceShape = '椭圆形'
 ```javascript
 const yintangWidth = dist(px(LM.leftBrowInner), px(LM.rightBrowInner))  // landmark 70, 300
 // 判断标准：与眼间距比较
-印堂宽度 = yintangWidth > eyeSpacing * 0.7 ? '开阔' 
-         : yintangWidth > eyeSpacing * 0.5 ? '适中' 
+印堂宽度 = yintangWidth > eyeSpacing * 0.95 ? '过宽'
+         : yintangWidth > eyeSpacing * 0.7 ? '开阔'
+         : yintangWidth > eyeSpacing * 0.5 ? '适中'
          : '较窄'
 ```
 
@@ -299,7 +300,7 @@ MediaPipe FaceLandmarker.detect()
 | 序号 | 可视化项 | 关键点 | 绘制内容 | 标注内容 |
 |------|---------|--------|----------|----------|
 | 1 | **三停比例** | 额头顶部(10)、眉峰(105,334)、鼻底(2)、下巴(152) | 两条水平分界线 + 三个区域标注 | 上庭X% / 中庭Y% / 下庭Z% |
-| 2 | **印堂宽度** | 左眉头(70)、右眉头(300) | 两点连线 + 宽度标注 | 宽度值 + 判断（开阔/适中/较窄） |
+| 2 | **印堂宽度** | 左眉头(70)、右眉头(300) | 两点连线 + 宽度标注 | 宽度值 + 判断（过宽/开阔/适中/较窄） |
 | 3 | **田宅宫** | 左眉峰(105)、左眼上(159)、右眉峰(334)、右眼上(386) | 左右各一条垂直线 + 距离标注 | 平均距离 + 判断（宽广/较窄） |
 | 4 | **颧骨突出度** | 左颧骨(234)、右颧骨(454)、左下颌(172)、右下颌(397) | 两条水平宽度线 + 比较标注 | 颧骨宽度 vs 下颌宽度 + 判断（突出/平和） |
 | 5 | **鼻翼宽度** | 左鼻翼(48)、右鼻翼(278) | 两点连线 + 宽度标注 | 宽度值 + 判断（饱满/适中） |
@@ -358,10 +359,11 @@ MediaPipe FaceLandmarker.detect()
 4. 绘制标注：
    - 位置：连线中点上方 10px
    - 文本：`"印堂: ${yintangWidth.toFixed(1)}px (${判断})"`
-   - 判断标准：
-     - `yintangWidth > eyeSpacing * 0.7` → "开阔"
-     - `yintangWidth > eyeSpacing * 0.5` → "适中"
-     - 否则 → "较窄"
+    - 判断标准：
+      - `yintangWidth > eyeSpacing * 0.95` → "过宽"
+      - `yintangWidth > eyeSpacing * 0.7` → "开阔"
+      - `yintangWidth > eyeSpacing * 0.5` → "适中"
+      - 否则 → "较窄"
 
 **视觉样式**：
 - 连线：金色实线，线宽 2px

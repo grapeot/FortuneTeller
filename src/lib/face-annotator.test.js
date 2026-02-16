@@ -55,6 +55,22 @@ describe('formatMeasurements', () => {
     expect(lines.length).toBe(9)
     expect(lines[0]).toContain('面部测量数据')
   })
+
+  it('should preserve over-wide yintang label in formatted output', () => {
+    const measurements = {
+      三停比例: { 上庭: 32, 中庭: 35, 下庭: 33 },
+      脸型: '圆形',
+      面部宽高比: 0.79,
+      印堂宽度: '过宽',
+      田宅宫: '宽广',
+      颧骨: '平和',
+      鼻翼宽度: '饱满',
+      下巴: '方阔',
+    }
+
+    const result = formatMeasurements(measurements)
+    expect(result).toContain('印堂：过宽')
+  })
 })
 
 describe('buildVisualizationData', () => {
