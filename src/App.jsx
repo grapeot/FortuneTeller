@@ -294,58 +294,60 @@ export default function App() {
         {activeTab === TAB.FORTUNE ? (
           <>
             <div
-              className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
+              className="absolute inset-0 z-0 bg-cover bg-center opacity-30 pointer-events-none"
               style={{ backgroundImage: 'url(/assets/bg-cny.jpg)' }}
             />
 
-            {phase === PHASE.RESULT && fortunes ? (
-              <ResultOverlay
-                key="result"
-                fortunes={fortunes}
-                pixelatedImage={pixelatedImage}
-                visualizationData={visualizationData}
-                onDismiss={dismissResult}
-                onShareCreated={handleShareCreated}
-                embedded
-                showTitle={false}
-                showFooter={false}
-              />
-            ) : (
-              <>
-                <CameraView videoRef={videoRef} canvasRef={canvasRef} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
+            <div className="relative z-10 h-full">
+              {phase === PHASE.RESULT && fortunes ? (
+                <ResultOverlay
+                  key="result"
+                  fortunes={fortunes}
+                  pixelatedImage={pixelatedImage}
+                  visualizationData={visualizationData}
+                  onDismiss={dismissResult}
+                  onShareCreated={handleShareCreated}
+                  embedded
+                  showTitle={false}
+                  showFooter={false}
+                />
+              ) : (
+                <>
+                  <CameraView videoRef={videoRef} canvasRef={canvasRef} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50 pointer-events-none" />
 
-                <AnimatePresence mode="wait">
-                  {phase === PHASE.IDLE && (
-                    <IdleOverlay
-                      key="idle"
-                      faceCount={faceCount}
-                      isReady={isReady}
-                    />
+                  <AnimatePresence mode="wait">
+                    {phase === PHASE.IDLE && (
+                      <IdleOverlay
+                        key="idle"
+                        faceCount={faceCount}
+                        isReady={isReady}
+                      />
+                    )}
+
+                    {phase === PHASE.ANALYZING && <AnalyzingOverlay key="analyzing" />}
+                  </AnimatePresence>
+
+                  {error && (
+                    <div className="absolute top-4 left-4 right-4 bg-red-900/80 text-red-200 px-4 py-2 rounded-lg text-sm">
+                      ⚠️ {error}
+                    </div>
                   )}
 
-                  {phase === PHASE.ANALYZING && <AnalyzingOverlay key="analyzing" />}
-                </AnimatePresence>
-
-                {error && (
-                  <div className="absolute top-4 left-4 right-4 bg-red-900/80 text-red-200 px-4 py-2 rounded-lg text-sm">
-                    ⚠️ {error}
-                  </div>
-                )}
-
-                {phase === PHASE.IDLE && (
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-5 z-30 pointer-events-auto">
-                    <button
-                      onClick={startFortune}
-                      disabled={!isReady}
-                      className="relative px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-calligraphy text-2xl sm:text-4xl whitespace-nowrap rounded-xl sm:rounded-2xl shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 animate-pulse-ring tracking-widest"
-                    >
-                      开始相面
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+                  {phase === PHASE.IDLE && (
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-5 z-30 pointer-events-auto">
+                      <button
+                        onClick={startFortune}
+                        disabled={!isReady}
+                        className="relative px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-calligraphy text-2xl sm:text-4xl whitespace-nowrap rounded-xl sm:rounded-2xl shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 animate-pulse-ring tracking-widest"
+                      >
+                        开始相面
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </>
         ) : activeTab === TAB.GUIDE ? (
           <Suspense fallback={<div className="h-full w-full flex items-center justify-center text-yellow-200 font-serif-cn">加载指南中...</div>}>
