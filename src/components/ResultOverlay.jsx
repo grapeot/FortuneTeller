@@ -93,7 +93,8 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-transparent flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-[#141826] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      style={{ backgroundColor: '#141826', backgroundImage: 'none' }}
     >
       {/* Scrollable content */}
       <div className="flex flex-col items-center justify-start w-full max-w-3xl gap-4 md:gap-5 pt-10 pb-6 px-3 sm:px-4 rounded-2xl border border-yellow-400/20" style={{ backgroundColor: '#141826' }}>
