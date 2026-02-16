@@ -86,7 +86,7 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-[#0b0d1a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} bg-transparent flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
     >
       {/* Scrollable content */}
       <div className="flex flex-col items-center justify-start w-full max-w-3xl gap-4 md:gap-5 pt-10 pb-6">
@@ -154,7 +154,7 @@ export default function ResultOverlay({
             <div className="rounded-xl border border-yellow-400/20 bg-[#141826] p-3 flex flex-col items-center justify-center">
               {shareQr ? (
                 <>
-                  <div className="relative p-2 bg-white/10 rounded-xl border border-yellow-400/20 backdrop-blur-sm">
+                  <div className="relative p-2 bg-[#1b1f31] rounded-xl border border-yellow-400/20">
                     <img
                       src={shareQr}
                       alt="分享二维码"
