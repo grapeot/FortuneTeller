@@ -138,8 +138,15 @@ export default function LandmarkVisualization({ visualizationData, showLabel = t
   const rightEyeTop = toCanvasPoint(points, KEY_LM.rightEyeTop, svgWidth, svgHeight)
 
   return (
-    <div className="w-full rounded-xl border border-yellow-400/20 bg-gradient-to-b from-[#101526] to-[#161b2c] p-3">
+    <div className="w-full rounded-xl border border-yellow-400/20 bg-[#141826] p-3">
       <svg viewBox={`${viewLeft} ${viewTop} ${viewWidth} ${viewHeight}`} className="w-full h-auto">
+        <rect
+          x={viewLeft}
+          y={viewTop}
+          width={viewWidth}
+          height={viewHeight}
+          fill="#141826"
+        />
         <defs>
           <marker id="dim-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
             <path d="M 0 0 L 8 4 L 0 8 z" fill="rgba(255,215,0,0.85)" />

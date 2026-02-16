@@ -121,7 +121,7 @@ export default function ResultOverlay({
               <button
                 type="button"
                 onClick={() => setVizModalOpen(true)}
-                className="w-full max-w-[420px] mx-auto flex justify-center text-left cursor-pointer"
+                className="w-full max-w-[420px] mx-auto flex flex-col items-center text-left cursor-pointer"
                 aria-label="查看面相轮廓大图"
               >
                 <div className="w-full">
