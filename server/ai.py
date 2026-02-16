@@ -43,7 +43,7 @@ def build_user_content(req: FortuneRequest | None) -> list:
 async def call_model(model_name: str, model_id: str, user_content: list) -> dict | None:
     """Call a single AI model and return parsed fortune, or None on failure."""
     try:
-        async with httpx.AsyncClient(timeout=25.0) as client:
+        async with httpx.AsyncClient(timeout=40.0) as client:
             resp = await client.post(
                 f"{config.AI_API_BASE}/chat/completions",
                 headers={

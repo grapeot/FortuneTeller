@@ -16,10 +16,11 @@ export const TIMING = {
   /** Minimum duration of the analyzing animation (ms) — increased 5x for image generation */
   analyzeDuration: 15000,
   /** Max time to wait for AI response before falling back (ms) — increased for parallel multi-model */
-  aiTimeout: 30000,
+  aiTimeout: 50000,
 }
 
 export const BRAND = {
   name: 'Superlinear Academy',
   tagline: '马年大吉 · 马到成功',
+  version: import.meta.env.VITE_BUILD_VERSION || 'dev-local',
 }
