@@ -109,8 +109,9 @@ async def _call_deep_model(
     display_name: str, model_id: str, user_msg: str
 ) -> tuple[str, str | None]:
     """Call one model for deep analysis. Returns (display_name, text_or_None)."""
-    max_attempts = 4
-    base_delay = 1.0
+    max_attempts = 6
+    base_delay = 5.0
+    max_delay = 20.0
 
     for attempt in range(1, max_attempts + 1):
         try:
@@ -151,9 +152,11 @@ async def _call_deep_model(
         if isinstance(err, httpx.HTTPStatusError) and err.response is not None:
             if err.response.status_code in (408, 409, 429, 500, 502, 503, 504):
                 is_retriable = True
+        if isinstance(err, RuntimeError) and str(err) == "empty response":
+            is_retriable = True
 
         if attempt < max_attempts and is_retriable:
-            delay = base_delay * (2 ** (attempt - 1))
+            delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
             print(
                 f"⚠ Deep analysis {display_name} ({model_id}) attempt {attempt}/{max_attempts} failed: {err}; retry in {delay:.1f}s"
             )

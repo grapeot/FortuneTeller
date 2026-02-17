@@ -32,6 +32,7 @@
 - 新增真实 Postgres 存储集成测试 `tests/test_storage_integration_live.py`（默认跳过，仅在 `RUN_INTEGRATION_TESTS=1` 时启用），覆盖 create/get/update/异常分支并做测试数据清理。
 - 验证了新集成测试可在显式启用时通过（`RUN_INTEGRATION_TESTS=1 pytest tests/test_storage_integration_live.py`）。
 - 深度分析多模型调用超时从 `60s` 提高到 `300s`，并加入可重试错误的指数退避重试（超时/网络错误/429/5xx），减少邮件中仅单模型成功的概率。
+- 深度分析重试策略进一步增强：最大尝试 `6` 次，退避改为 `5s -> 10s -> 20s`（上限 20s），并将“空响应”纳入可重试范围。
 
 ### Future Work
 

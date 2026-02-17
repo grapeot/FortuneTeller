@@ -320,3 +320,20 @@ class TestCallDeepModel:
         assert text is None
         assert post_mock.call_count == 1
         assert sleep_mock.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_empty_response_retries_with_capped_backoff(self):
+        empty_resp = MagicMock()
+        empty_resp.raise_for_status = MagicMock()
+        empty_resp.json.return_value = {"choices": [{"message": {"content": ""}}]}
+
+        with patch("httpx.AsyncClient.post", side_effect=[empty_resp] * 6) as post_mock:
+            with patch("asyncio.sleep", return_value=None) as sleep_mock:
+                name, text = await _call_deep_model("Kimi K2.5", "kimi", "u")
+
+        assert name == "Kimi K2.5"
+        assert text is None
+        assert post_mock.call_count == 6
+        assert sleep_mock.call_count == 5
+        delays = [call.args[0] for call in sleep_mock.call_args_list]
+        assert delays == [5.0, 10.0, 20.0, 20.0, 20.0]
