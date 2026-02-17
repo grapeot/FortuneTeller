@@ -5,12 +5,13 @@ Tests for pure helper functions: build_user_content, pixelate_image, build_email
 import base64
 import io
 import json
+import httpx
 import pytest
 from unittest.mock import MagicMock, patch
 from PIL import Image
 
 from server.models import FortuneRequest
-from server.ai import build_user_content, call_model
+from server.ai import build_user_content, call_model, _call_deep_model
 from server.pixelate import pixelate_image
 from server.email_service import build_email_html
 from server.prompts import SYSTEM_PROMPT, DEEP_ANALYSIS_PROMPT
@@ -281,3 +282,41 @@ class TestPrompts:
         assert "600-900" in DEEP_ANALYSIS_PROMPT
         assert "五官与三停" in DEEP_ANALYSIS_PROMPT
         assert "马年寄语" in DEEP_ANALYSIS_PROMPT
+
+
+# ── _call_deep_model retry behavior ─────────────────────────────────────────
+
+class TestCallDeepModel:
+    @pytest.mark.asyncio
+    async def test_retry_then_success(self):
+        ok_resp = MagicMock()
+        ok_resp.raise_for_status = MagicMock()
+        ok_resp.json.return_value = {
+            "choices": [{"message": {"content": "deep analysis ok"}}]
+        }
+
+        with patch(
+            "httpx.AsyncClient.post",
+            side_effect=[httpx.TimeoutException("timeout"), ok_resp],
+        ) as post_mock:
+            with patch("asyncio.sleep", return_value=None):
+                name, text = await _call_deep_model("Gemini 3 Flash", "gemini", "u")
+
+        assert name == "Gemini 3 Flash"
+        assert text == "deep analysis ok"
+        assert post_mock.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_non_retriable_http_error_fails_fast(self):
+        req = httpx.Request("POST", "https://test")
+        resp = httpx.Response(400, request=req)
+        err = httpx.HTTPStatusError("bad request", request=req, response=resp)
+
+        with patch("httpx.AsyncClient.post", side_effect=err) as post_mock:
+            with patch("asyncio.sleep", return_value=None) as sleep_mock:
+                name, text = await _call_deep_model("DeepSeek", "deepseek", "u")
+
+        assert name == "DeepSeek"
+        assert text is None
+        assert post_mock.call_count == 1
+        assert sleep_mock.call_count == 0
