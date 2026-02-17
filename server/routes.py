@@ -4,6 +4,7 @@ FastAPI route handlers.
 
 import asyncio
 import base64
+import hashlib
 import io
 import json
 import math
@@ -29,6 +30,87 @@ from .storage import get_share_storage
 from . import ai
 from .pixelate import pixelate_image
 from . import email_service
+
+
+_L2_PREWARM_CACHE: dict[str, tuple[str, float]] = {}
+_L2_PREWARM_INFLIGHT: set[str] = set()
+_L2_PREWARM_TTL_SEC = 15 * 60
+_L2_PREWARM_MAX_ENTRIES = 256
+
+
+def _canonical_fortunes(fortunes: dict | None) -> dict:
+    if not fortunes:
+        return {}
+    grok = fortunes.get("grok") if isinstance(fortunes, dict) else None
+    if isinstance(grok, dict):
+        return {
+            "grok": {
+                "face": grok.get("face", ""),
+                "career": grok.get("career", ""),
+                "blessing": grok.get("blessing", ""),
+            }
+        }
+    return {}
+
+
+def _fortunes_signature(fortunes: dict | None) -> str:
+    canonical = _canonical_fortunes(fortunes)
+    raw = json.dumps(canonical, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _gc_l2_prewarm_cache(now_ts: float) -> None:
+    expired = [
+        key
+        for key, (_, ts) in _L2_PREWARM_CACHE.items()
+        if now_ts - ts > _L2_PREWARM_TTL_SEC
+    ]
+    for key in expired:
+        _L2_PREWARM_CACHE.pop(key, None)
+
+    if len(_L2_PREWARM_CACHE) > _L2_PREWARM_MAX_ENTRIES:
+        by_time = sorted(_L2_PREWARM_CACHE.items(), key=lambda item: item[1][1])
+        to_drop = len(_L2_PREWARM_CACHE) - _L2_PREWARM_MAX_ENTRIES
+        for key, _ in by_time[:to_drop]:
+            _L2_PREWARM_CACHE.pop(key, None)
+
+
+def _take_prewarmed_l2_analysis(fortunes: dict | None) -> Optional[str]:
+    signature = _fortunes_signature(fortunes)
+    if not signature:
+        return None
+
+    now_ts = time.time()
+    _gc_l2_prewarm_cache(now_ts)
+    entry = _L2_PREWARM_CACHE.pop(signature, None)
+    if not entry:
+        return None
+
+    analysis, ts = entry
+    if now_ts - ts > _L2_PREWARM_TTL_SEC:
+        return None
+    return analysis
+
+
+async def _prewarm_l2_from_fortunes(fortunes: dict) -> None:
+    if not config.AI_TOKEN:
+        return
+
+    signature = _fortunes_signature(fortunes)
+    if not signature or signature in _L2_PREWARM_INFLIGHT:
+        return
+
+    _L2_PREWARM_INFLIGHT.add(signature)
+    try:
+        analysis = await ai.generate_deep_analysis(fortunes)
+        if not analysis or "失败" in analysis:
+            return
+        _L2_PREWARM_CACHE[signature] = (analysis, time.time())
+        _gc_l2_prewarm_cache(time.time())
+    except Exception as exc:
+        config.logger.warning("L2 prewarm failed: %s", exc)
+    finally:
+        _L2_PREWARM_INFLIGHT.discard(signature)
 
 
 def _sanitize_firestore_key(key: str) -> str:
@@ -153,6 +235,10 @@ async def generate_fortune(req: Optional[FortuneRequest] = None):
     if not grok_result:
         raise HTTPException(status_code=502, detail="Grok model failed")
 
+    fortunes = {"grok": grok_result}
+    if config.AI_TOKEN:
+        asyncio.create_task(_prewarm_l2_from_fortunes(fortunes))
+
     return {"gemini": None, "grok": grok_result}
 
 
@@ -245,6 +331,10 @@ async def create_share(req: ShareRequest):
         "fortunes": fortunes_data,
     }
 
+    prewarmed_analysis = _take_prewarmed_l2_analysis(fortunes_data)
+    if prewarmed_analysis:
+        doc["analysis_l2"] = prewarmed_analysis
+
     serialize_start = time.perf_counter()
     doc_bytes = len(json.dumps(doc, ensure_ascii=False).encode("utf-8"))
     serialize_ms = (time.perf_counter() - serialize_start) * 1000.0
@@ -267,7 +357,7 @@ async def create_share(req: ShareRequest):
         )
         raise HTTPException(status_code=502, detail="Failed to persist share data")
 
-    if config.AI_TOKEN:
+    if config.AI_TOKEN and not prewarmed_analysis:
         asyncio.create_task(_backfill_l2_analysis(share_id))
 
     total_ms = (time.perf_counter() - total_start) * 1000.0

@@ -106,6 +106,31 @@ async def test_fortune_success(client):
 
 
 @pytest.mark.asyncio
+async def test_fortune_starts_l2_prewarm_task(client):
+    grok_result = {
+        "face": "山根高——",
+        "career": "适合深耕。",
+        "blessing": "龙马精神！",
+        "source": "ai",
+        "model": "grok",
+    }
+
+    async def mock_call(name, model_id, content):
+        return grok_result
+
+    async def mock_prewarm(_fortunes):
+        return None
+
+    with patch.object(server_ai, "call_model", side_effect=mock_call):
+        with patch.object(server_routes, "_prewarm_l2_from_fortunes", side_effect=mock_prewarm):
+            with patch("asyncio.create_task") as create_task_mock:
+                resp = await client.post("/api/fortune", json={})
+
+    assert resp.status_code == 200
+    create_task_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_fortune_both_fail(client):
     """Both models fail → 502."""
 
@@ -228,6 +253,29 @@ async def test_share_persists_visualization_data(client, mock_firestore):
         0.34,
         0.33,
     ]
+
+
+@pytest.mark.asyncio
+async def test_share_uses_prewarmed_l2_when_available(client, mock_firestore):
+    set_mock = MagicMock()
+    mock_firestore.collection.return_value.document.return_value.set = set_mock
+
+    with patch.object(
+        server_routes,
+        "_take_prewarmed_l2_analysis",
+        return_value="## 预热命中\n- 已在 /api/fortune 阶段生成",
+    ):
+        resp = await client.post(
+            "/api/share",
+            json={
+                "pixelated_image": "data:image/png;base64,px",
+                "fortunes": {"grok": {"face": "a", "career": "b", "blessing": "c"}},
+            },
+        )
+
+    assert resp.status_code == 200
+    saved_doc = set_mock.call_args.args[0]
+    assert saved_doc["analysis_l2"].startswith("## 预热命中")
 
 
 @pytest.mark.asyncio
