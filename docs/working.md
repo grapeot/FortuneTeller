@@ -22,6 +22,9 @@
 - L1 再次加固：最外层可滚动容器也强制实色底并禁用背景图层，按“最蠢但可靠”的方式彻底消除透底。
 - 新增 `/api/share` 分段耗时日志（编码、序列化、写库、总耗时及负载体积），便于线上直接定位慢点是否出在 Firestore 写入。
 - L1 层级顺序修正：将 Year of the Horse 背景层固定在 `z-0`，结果/相机内容提升到 `z-10`，避免背景图在图片加载后反压到前景造成“先正常后变透明”。
+- AI 超时阈值已提升：后端模型调用超时调到 `40s`，前端调用超时调到 `50s`，降低冷启动或弱网时直接落入 fallback 的概率。
+- 页面右下角已新增版本号展示，格式为 `Superlinear Academy, v<build_version>`，便于线上版本核对。
+- 邮件品牌标题已统一为“AI相面”，邮件内容文案与产品对外文案保持一致。
 - 新增 share 存储抽象层 `ShareStorage`：路由与邮件订阅流程不再直接依赖 Firebase SDK，统一通过存储接口读写。
 - 存储层新增 PostgreSQL 实现 `PostgresShareStorage`，支持与 Firebase 并存切换，环境变量可控制后端类型。
 - 新增环境变量约定：`SHARE_STORAGE_BACKEND`（`auto|firebase|postgres`）与 `SHARE_DATABASE_URL`，并更新 `.env.example`（使用占位连接串）。
@@ -39,9 +42,6 @@
 ### Future Work
 
 - L1 背景可见性进一步微调：当前方案优先保证结果容器不透底，后续可优化为“容器内完全遮挡、容器外继续可见 Year of the Horse”以兼顾可读性与氛围。
-- AI 超时阈值提高（后端 40s、前端 50s），降低冷启动或弱网时直接落入 fallback 的概率。
-- 页面右下角新增版本号展示，格式为 `Superlinear Academy, v<build_version>`，便于对照线上版本。
-- 邮件品牌标题统一为“AI相面”，邮件内容与产品文案保持一致。
 
 ## 2026-02-15
 
