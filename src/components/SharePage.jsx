@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import FortuneCard from './FortuneCard'
 import LandmarkVisualization from './LandmarkVisualization'
 
+const L2_RETRY_DELAY_MS = 5000
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 function renderInlineMarkdown(text) {
   const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
   return tokens.map((token, idx) => {
@@ -74,6 +80,7 @@ export default function SharePage({ shareId }) {
         }
         const result = await resp.json()
         setData(result)
+        setLoading(false)
 
         if (result.analysis_l2) {
           setL2Analysis(result.analysis_l2)
@@ -83,20 +90,30 @@ export default function SharePage({ shareId }) {
 
         // Layer 2: request detailed analysis (Gemini 3 Flash)
         setL2Status('loading')
-        try {
-          const l2Resp = await fetch('/api/analysis/l2', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ share_id: shareId }),
-          })
-          if (l2Resp.ok) {
-            const l2 = await l2Resp.json()
-            setL2Analysis(l2.analysis || '')
-            setL2Status('ready')
-          } else {
-            setL2Status('error')
+        let l2Ok = false
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          try {
+            const l2Resp = await fetch('/api/analysis/l2', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ share_id: shareId }),
+            })
+            if (l2Resp.ok) {
+              const l2 = await l2Resp.json()
+              setL2Analysis(l2.analysis || '')
+              setL2Status('ready')
+              l2Ok = true
+              break
+            }
+          } catch {
+            // Retry once for transient network failures.
           }
-        } catch {
+
+          if (attempt < 2) {
+            await sleep(L2_RETRY_DELAY_MS)
+          }
+        }
+        if (!l2Ok) {
           setL2Status('error')
         }
       } catch {

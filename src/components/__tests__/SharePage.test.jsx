@@ -34,6 +34,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', mockFetch)
 })
 
+
 describe('SharePage', () => {
   it('shows loading state initially', () => {
     mockFetch.mockReturnValue(new Promise(() => {})) // never resolves
