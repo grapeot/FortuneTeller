@@ -92,7 +92,7 @@ export default function SharePage({ shareId }) {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-base)' }}>
-        <span className="text-sm font-hei-cn animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>加载中…</span>
+        <span className="text-sm font-hei-cn animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>正在加载...</span>
       </div>
     )
 
@@ -129,28 +129,33 @@ export default function SharePage({ shareId }) {
               </div>
             )}
             {hasVisualization && (
-              <button type="button" onClick={() => setVizModalOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer">
-                <div className="w-28 sm:w-36"><LandmarkVisualization visualizationData={data.visualization_data} showMeasurements={false} /></div>
-                <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>点击查看大图</span>
-              </button>
+              <div className="flex flex-col items-center gap-1">
+                <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>面相特征检测结果</span>
+                <button type="button" onClick={() => setVizModalOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer" aria-label="查看面相轮廓大图">
+                  <div className="w-28 sm:w-36"><LandmarkVisualization visualizationData={data.visualization_data} showMeasurements={false} /></div>
+                  <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>点击查看大图</span>
+                </button>
+              </div>
             )}
           </div>
         )}
 
         {/* Layer 1 fortune */}
-        {activeFortune && (
-          <div>
-            <p className="font-hei-cn text-xs uppercase tracking-widest mb-3 text-center" style={{ color: 'var(--text-muted)' }}>速览解读</p>
+        <div>
+          <p className="font-hei-cn text-xs uppercase tracking-widest mb-3 text-center" style={{ color: 'var(--text-muted)' }}>速览解读</p>
+          {activeFortune ? (
             <FortuneCard fortune={activeFortune} />
-          </div>
-        )}
+          ) : (
+            <p className="font-serif-cn text-sm text-center" style={{ color: 'var(--text-muted)' }}>该模型暂无结果</p>
+          )}
+        </div>
 
         {/* Layer 2 deep analysis */}
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
           <div className="flex items-center gap-3 px-5 py-3.5" style={{ backgroundColor: 'var(--bg-raised)', borderBottom: '1px solid var(--border)' }}>
             <span className="font-calligraphy text-base" style={{ color: 'var(--amber)' }}>深度解读</span>
             <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>Gemini 3 Flash</span>
+            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>Gemini 3 分析</span>
           </div>
           <div className="px-5 py-4" style={{ backgroundColor: 'var(--bg-card)' }}>
             {l2Status === 'loading' && <p className="font-serif-cn text-sm animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>正在生成详细解读…</p>}
@@ -166,12 +171,12 @@ export default function SharePage({ shareId }) {
         <div className="max-w-md mx-auto w-full">
           {subscribeStatus === 'success' ? (
             <div className="text-center py-8 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-              <p className="font-serif-cn text-base leading-relaxed" style={{ color: 'var(--text-primary)' }}>已提交，结果将发送至您的邮箱。</p>
+              <p className="font-serif-cn text-base leading-relaxed" style={{ color: 'var(--text-primary)' }}>分析已提交，结果将发送至您的邮箱。</p>
               <p className="font-hei-cn text-sm mt-2" style={{ color: 'var(--text-muted)' }}>同时会收到社区项目更新。</p>
             </div>
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col gap-3.5">
-              <h3 className="font-hei-cn font-semibold text-lg text-center" style={{ color: 'var(--text-primary)' }}>获取三模型完整解读</h3>
+              <h3 className="font-hei-cn font-semibold text-lg text-center" style={{ color: 'var(--text-primary)' }}>留下邮箱查看 Gemini 3 Flash 完整解读</h3>
               <p className="font-serif-cn text-sm text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                 <span className="font-en">Gemini 3 Flash</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi K2.5</span> 并行解读，含共识与分歧视角。
               </p>
@@ -190,7 +195,7 @@ export default function SharePage({ shareId }) {
                 disabled={subscribeStatus === 'submitting' || !email.includes('@')}
                 className="w-full py-3 rounded-xl font-hei-cn font-semibold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-card)' }}>
-                {subscribeStatus === 'submitting' ? '提交中…' : '留邮箱获取完整解读'}
+                {subscribeStatus === 'submitting' ? '提交中…' : '留邮箱获取三模型完整解读'}
               </button>
               {subscribeStatus === 'error' && <p className="font-hei-cn text-xs text-center" style={{ color: '#b03030' }}>提交失败，请稍后重试</p>}
               <p className="font-hei-cn text-xs text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>
@@ -209,7 +214,7 @@ export default function SharePage({ shareId }) {
       {vizModalOpen && hasVisualization && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
           style={{ backgroundColor: 'rgba(28,26,22,0.55)', backdropFilter: 'blur(6px)' }}
-          role="dialog" aria-modal="true" onClick={() => setVizModalOpen(false)}>
+          role="dialog" aria-label="面相轮廓图大图" aria-modal="true" onClick={() => setVizModalOpen(false)}>
           <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-5"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}>

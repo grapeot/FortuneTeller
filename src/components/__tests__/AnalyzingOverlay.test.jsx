@@ -17,11 +17,6 @@ vi.mock('framer-motion', () => ({
 }))
 
 describe('AnalyzingOverlay', () => {
-  it('renders the analyzing title', () => {
-    render(<AnalyzingOverlay />)
-    expect(screen.getByText('正在观面...')).toBeInTheDocument()
-  })
-
   it('renders the calligraphy character', () => {
     render(<AnalyzingOverlay />)
     expect(screen.getByText('相')).toBeInTheDocument()
@@ -29,6 +24,11 @@ describe('AnalyzingOverlay', () => {
 
   it('renders an initial analysis term', () => {
     render(<AnalyzingOverlay />)
-    expect(screen.getByText('观天庭...')).toBeInTheDocument()
+    expect(screen.getByText('观天庭…')).toBeInTheDocument()
+  })
+
+  it('renders a concept card', () => {
+    render(<AnalyzingOverlay />)
+    expect(screen.getByText('三停')).toBeInTheDocument()
   })
 })

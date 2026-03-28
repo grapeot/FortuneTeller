@@ -124,7 +124,7 @@ export default function ResultOverlay({
               <SkeletonBox style={{ aspectRatio: '3/4', minHeight: '6rem' }} />
             )}
             <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>
-              {hasVisualization ? '点击查看大图' : '面相轮廓'}
+              {hasVisualization ? '面相特征检测结果' : '面相轮廓'}
             </span>
           </div>
 
@@ -163,11 +163,14 @@ export default function ResultOverlay({
               <SkeletonBox style={{ aspectRatio: '1/1', minHeight: '6rem' }} />
             )}
             {shareUrl ? (
-              <a href={shareUrl} target="_blank" rel="noreferrer"
-                className="font-hei-cn text-[10px] underline underline-offset-2 text-center leading-tight"
-                style={{ color: 'var(--amber)' }}>
-                查看完整报告 →
-              </a>
+              <>
+                <span className="font-hei-cn text-[10px] text-center" style={{ color: 'var(--text-muted)' }}>扫码获取更详细的 AI 解读</span>
+                <a href={shareUrl} target="_blank" rel="noreferrer"
+                  className="font-hei-cn text-[10px] underline underline-offset-2 text-center leading-tight"
+                  style={{ color: 'var(--amber)' }}>
+                  直接访问链接
+                </a>
+              </>
             ) : (
               <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>分享二维码</span>
             )}
@@ -208,6 +211,14 @@ export default function ResultOverlay({
           {activeFortune && <FortuneCard key="grok" fortune={activeFortune} />}
         </AnimatePresence>
 
+        <p
+          className="text-center font-hei-cn text-xs cursor-pointer"
+          style={{ color: 'var(--text-muted)' }}
+          onClick={onDismiss}
+        >
+          按空格键或点击此处继续下一位
+        </p>
+
         {showFooter && (
           <p className="text-center font-hei-cn text-xs" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
             Superlinear Academy
@@ -221,6 +232,7 @@ export default function ResultOverlay({
           className="fixed inset-0 z-[90] flex items-center justify-center p-4"
           style={{ backgroundColor: 'rgba(28,26,22,0.55)', backdropFilter: 'blur(6px)' }}
           role="dialog"
+          aria-label="面相轮廓图大图"
           aria-modal="true"
           onClick={() => setVizModalOpen(false)}
         >
