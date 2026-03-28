@@ -4,12 +4,12 @@ import QRCode from 'qrcode'
 import FortuneCard from './FortuneCard'
 import LandmarkVisualization from './LandmarkVisualization'
 
-/**
- * ResultOverlay - displays Grok fortune results with Chinese-style design.
- * Auto-shares to backend and shows QR code. Dismissed by Space/Enter or click.
- */
+function SkeletonBox({ style }) {
+  return <div className="skeleton w-full" style={style} />
+}
+
 export default function ResultOverlay({
-  fortunes,  // { gemini: null, grok: {...} }
+  fortunes,
   pixelatedImage,
   visualizationData,
   onDismiss,
@@ -20,16 +20,17 @@ export default function ResultOverlay({
 }) {
   const [shareQr, setShareQr] = useState(null)
   const [shareUrl, setShareUrl] = useState('')
+  const [shareError, setShareError] = useState(false)
   const [vizModalOpen, setVizModalOpen] = useState(false)
   const lastSharedSignatureRef = useRef('')
 
   const activeFortune = fortunes?.grok
   const hasVisualization = Boolean(visualizationData?.landmarks?.length)
 
-  // Auto-share: POST to /api/share and generate QR code
   useEffect(() => {
     if (!fortunes?.grok) return
 
+    // Build signature to avoid duplicate shares (e.g. from parent re-renders)
     const shareSignature = JSON.stringify({
       face: fortunes.grok.face,
       career: fortunes.grok.career,
@@ -37,8 +38,8 @@ export default function ResultOverlay({
       pixelatedImage,
       hasViz: Boolean(visualizationData),
     })
+    // Guard: skip if we already successfully shared this exact payload
     if (lastSharedSignatureRef.current === shareSignature) return
-    lastSharedSignatureRef.current = shareSignature
 
     let cancelled = false
 
@@ -48,38 +49,36 @@ export default function ResultOverlay({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              pixelated_image: pixelatedImage || null,
-              visualization_data: visualizationData || null,
-              fortunes: {
-                gemini: null,
-                grok: fortunes.grok ? { face: fortunes.grok.face, career: fortunes.grok.career, blessing: fortunes.grok.blessing } : null,
+            pixelated_image: pixelatedImage || null,
+            visualization_data: visualizationData || null,
+            fortunes: {
+              gemini: null,
+              grok: fortunes.grok
+                ? { face: fortunes.grok.face, career: fortunes.grok.career, blessing: fortunes.grok.blessing }
+                : null,
             },
           }),
         })
-        if (!resp.ok) {
-          const errorText = await resp.text()
-          console.error('[QR Code] Share API failed:', resp.status, errorText)
-          return
-        }
+        if (!resp.ok) { if (!cancelled) setShareError(true); return }
         const data = await resp.json()
-        console.log('[QR Code] Share API success:', data)
-        const shareUrl = `${window.location.origin}/share/${data.id}`
-        const qrDataUrl = await QRCode.toDataURL(shareUrl, {
+        const url = `${window.location.origin}/share/${data.id}`
+        const qrDataUrl = await QRCode.toDataURL(url, {
           width: 200,
           margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF',
-          },
+          color: { dark: '#1c1a16', light: '#ffffff' },
         })
-        console.log('[QR Code] Generated QR code for:', shareUrl)
+        // Only record the signature after a successful share — this makes it
+        // StrictMode-safe: if React cancels the first invocation, the signature
+        // is never committed, so the second invocation proceeds normally.
         if (!cancelled) {
+          lastSharedSignatureRef.current = shareSignature
           setShareQr(qrDataUrl)
-          setShareUrl(shareUrl)
+          setShareUrl(url)
           if (onShareCreated) onShareCreated(data.id)
         }
       } catch (err) {
         console.error('[QR Code] Share failed:', err)
+        if (!cancelled) setShareError(true)
       }
     }
 
@@ -93,150 +92,152 @@ export default function ResultOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} relative flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
-      style={{ backgroundColor: '#141826' }}
+      className={`${embedded ? 'h-full w-full' : 'absolute inset-0'} flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto`}
+      style={{ backgroundColor: 'var(--bg-base)' }}
     >
-      <div className="absolute inset-0" style={{ backgroundColor: '#141826' }} aria-hidden="true" />
-      {/* Scrollable content */}
-      <div className="relative z-10 flex flex-col items-center justify-start w-full max-w-3xl gap-4 md:gap-5 pt-10 pb-6 px-3 sm:px-4 rounded-2xl border border-yellow-400/20" style={{ backgroundColor: '#141826' }}>
+      <div className="w-full max-w-3xl flex flex-col gap-5 pt-4 pb-8">
 
         {showTitle && (
-          <>
-            {/* Title - calligraphy style */}
-            <motion.h2
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="font-calligraphy text-3xl sm:text-4xl md:text-5xl text-yellow-400 text-glow-warm tracking-wider shrink-0"
-            >
+          <div className="flex flex-col items-center gap-3">
+            <h2 className="font-calligraphy text-3xl sm:text-4xl" style={{ color: 'var(--text-primary)' }}>
               相面结果
-            </motion.h2>
-
-            {/* Decorative divider */}
-            <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
-          </>
+            </h2>
+            <div className="w-20 h-px" style={{ background: 'linear-gradient(90deg,transparent,var(--border-amber),transparent)' }} />
+          </div>
         )}
 
-        {/* Preview cards */}
-        <motion.div
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-          className="w-full max-w-3xl space-y-3 md:space-y-4"
-        >
-          <div className="rounded-xl border border-yellow-400/20 p-3" style={{ backgroundColor: '#141826' }}>
-            <p className="text-xs text-yellow-300/70 font-serif-cn mb-2">面相特征检测结果</p>
+        {/* Three-column grid: landmark viz | pixel avatar | QR code */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {/* Landmark visualization */}
+          <div className="flex flex-col items-center gap-2">
             {hasVisualization ? (
               <button
                 type="button"
                 onClick={() => setVizModalOpen(true)}
-                className="w-full max-w-[420px] mx-auto flex flex-col items-center text-left cursor-pointer"
+                className="w-full cursor-pointer rounded-xl overflow-hidden"
+                style={{ border: '1px solid var(--border)' }}
                 aria-label="查看面相轮廓大图"
               >
-                <div className="w-full">
-                  <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
-                </div>
-                <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
+                <LandmarkVisualization visualizationData={visualizationData} showLabel={false} showMeasurements={false} />
               </button>
             ) : (
-              <p className="text-sm text-yellow-100/55 font-serif-cn">暂无轮廓数据</p>
+              <SkeletonBox style={{ aspectRatio: '3/4', minHeight: '6rem' }} />
+            )}
+            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>
+              {hasVisualization ? '点击查看大图' : '面相轮廓'}
+            </span>
+          </div>
+
+          {/* Pixel avatar */}
+          <div className="flex flex-col items-center gap-2">
+            {pixelatedImage ? (
+              <img
+                src={pixelatedImage}
+                alt="像素画像"
+                className="w-full rounded-xl"
+                style={{ imageRendering: 'pixelated', border: '1px solid var(--border)', aspectRatio: '1/1', objectFit: 'cover' }}
+              />
+            ) : (
+              <SkeletonBox style={{ aspectRatio: '1/1', minHeight: '6rem' }} />
+            )}
+            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>像素画像</span>
+          </div>
+
+          {/* QR code */}
+          <div className="flex flex-col items-center gap-2">
+            {shareQr ? (
+              <a href={shareUrl} target="_blank" rel="noreferrer" className="w-full block">
+                <img
+                  src={shareQr}
+                  alt="分享二维码"
+                  className="w-full rounded-xl bg-white"
+                  style={{ border: '1px solid var(--border)', aspectRatio: '1/1', objectFit: 'cover' }}
+                />
+              </a>
+            ) : shareError ? (
+              <div className="w-full rounded-xl flex items-center justify-center"
+                style={{ aspectRatio: '1/1', minHeight: '6rem', border: '1px solid var(--border)', backgroundColor: 'var(--bg-raised)' }}>
+                <span className="font-hei-cn text-[10px] text-center px-1" style={{ color: 'var(--text-muted)' }}>生成失败<br/>刷新重试</span>
+              </div>
+            ) : (
+              <SkeletonBox style={{ aspectRatio: '1/1', minHeight: '6rem' }} />
+            )}
+            {shareUrl ? (
+              <a href={shareUrl} target="_blank" rel="noreferrer"
+                className="font-hei-cn text-[10px] underline underline-offset-2 text-center leading-tight"
+                style={{ color: 'var(--amber)' }}>
+                查看完整报告 →
+              </a>
+            ) : (
+              <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>分享二维码</span>
             )}
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <div className="rounded-xl border border-yellow-400/20 p-3 flex flex-col items-center justify-center" style={{ backgroundColor: '#141826' }}>
-              {pixelatedImage ? (
-                <div className="relative p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
-                  <img
-                    src={pixelatedImage}
-                    alt="像素画像"
-                    className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
-              )}
-              <p className="text-xs text-yellow-300/70 font-serif-cn mt-2">像素画像</p>
+        {/* Share CTA — explains what's behind the QR */}
+        {shareUrl ? (
+          <div
+            className="rounded-xl px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
+            style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border-amber)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="font-hei-cn text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
+                三大 AI 深度解读报告
+              </p>
+              <p className="font-hei-cn text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                扫码或点击，查看 <span className="font-en font-medium">Gemini</span>、<span className="font-en font-medium">DeepSeek</span>、<span className="font-en font-medium">Kimi</span> 三模型独立分析——
+                性格特质、事业方向、潜在优势，多维视角交叉印证
+              </p>
             </div>
-
-            <div className="rounded-xl border border-yellow-400/20 p-3 flex flex-col items-center justify-center" style={{ backgroundColor: '#141826' }}>
-              {shareQr ? (
-                <>
-                  <div className="relative p-2 rounded-xl border border-yellow-400/20" style={{ backgroundColor: '#1b1f31' }}>
-                    <img
-                      src={shareQr}
-                      alt="分享二维码"
-                      className="w-44 h-44 sm:w-48 sm:h-48 rounded-lg bg-white"
-                    />
-                  </div>
-                  <span className="mt-1 text-[11px] text-yellow-200/55 font-serif-cn">扫码获取更详细的 AI 解读</span>
-                  {shareUrl && (
-                    <a
-                      href={shareUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[10px] text-yellow-300/80 underline underline-offset-2 hover:text-yellow-200 transition-colors font-en"
-                    >
-                      直接访问链接
-                    </a>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-yellow-100/55 font-serif-cn">生成中...</p>
-              )}
-            </div>
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-hei-cn text-xs font-semibold whitespace-nowrap px-4 py-2 rounded-lg shrink-0 transition-opacity hover:opacity-80"
+              style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-card)' }}
+            >
+              立即查看 →
+            </a>
           </div>
-        </motion.div>
+        ) : !shareError && (
+          <div className="rounded-xl px-4 py-3 skeleton" style={{ height: '64px' }} />
+        )}
 
-        {/* Fortune text with Chinese styling */}
+        {/* Fortune card */}
         <AnimatePresence mode="wait">
-          {activeFortune && (
-            <FortuneCard key="grok" fortune={activeFortune} />
-          )}
+          {activeFortune && <FortuneCard key="grok" fortune={activeFortune} />}
         </AnimatePresence>
 
-        {/* Dismiss hint */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          onClick={onDismiss}
-          className="mt-2 text-base text-gray-500 hover:text-gray-300 transition-colors cursor-pointer shrink-0 font-serif-cn"
-        >
-          按空格键或点击此处继续下一位 →
-        </motion.button>
+        {showFooter && (
+          <p className="text-center font-hei-cn text-xs" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
+            Superlinear Academy
+          </p>
+        )}
       </div>
 
-      {showFooter && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-4 z-10 text-xs text-gray-600 font-serif-cn"
-        >
-          Superlinear Academy · 马年大吉
-        </motion.p>
-      )}
-
+      {/* Landmark modal */}
       {vizModalOpen && hasVisualization && (
         <div
-          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(28,26,22,0.55)', backdropFilter: 'blur(6px)' }}
           role="dialog"
           aria-modal="true"
-          aria-label="面相轮廓图大图"
           onClick={() => setVizModalOpen(false)}
         >
           <div
-            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-5"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-3 gap-3">
-              <h3 className="font-serif-cn text-yellow-200 text-base sm:text-lg">现场速览 · 面相轮廓与测量</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-hei-cn font-semibold" style={{ color: 'var(--text-primary)' }}>
+                面相轮廓与测量
+              </h3>
               <button
                 type="button"
                 onClick={() => setVizModalOpen(false)}
-                className="px-2.5 py-1 text-xs rounded border border-yellow-400/30 text-yellow-200/80 hover:bg-white/10 cursor-pointer"
+                className="px-3 py-1 text-xs font-hei-cn rounded-lg cursor-pointer"
+                style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
               >
                 关闭
               </button>

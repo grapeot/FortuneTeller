@@ -7,7 +7,10 @@ const TABS = [
 export default function AppTabs({ activeTab, onChange, className = '' }) {
   return (
     <div className={`flex justify-end ${className}`}>
-      <div className="flex items-center gap-1 rounded-xl border border-yellow-400/30 bg-black/45 backdrop-blur px-1 py-1">
+      <div
+        className="flex items-center gap-0.5 rounded-xl px-1 py-1"
+        style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg-raised)' }}
+      >
         {TABS.map((tab) => {
           const active = activeTab === tab.id
           return (
@@ -15,11 +18,14 @@ export default function AppTabs({ activeTab, onChange, className = '' }) {
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-serif-cn rounded-lg transition-all duration-200 cursor-pointer ${
-                active
-                  ? 'text-yellow-200 bg-yellow-400/20 tab-active'
-                  : 'text-yellow-100/70 hover:text-yellow-200 hover:bg-white/10'
+              className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-hei-cn rounded-lg transition-all duration-200 cursor-pointer ${
+                active ? 'tab-active' : ''
               }`}
+              style={{
+                backgroundColor: active ? 'var(--bg-card)' : 'transparent',
+                color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
               aria-pressed={active}
             >
               {tab.label}

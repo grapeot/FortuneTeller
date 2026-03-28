@@ -1,38 +1,72 @@
 import { motion } from 'framer-motion'
 
-/**
- * IdleOverlay - shown when the app is waiting for the user to start.
- * Displays readiness status.
- */
-export default function IdleOverlay({ faceCount, isReady }) {
+const FEATURES = [
+  { icon: '◎', label: '客观测量', desc: '实时检测 478 个面部特征点，精确量化三停比例、五眼宽度等传统相学参数' },
+  { icon: '⬡', label: '古今融合', desc: '以十二宫位理论为框架，将几何数据与传统面相学对应' },
+  { icon: '≡', label: '三模型报告', desc: 'Gemini · DeepSeek · Kimi 三大 AI 并行分析，多维视角交叉印证' },
+]
+
+export default function IdleOverlay({ faceCount, isReady, error, onStart }) {
+  const statusText = error
+    ? `⚠ ${error}`
+    : faceCount > 0
+    ? `检测到 ${faceCount} 张面相`
+    : isReady
+    ? '请面向摄像头…'
+    : null
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="h-full w-full flex flex-col items-center justify-center pointer-events-none px-4"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.3 }}
+      className="w-full flex flex-col items-center gap-3"
+      style={{ maxWidth: '360px' }}
     >
-      <div className="text-center flex flex-col items-center">
-        <img
-          src="/assets/fortune-teller.jpg"
-          alt="AI相面"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 sm:border-4 border-yellow-400/50 shadow-lg shadow-yellow-400/20 mb-4 object-cover"
-        />
-
-        <div className="flex flex-col items-center gap-4">
-          {faceCount > 0 ? (
-            <p className="font-serif-cn text-base sm:text-lg md:text-xl text-green-400">
-              ✨ 检测到 {faceCount} 张面相 ✨
-            </p>
-          ) : isReady ? (
-            <p className="font-serif-cn text-base sm:text-lg md:text-xl text-yellow-200/60">请面向摄像头...</p>
-          ) : (
-            <p className="font-serif-cn text-base sm:text-lg md:text-xl text-yellow-200/60">
-              正在加载<span className="font-en">AI</span>模型...
-            </p>
-          )}
-        </div>
+      {/* Status line */}
+      <div className="h-5 flex items-center">
+        {statusText ? (
+          <p className="font-hei-cn text-sm" style={{ color: error ? 'var(--text-secondary)' : faceCount > 0 ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+            {statusText}
+          </p>
+        ) : (
+          <p className="font-hei-cn text-sm animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>
+            正在加载<span className="font-en">AI</span>模型…
+          </p>
+        )}
       </div>
+
+      {/* Feature cards */}
+      <div className="w-full grid grid-cols-3 gap-2">
+        {FEATURES.map((f) => (
+          <div
+            key={f.label}
+            className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs leading-none shrink-0" style={{ color: 'var(--amber)' }}>{f.icon}</span>
+              <span className="font-hei-cn text-xs font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>{f.label}</span>
+            </div>
+            <p className="font-hei-cn text-[10px] leading-[1.5]" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA button */}
+      <button
+        onClick={onStart}
+        disabled={!isReady}
+        className="px-10 py-3 disabled:opacity-40 disabled:cursor-not-allowed font-hei-cn font-semibold text-base whitespace-nowrap rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 tracking-widest cursor-pointer"
+        style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-card)' }}
+      >
+        开始相面
+      </button>
+
+      <p className="font-hei-cn text-[10px] text-center" style={{ color: 'var(--text-muted)', opacity: 0.55 }}>
+        仅供娱乐参考，不构成任何决策依据
+      </p>
     </motion.div>
   )
 }
