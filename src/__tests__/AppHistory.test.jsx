@@ -36,7 +36,7 @@ vi.mock('../components/CameraView', () => ({
 }))
 
 vi.mock('../components/IdleOverlay', () => ({
-  default: () => <div>idle</div>,
+  default: ({ onStart }) => <div><button onClick={onStart}>开始相面</button></div>,
 }))
 
 vi.mock('../components/AnalyzingOverlay', () => ({

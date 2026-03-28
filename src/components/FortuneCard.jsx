@@ -106,8 +106,9 @@ export default function FortuneCard({ fortune }) {
   if (!fortune) return null
 
   const sections = [
-    { key: 'face',   label: '观面', content: fortune.face },
-    { key: 'career', label: '论事', content: fortune.career },
+    { key: 'face',     label: '观面', content: fortune.face },
+    { key: 'career',   label: '论事', content: fortune.career },
+    { key: 'blessing', label: '祝福', content: fortune.blessing },
   ]
 
   return (
