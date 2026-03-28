@@ -3,339 +3,221 @@ import FortuneCard from './FortuneCard'
 import LandmarkVisualization from './LandmarkVisualization'
 
 const L2_RETRY_DELAY_MS = 5000
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 function renderInlineMarkdown(text) {
-  const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
-  return tokens.map((token, idx) => {
-    if (!token) return null
-    if (token.startsWith('**') && token.endsWith('**')) {
-      return <strong key={idx} className="text-yellow-100 font-semibold">{token.slice(2, -2)}</strong>
-    }
-    if (token.startsWith('`') && token.endsWith('`')) {
-      return <code key={idx} className="px-1 py-0.5 rounded bg-black/35 text-yellow-200 text-xs">{token.slice(1, -1)}</code>
-    }
-    return <span key={idx}>{token}</span>
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((tok, i) => {
+    if (!tok) return null
+    if (tok.startsWith('**') && tok.endsWith('**'))
+      return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{tok.slice(2, -2)}</strong>
+    if (tok.startsWith('`') && tok.endsWith('`'))
+      return (
+        <code key={i} className="px-1 py-0.5 rounded text-xs font-en"
+          style={{ backgroundColor: 'var(--bg-raised)', color: 'var(--text-secondary)' }}>
+          {tok.slice(1, -1)}
+        </code>
+      )
+    return <span key={i}>{tok}</span>
   })
 }
 
-function renderMarkdownBlock(markdown) {
-  if (!markdown) return null
-  const lines = markdown.split('\n')
-  return lines.map((line, idx) => {
-    const trimmed = line.trim()
-    if (!trimmed) return <div key={idx} className="h-2" />
-    if (trimmed.startsWith('### ')) {
-      return <h4 key={idx} className="text-yellow-200 text-base font-serif-cn mt-2">{renderInlineMarkdown(trimmed.slice(4))}</h4>
-    }
-    if (trimmed.startsWith('## ')) {
-      return <h3 key={idx} className="text-yellow-200 text-lg font-serif-cn mt-3">{renderInlineMarkdown(trimmed.slice(3))}</h3>
-    }
-    if (/^\d+\.\s+/.test(trimmed)) {
-      return <p key={idx} className="text-yellow-100/85 text-sm leading-7">{renderInlineMarkdown(trimmed)}</p>
-    }
-    if (trimmed.startsWith('- ')) {
-      return <p key={idx} className="text-yellow-100/85 text-sm leading-7">• {renderInlineMarkdown(trimmed.slice(2))}</p>
-    }
-    return <p key={idx} className="text-yellow-100/85 text-sm leading-7">{renderInlineMarkdown(trimmed)}</p>
+function renderMarkdownBlock(md) {
+  if (!md) return null
+  return md.split('\n').map((line, i) => {
+    const t = line.trim()
+    if (!t) return <div key={i} className="h-2" />
+    if (t.startsWith('### '))
+      return <h4 key={i} className="font-hei-cn font-semibold text-sm mt-4 mb-1" style={{ color: 'var(--text-primary)' }}>{renderInlineMarkdown(t.slice(4))}</h4>
+    if (t.startsWith('## '))
+      return <h3 key={i} className="font-hei-cn font-semibold text-base mt-5 mb-1.5" style={{ color: 'var(--text-primary)' }}>{renderInlineMarkdown(t.slice(3))}</h3>
+    if (t.startsWith('- '))
+      return (
+        <p key={i} className="font-serif-cn text-sm leading-7" style={{ color: 'var(--text-secondary)' }}>
+          <span style={{ color: 'var(--amber)', marginRight: '0.35em' }}>·</span>{renderInlineMarkdown(t.slice(2))}
+        </p>
+      )
+    return <p key={i} className="font-serif-cn text-sm leading-7" style={{ color: 'var(--text-secondary)' }}>{renderInlineMarkdown(t)}</p>
   })
 }
 
-/**
- * SharePage - displays a shared Grok fortune result.
- * Accessed via /share/{id} URL.
- * Includes an email subscription form for deep analysis + community access.
- */
 export default function SharePage({ shareId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [l2Analysis, setL2Analysis] = useState('')
-  const [l2Status, setL2Status] = useState('idle') // idle | loading | ready | error
+  const [l2Status, setL2Status] = useState('idle')
   const [vizModalOpen, setVizModalOpen] = useState(false)
-  const [vizModalLayer, setVizModalLayer] = useState('')
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [subscribeStatus, setSubscribeStatus] = useState('idle')
 
-  // Override body overflow-hidden (set in index.html for the camera view)
-  // so this page can scroll on mobile
   useEffect(() => {
     document.body.style.overflow = 'auto'
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Email subscription form state
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [subscribeStatus, setSubscribeStatus] = useState('idle') // idle | submitting | success | error
-
   useEffect(() => {
     async function fetchShare() {
       try {
         const resp = await fetch(`/api/share/${shareId}`)
-        if (!resp.ok) {
-          setError(resp.status === 404 ? '分享链接已失效或不存在' : '加载失败，请稍后再试')
-          return
-        }
+        if (!resp.ok) { setError(resp.status === 404 ? '分享链接已失效或不存在' : '加载失败，请稍后再试'); return }
         const result = await resp.json()
-        setData(result)
-        setLoading(false)
-
-        if (result.analysis_l2) {
-          setL2Analysis(result.analysis_l2)
-          setL2Status('ready')
-          return
-        }
-
-        // Layer 2: request detailed analysis (Gemini 3 Flash)
+        setData(result); setLoading(false)
+        if (result.analysis_l2) { setL2Analysis(result.analysis_l2); setL2Status('ready'); return }
         setL2Status('loading')
-        let l2Ok = false
-        for (let attempt = 1; attempt <= 2; attempt += 1) {
+        let ok = false
+        for (let attempt = 1; attempt <= 2; attempt++) {
           try {
-            const l2Resp = await fetch('/api/analysis/l2', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ share_id: shareId }),
-            })
-            if (l2Resp.ok) {
-              const l2 = await l2Resp.json()
-              setL2Analysis(l2.analysis || '')
-              setL2Status('ready')
-              l2Ok = true
-              break
-            }
-          } catch {
-            // Retry once for transient network failures.
-          }
-
-          if (attempt < 2) {
-            await sleep(L2_RETRY_DELAY_MS)
-          }
+            const r = await fetch('/api/analysis/l2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ share_id: shareId }) })
+            if (r.ok) { const l2 = await r.json(); setL2Analysis(l2.analysis || ''); setL2Status('ready'); ok = true; break }
+          } catch { /* retry */ }
+          if (attempt < 2) await sleep(L2_RETRY_DELAY_MS)
         }
-        if (!l2Ok) {
-          setL2Status('error')
-        }
-      } catch {
-        setError('网络错误，请检查连接')
-      } finally {
-        setLoading(false)
-      }
+        if (!ok) setL2Status('error')
+      } catch { setError('网络错误，请检查连接') } finally { setLoading(false) }
     }
     fetchShare()
   }, [shareId])
 
   async function handleSubscribe(e) {
     e.preventDefault()
-    if (!email || !email.includes('@')) return
+    if (!email.includes('@')) return
     setSubscribeStatus('submitting')
     try {
-      const resp = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, share_id: shareId }),
-      })
-      if (resp.ok) {
-        setSubscribeStatus('success')
-      } else {
-        setSubscribeStatus('error')
-      }
-    } catch {
-      setSubscribeStatus('error')
-    }
+      const resp = await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, name, share_id: shareId }) })
+      setSubscribeStatus(resp.ok ? 'success' : 'error')
+    } catch { setSubscribeStatus('error') }
   }
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] to-[#0f0f23] flex items-center justify-center">
-        <div className="font-calligraphy text-yellow-400 text-2xl animate-pulse">正在加载...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-base)' }}>
+        <span className="text-sm font-hei-cn animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>加载中…</span>
       </div>
     )
-  }
 
-  if (error) {
+  if (error)
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] to-[#0f0f23] flex flex-col items-center justify-center gap-4 px-4">
-        <p className="font-serif-cn text-yellow-200 text-lg">{error}</p>
-        <a
-          href="/"
-          className="font-serif-cn text-yellow-400 underline hover:text-yellow-300 transition-colors"
-        >
-          去首页体验相面 →
-        </a>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4" style={{ backgroundColor: 'var(--bg-base)' }}>
+        <p className="font-serif-cn text-base" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+        <a href="/" className="font-hei-cn text-sm underline underline-offset-4" style={{ color: 'var(--text-muted)' }}>返回首页</a>
       </div>
     )
-  }
 
   const activeFortune = data?.fortunes?.grok || null
   const hasVisualization = Boolean(data?.visualization_data?.landmarks?.length)
 
-  const openVizModal = (layerLabel) => {
-    setVizModalLayer(layerLabel)
-    setVizModalOpen(true)
-  }
-
-  const closeVizModal = () => {
-    setVizModalOpen(false)
-    setVizModalLayer('')
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a0a0a] via-[#0f0f23] to-[#1a0a0a] flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
-      <div className="flex flex-col items-center w-full max-w-3xl gap-5 py-8">
+    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-10" style={{ backgroundColor: 'var(--bg-base)' }}>
+      <div className="w-full max-w-2xl flex flex-col gap-7">
 
         {/* Title */}
-        <h1 className="font-calligraphy text-3xl sm:text-4xl text-yellow-400 text-glow-warm tracking-wider">
-          相面结果
-        </h1>
-
-        {/* Decorative divider */}
-        <div className="w-48 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
-
-        {/* Pixelated avatar */}
-        {(data?.pixelated_image || hasVisualization) && (
-          <div className="flex flex-wrap items-end justify-center gap-4">
-            {data?.pixelated_image && (
-              <div className="flex flex-col items-center gap-1">
-                <div className="p-1 rounded-xl bg-gradient-to-br from-yellow-400/30 via-red-600/20 to-yellow-400/30">
-                  <img
-                    src={data.pixelated_image}
-                    alt="像素画像"
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-lg"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </div>
-                <span className="text-xs text-yellow-400/50 font-serif-cn">像素画像</span>
-              </div>
-            )}
-
-            {hasVisualization && (
-              <button
-                type="button"
-                onClick={() => openVizModal('面相特征检测结果')}
-                className="w-full max-w-sm text-left cursor-pointer"
-                aria-label="查看面相轮廓大图"
-              >
-                <LandmarkVisualization visualizationData={data.visualization_data} />
-                <p className="mt-1 text-[11px] text-yellow-300/70 font-serif-cn text-center">点击查看大图</p>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Fortune content (Layer 1 quick summary) */}
-        {activeFortune ? (
-          <div className="w-full">
-            <h2 className="font-serif-cn text-yellow-300 text-base mb-2 text-center">现场速览（Grok）</h2>
-            <FortuneCard fortune={activeFortune} />
-          </div>
-        ) : (
-          <p className="font-serif-cn text-gray-400 text-center">该模型暂无结果</p>
-        )}
-
-        {/* Layer 2 detailed analysis */}
-        <div className="w-full max-w-3xl mt-2 rounded-xl border border-yellow-400/15 bg-white/5 p-4 sm:p-5">
-          <h2 className="font-serif-cn text-yellow-300 text-lg">Gemini 3 分析</h2>
-          {l2Status === 'loading' && (
-            <p className="mt-2 text-yellow-100/70 text-sm animate-pulse">正在生成详细解读...</p>
-          )}
-          {l2Status === 'ready' && l2Analysis && (
-            <div className="mt-2">{renderMarkdownBlock(l2Analysis)}</div>
-          )}
-          {l2Status === 'error' && (
-            <p className="mt-2 text-yellow-100/60 text-sm">详细解读生成暂时失败，请稍后刷新重试。</p>
-          )}
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <h1 className="font-calligraphy text-3xl sm:text-4xl" style={{ color: 'var(--text-primary)' }}>相面结果</h1>
+          <div className="w-20 h-px" style={{ background: 'linear-gradient(90deg,transparent,var(--border-amber),transparent)' }} />
         </div>
 
-        {/* Decorative divider before form */}
-        <div className="w-64 h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent mt-2" />
+        {/* Avatar + viz */}
+        {(data?.pixelated_image || hasVisualization) && (
+          <div className="flex flex-wrap items-start justify-center gap-5">
+            {data?.pixelated_image && (
+              <div className="flex flex-col items-center gap-2">
+                <img src={data.pixelated_image} alt="像素画像"
+                  className="w-28 h-28 sm:w-36 sm:h-36 rounded-xl"
+                  style={{ imageRendering: 'pixelated', border: '1px solid var(--border)' }} />
+                <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>像素画像</span>
+              </div>
+            )}
+            {hasVisualization && (
+              <button type="button" onClick={() => setVizModalOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer">
+                <div className="w-28 sm:w-36"><LandmarkVisualization visualizationData={data.visualization_data} showMeasurements={false} /></div>
+                <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>点击查看大图</span>
+              </button>
+            )}
+          </div>
+        )}
 
-        {/* Email subscription form */}
-        <div className="w-full max-w-md">
+        {/* Layer 1 fortune */}
+        {activeFortune && (
+          <div>
+            <p className="font-hei-cn text-xs uppercase tracking-widest mb-3 text-center" style={{ color: 'var(--text-muted)' }}>速览解读</p>
+            <FortuneCard fortune={activeFortune} />
+          </div>
+        )}
+
+        {/* Layer 2 deep analysis */}
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-3 px-5 py-3.5" style={{ backgroundColor: 'var(--bg-raised)', borderBottom: '1px solid var(--border)' }}>
+            <span className="font-calligraphy text-base" style={{ color: 'var(--amber)' }}>深度解读</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>Gemini 3 Flash</span>
+          </div>
+          <div className="px-5 py-4" style={{ backgroundColor: 'var(--bg-card)' }}>
+            {l2Status === 'loading' && <p className="font-serif-cn text-sm animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>正在生成详细解读…</p>}
+            {l2Status === 'ready' && l2Analysis && renderMarkdownBlock(l2Analysis)}
+            {l2Status === 'error' && <p className="font-serif-cn text-sm" style={{ color: 'var(--text-muted)' }}>详细解读生成暂时失败，请刷新重试。</p>}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+        {/* Email subscription */}
+        <div className="max-w-md mx-auto w-full">
           {subscribeStatus === 'success' ? (
-            <div className="text-center py-6 px-4 bg-white/5 rounded-xl border border-yellow-400/10">
-              <p className="font-serif-cn text-yellow-100 text-base leading-relaxed">
-                分析已提交，结果将在数分钟内发送至您的邮箱。
-              </p>
-              <p className="font-serif-cn text-yellow-100/60 text-sm mt-2">
-                与此同时，您也会收到社区学员分享的项目更新。
-              </p>
+            <div className="text-center py-8 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <p className="font-serif-cn text-base leading-relaxed" style={{ color: 'var(--text-primary)' }}>已提交，结果将发送至您的邮箱。</p>
+              <p className="font-hei-cn text-sm mt-2" style={{ color: 'var(--text-muted)' }}>同时会收到社区项目更新。</p>
             </div>
           ) : (
-            <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-3 px-2">
-              <h3 className="font-serif-cn text-lg text-yellow-300/95 tracking-wide text-center leading-7">
-                留下邮箱查看 <span className="font-en">Gemini 3 Flash</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi K2.5</span> 三模型完整解读
-              </h3>
-              <p className="text-sm text-yellow-100/70 font-serif-cn text-center leading-relaxed px-1">
-                留下邮箱后将收到三模型并行解读，并附共识与分歧视角，帮助你更全面理解结果。
+            <form onSubmit={handleSubscribe} className="flex flex-col gap-3.5">
+              <h3 className="font-hei-cn font-semibold text-lg text-center" style={{ color: 'var(--text-primary)' }}>获取三模型完整解读</h3>
+              <p className="font-serif-cn text-sm text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                <span className="font-en">Gemini 3 Flash</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi K2.5</span> 并行解读，含共识与分歧视角。
               </p>
-              <input
-                type="email"
-                required
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-yellow-100 placeholder-gray-500 text-sm font-serif-cn focus:outline-none focus:border-yellow-400/40 transition-colors"
-              />
-              <input
-                type="text"
-                placeholder="姓名/昵称（选填）"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-lg text-yellow-100 placeholder-gray-500 text-sm font-serif-cn focus:outline-none focus:border-yellow-400/40 transition-colors"
-              />
-              <button
-                type="submit"
+              {[
+                { type: 'email', required: true, placeholder: 'your@email.com', value: email, onChange: e => setEmail(e.target.value) },
+                { type: 'text', required: false, placeholder: '姓名/昵称（选填）', value: name, onChange: e => setName(e.target.value) },
+              ].map((props, i) => (
+                <input key={i} {...props}
+                  className="w-full px-4 py-3 rounded-xl text-sm font-hei-cn outline-none transition-colors"
+                  style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                />
+              ))}
+              <button type="submit"
                 disabled={subscribeStatus === 'submitting' || !email.includes('@')}
-                className="w-full py-3 bg-yellow-400 hover:bg-yellow-300 border border-yellow-300 text-[#2a1a00] font-serif-cn font-semibold text-sm rounded-lg transition-all duration-200 shadow-[0_8px_24px_rgba(250,204,21,0.25)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {subscribeStatus === 'submitting' ? '提交中...' : '留邮箱获取三模型完整解读'}
+                className="w-full py-3 rounded-xl font-hei-cn font-semibold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-card)' }}>
+                {subscribeStatus === 'submitting' ? '提交中…' : '留邮箱获取完整解读'}
               </button>
-              {subscribeStatus === 'error' && (
-                <p className="text-red-400 text-xs font-serif-cn">提交失败，请稍后重试</p>
-              )}
-              <p className="text-xs text-gray-500/70 font-serif-cn text-center leading-relaxed px-2">
-                同时加入 <span className="font-en">Superlinear AI</span> 社区，免费获取前沿 <span className="font-en">AI</span> 资讯和实战干货。
+              {subscribeStatus === 'error' && <p className="font-hei-cn text-xs text-center" style={{ color: '#b03030' }}>提交失败，请稍后重试</p>}
+              <p className="font-hei-cn text-xs text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                同时加入 <span className="font-en">Superlinear AI</span> 社区，获取前沿 AI 资讯。
               </p>
             </form>
           )}
         </div>
 
-        {/* CTA */}
-        <a
-          href="/"
-          className="mt-3 px-4 py-2 text-yellow-100/55 hover:text-yellow-100/80 text-sm font-serif-cn rounded-lg transition-colors underline underline-offset-4"
-        >
+        <a href="/" className="mx-auto font-hei-cn text-sm underline underline-offset-4" style={{ color: 'var(--text-muted)' }}>
           我也要相面 →
         </a>
-
-        {/* Footer */}
-        <p className="text-xs text-gray-600 mt-4 font-serif-cn">
-          Superlinear Academy · 马年大吉
-        </p>
+        <p className="text-center font-hei-cn text-xs pb-2" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>Superlinear Academy</p>
       </div>
 
       {vizModalOpen && hasVisualization && (
-        <div
-          className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-          aria-label="面相轮廓图大图"
-          onClick={closeVizModal}
-        >
-          <div
-            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-yellow-400/30 bg-[#0d1224] p-4 sm:p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3 gap-3">
-              <h3 className="font-serif-cn text-yellow-200 text-base sm:text-lg">{vizModalLayer} · 面相轮廓与测量</h3>
-              <button
-                type="button"
-                onClick={closeVizModal}
-                className="px-2.5 py-1 text-xs rounded border border-yellow-400/30 text-yellow-200/80 hover:bg-white/10 cursor-pointer"
-              >
-                关闭
-              </button>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(28,26,22,0.55)', backdropFilter: 'blur(6px)' }}
+          role="dialog" aria-modal="true" onClick={() => setVizModalOpen(false)}>
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-5"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-hei-cn font-semibold" style={{ color: 'var(--text-primary)' }}>面相轮廓与测量</h3>
+              <button type="button" onClick={() => setVizModalOpen(false)}
+                className="px-3 py-1 text-xs font-hei-cn rounded-lg cursor-pointer"
+                style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>关闭</button>
             </div>
             <LandmarkVisualization visualizationData={data.visualization_data} />
           </div>
