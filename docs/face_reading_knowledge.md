@@ -30,14 +30,14 @@
 - 目标：3-6 秒内给出可读结果，适合围观场景
 
 ### L2 扫码详版（分享页）
-- 模型：`Gemini 3 Flash`
+- 模型：`Gemini`（`gemini-3.8-flash`）
 - 字数：约 350-600 字
 - 结构：五官/三停/重点宫位 + 事业财运 + 关系沟通 + 风险提示（温和）
 - 输入：L1 同源事实 + 扩展测量 + 可视化骨架图
 - 目标：让用户明显感知“比现场更深入、更有证据链”
 
 ### L3 邮件深度版（订阅后）
-- 模型：`Gemini 3 Flash + DeepSeek + Kimi K2.5` 三模型并行
+- 模型：`Gemini + DeepSeek + Kimi` 三模型并行
 - 字数：每模型 500-800 字，外加 1 段聚合总结
 - 结构：模型独立报告 + 共识/分歧对照 + 可执行建议清单
 - 输入：统一事实包（landmarks+measurements+image context）
@@ -167,7 +167,7 @@
 - 结尾加入一句春节祝词
 ```
 
-### 5.2 L2 扫码详版 Prompt（Gemini 3 Flash）
+### 5.2 L2 扫码详版 Prompt（Gemini）
 
 ```text
 角色：面相结构化分析师。
@@ -184,7 +184,7 @@
 - 语言避免恐吓，保持鼓励和建设性
 ```
 
-### 5.3 L3 邮件三模型 Prompt（Gemini 3 Flash / DeepSeek / Kimi K2.5）
+### 5.3 L3 邮件三模型 Prompt（Gemini / DeepSeek / Kimi）
 
 统一输入包，分别调用三模型，并要求输出统一结构：
 
@@ -207,15 +207,15 @@
 ## 6. UI 文案与 CTA 规范（对应三层）
 
 现场二维码旁文案：
-- `扫码获取 Gemini 3 Flash 详细解读`
+- `扫码获取 Gemini 详细解读`
 
 分享页邮箱 CTA：
-- `留邮箱查看 Gemini 3 Flash、DeepSeek、Kimi K2.5 三模型完整解读`
+- `留邮箱查看 Gemini、DeepSeek、Kimi 三模型完整解读`
 
 品牌/副标题滚动文案（动态轮播）：
-- `Gemini 3 Flash · 深度结构化解读`
+- `Gemini · 深度结构化解读`
 - `DeepSeek · 逻辑链路推断`
-- `Kimi K2.5 · 长上下文补充分析`
+- `Kimi · 长上下文补充分析`
 
 ---
 

@@ -8,7 +8,7 @@ export const AI_CONFIG = {
   baseUrl: import.meta.env.VITE_AI_API_BASE_URL || 'https://space.ai-builders.com/backend/v1',
   /** Bearer token */
   apiToken: import.meta.env.VITE_AI_API_TOKEN || '',
-  /** Model identifier – switch between grok-4-fast, gemini-3-flash-preview, etc. */
+  /** Model identifier – switch between grok-4-fast, gemini-3.8-flash, etc. */
   model: import.meta.env.VITE_AI_MODEL || 'grok-4-fast',
 }
 

@@ -155,7 +155,7 @@ export default function SharePage({ shareId }) {
           <div className="flex items-center gap-3 px-5 py-3.5" style={{ backgroundColor: 'var(--bg-raised)', borderBottom: '1px solid var(--border)' }}>
             <span className="font-calligraphy text-base" style={{ color: 'var(--amber)' }}>深度解读</span>
             <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>Gemini 3 分析</span>
+            <span className="font-hei-cn text-xs" style={{ color: 'var(--text-muted)' }}>Gemini 分析</span>
           </div>
           <div className="px-5 py-4" style={{ backgroundColor: 'var(--bg-card)' }}>
             {l2Status === 'loading' && <p className="font-serif-cn text-sm animate-pulse-soft" style={{ color: 'var(--text-muted)' }}>正在生成详细解读…</p>}
@@ -176,9 +176,9 @@ export default function SharePage({ shareId }) {
             </div>
           ) : (
             <form onSubmit={handleSubscribe} className="flex flex-col gap-3.5">
-              <h3 className="font-hei-cn font-semibold text-lg text-center" style={{ color: 'var(--text-primary)' }}>留下邮箱查看 Gemini 3 Flash 完整解读</h3>
+              <h3 className="font-hei-cn font-semibold text-lg text-center" style={{ color: 'var(--text-primary)' }}>留下邮箱查看 Gemini 完整解读</h3>
               <p className="font-serif-cn text-sm text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                <span className="font-en">Gemini 3 Flash</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi K2.5</span> 并行解读，含共识与分歧视角。
+                <span className="font-en">Gemini</span>、<span className="font-en">DeepSeek</span>、<span className="font-en">Kimi</span> 并行解读，含共识与分歧视角。
               </p>
               {[
                 { type: 'email', required: true, placeholder: 'your@email.com', value: email, onChange: e => setEmail(e.target.value) },
