@@ -1,79 +1,47 @@
 """
 Tests for the email subscription background pipeline:
-circle_create_member, generate_deep_analysis, send_resend_email, subscribe_background.
+generate_deep_analysis, send_resend_email, subscribe_background.
 """
 
 import json
+import re
+from html import unescape
+from urllib.parse import parse_qs, urlparse
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
 from server import config
 from server.email_service import (
-    circle_create_member,
     send_resend_email,
     subscribe_background,
+    build_email_html,
 )
 from server.ai import generate_deep_analysis
 
 
-# ── circle_create_member ─────────────────────────────────────────────────────
+class TestEmailLoginLink:
+    def test_sso_link_prefills_exact_recipient_in_both_email_buttons(self):
+        email = 'reader+tag&special@example.com'
+        html = build_email_html("Analysis", email=email)
+        links = re.findall(r'href="([^"]+)"', html)
+        login_links = [unescape(link) for link in links if "signup.superlinear.academy" in link]
+        assert len(login_links) == 2  # HTML CTA and Outlook VML CTA
+        for link in login_links:
+            parsed = urlparse(link)
+            assert parsed.scheme == "https"
+            assert parsed.netloc == "signup.superlinear.academy"
+            assert parse_qs(parsed.query) == {
+                "ui_locales": ["zh-CN"], "email": [email]
+            }
+        assert "password/new" not in html
+        assert "设置登录密码" not in html
+        assert "已为您开通" not in html
+        assert "注册" not in html
+        assert "创建账号" not in html
 
-class TestCircleCreateMember:
-    def test_new_member_created(self):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"id": 123, "name": "Test"}
-
-        with patch("requests.post", return_value=mock_resp) as mock_post:
-            circle_create_member("test@example.com", "Test")
-
-        mock_post.assert_called_once()
-        call_body = mock_post.call_args[1]["json"]
-        assert call_body["email"] == "test@example.com"
-        assert call_body["name"] == "Test"
-        assert call_body["skip_invitation"] is True
-
-    def test_existing_member_adds_to_spaces(self):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 201
-        mock_resp.json.return_value = {
-            "message": "This user is already a member",
-            "community_member": {"first_name": "Existing"},
-        }
-
-        space_resp = MagicMock()
-        space_resp.status_code = 200
-
-        with patch("requests.post", side_effect=[mock_resp, space_resp, space_resp]) as mock_post:
-            circle_create_member("existing@example.com")
-
-        # 1 member creation + 2 space additions (CIRCLE_SPACE_IDS has 2 entries)
-        assert mock_post.call_count == 3
-
-    def test_422_adds_to_spaces(self):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 422
-        mock_resp.json.return_value = {}
-
-        space_resp = MagicMock()
-        space_resp.status_code = 200
-
-        with patch("requests.post", side_effect=[mock_resp, space_resp, space_resp]):
-            circle_create_member("dup@example.com")
-
-    def test_no_name_omitted_from_body(self):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {}
-
-        with patch("requests.post", return_value=mock_resp) as mock_post:
-            circle_create_member("no-name@example.com")
-
-        call_body = mock_post.call_args[1]["json"]
-        assert "name" not in call_body
-
-
-# ── generate_deep_analysis ───────────────────────────────────────────────────
+    def test_missing_email_does_not_insert_an_empty_login_hint(self):
+        html = build_email_html("Analysis")
+        assert "email=" not in html
 
 class TestGenerateDeepAnalysis:
     @pytest.mark.asyncio
@@ -163,8 +131,16 @@ class TestSendResendEmail:
 
 class TestSubscribeBackground:
     @pytest.mark.asyncio
+    async def test_single_model_fallback_preserves_recipient_login_hint(self):
+        with patch("server.email_service.generate_multi_model_analysis", new=AsyncMock(return_value={})), \
+             patch("server.email_service.generate_deep_analysis", new=AsyncMock(return_value="Analysis")), \
+             patch("server.email_service.send_resend_email", return_value="email-test") as send:
+            await subscribe_background("reader+tag@example.com", "", "missing-share")
+        assert "email=reader%2Btag%40example.com" in send.call_args.args[1]
+
+    @pytest.mark.asyncio
     async def test_full_pipeline(self, mock_firestore):
-        """Runs the full pipeline: Circle → Firestore read → Gemini → Resend → Firestore update."""
+        """Runs storage read → AI → Resend → storage update."""
         mock_doc = MagicMock()
         mock_doc.exists = True
         mock_doc.to_dict.return_value = {
@@ -173,10 +149,6 @@ class TestSubscribeBackground:
         }
         mock_firestore.collection.return_value.document.return_value.get.return_value = mock_doc
         mock_firestore.collection.return_value.document.return_value.update = MagicMock()
-
-        circle_resp = MagicMock()
-        circle_resp.status_code = 200
-        circle_resp.json.return_value = {"id": 1}
 
         ai_resp = MagicMock()
         ai_resp.json.return_value = {
@@ -187,10 +159,11 @@ class TestSubscribeBackground:
         async def mock_ai_post(*args, **kwargs):
             return ai_resp
 
-        with patch("requests.post", return_value=circle_resp), \
-             patch("httpx.AsyncClient.post", side_effect=mock_ai_post), \
-             patch("resend.Emails.send", return_value={"id": "email-456"}):
+        with patch("httpx.AsyncClient.post", side_effect=mock_ai_post), \
+             patch("resend.Emails.send", return_value={"id": "email-456"}) as mock_send:
             await subscribe_background("user@test.com", "张三", "share123")
+
+        assert "email=user%40test.com" in mock_send.call_args[0][0]["html"]
 
         update_call = mock_firestore.collection.return_value.document.return_value.update
         update_call.assert_called_once()
@@ -199,9 +172,8 @@ class TestSubscribeBackground:
         assert update_data["subscribed_name"] == "张三"
 
     @pytest.mark.asyncio
-    async def test_pipeline_without_circle_token(self, monkeypatch, mock_firestore):
-        """Pipeline skips Circle when no token configured."""
-        monkeypatch.setattr(config, "CIRCLE_V2_TOKEN", "")
+    async def test_pipeline_does_not_provision_accounts_or_access(self, mock_firestore):
+        """Subscription sends a report without provisioning Circle/Logto accounts."""
 
         mock_doc = MagicMock()
         mock_doc.exists = True
@@ -229,7 +201,6 @@ class TestSubscribeBackground:
         async def mock_ai_post(*args, **kwargs):
             raise Exception("AI down")
 
-        with patch("requests.post", side_effect=Exception("Circle down")), \
-             patch("httpx.AsyncClient.post", side_effect=mock_ai_post), \
+        with patch("httpx.AsyncClient.post", side_effect=mock_ai_post), \
              patch("resend.Emails.send", side_effect=Exception("Resend down")):
             await subscribe_background("fail@test.com", "", "bad_id")

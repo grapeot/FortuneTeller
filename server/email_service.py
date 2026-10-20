@@ -1,9 +1,11 @@
 """
-Email subscription pipeline: Circle community, Resend email, deep analysis.
+Email subscription pipeline: Resend email and deep analysis.
 """
 
 import asyncio
 import re
+from html import escape
+from urllib.parse import urlencode
 import mistune
 
 from . import config
@@ -82,6 +84,7 @@ def build_email_html(
     name: str = "",
     pixelated_image: str | None = None,
     multi_model_results: dict[str, str] | None = None,
+    email: str = "",
 ) -> str:
     """Build Outlook-compatible HTML email with harmonious palette.
 
@@ -89,7 +92,10 @@ def build_email_html(
     multi_model_results mapping display_name → analysis_text.
     """
     greeting = f"{name}，您好！" if name else "您好！"
-    community_url = config.COMMUNITY_URL
+    login_params = {"ui_locales": "zh-CN"}
+    if email:
+        login_params["email"] = email
+    community_url = escape(f"{config.COMMUNITY_URL}?{urlencode(login_params)}", quote=True)
 
     avatar_html = ""
     if pixelated_image:
@@ -201,10 +207,10 @@ def build_email_html(
         <!-- Community section -->
         <tr><td class="email-community-cell" style="padding:20px 32px;">
           <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 8px;">
-            我们已为您开通 <strong style="color:#5c4a32;">Superlinear Academy</strong> AI 社区的访问权限。您将收到社区学员分享的实战项目更新。
+            欢迎访问 <strong style="color:#5c4a32;">Superlinear Academy</strong> 社区，浏览公开内容与学员分享的实践项目。
           </p>
           <p class="email-body" style="font-size:15px;color:#6b5d4d;line-height:1.85;margin:0 0 16px;">
-            首次访问请点击下方按钮设置登录密码，即可进入社区。
+            点击下方按钮即可前往社区。
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -237,55 +243,6 @@ def build_email_html(
 </html>"""
 
 
-def circle_create_member(email: str, name: str = "") -> None:
-    """Create Circle community member (sync, for background task)."""
-    import requests as req
-
-    headers = {
-        "Authorization": f"Token {config.CIRCLE_V2_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "email": email,
-        "skip_invitation": True,
-        "space_ids": config.CIRCLE_SPACE_IDS,
-        "email_notifications_enabled": True,
-    }
-    if name:
-        data["name"] = name
-
-    resp = req.post(
-        "https://app.circle.so/api/admin/v2/community_members",
-        headers=headers, json=data, timeout=30,
-    )
-
-    if resp.status_code in (200, 201):
-        result = resp.json()
-        msg = result.get("message", "")
-        if "already a member" in msg.lower():
-            for space_id in config.CIRCLE_SPACE_IDS:
-                req.post(
-                    "https://app.circle.so/api/admin/v2/space_members",
-                    headers=headers,
-                    json={"email": email, "space_id": space_id},
-                    timeout=30,
-                )
-            config.logger.info(f"Circle: existing member {email} added to spaces")
-        else:
-            config.logger.info(f"Circle: new member created for {email}")
-    elif resp.status_code == 422:
-        for space_id in config.CIRCLE_SPACE_IDS:
-            req.post(
-                "https://app.circle.so/api/admin/v2/space_members",
-                headers=headers,
-                json={"email": email, "space_id": space_id},
-                timeout=30,
-            )
-        config.logger.info(f"Circle: 422 existing member {email}, added to spaces")
-    else:
-        config.logger.warning(f"Circle: unexpected status {resp.status_code}: {resp.text[:200]}")
-
-
 def send_resend_email(email: str, html: str) -> str | None:
     """Send HTML email via Resend. Returns email ID or None."""
     import resend
@@ -306,15 +263,9 @@ def send_resend_email(email: str, html: str) -> str | None:
 
 
 async def subscribe_background(email: str, name: str, share_id: str):
-    """Background task: Circle invite → Gemini deep analysis → Resend email."""
+    """Generate and email the report; account creation happens through SSO."""
     try:
-        # Step 1: Circle membership
-        if config.CIRCLE_V2_TOKEN:
-            await asyncio.to_thread(circle_create_member, email, name)
-        else:
-            config.logger.warning("Circle: CIRCLE_V2_TOKEN not set, skipping")
-
-        # Step 2: Fetch share data from Firestore
+        # Step 1: Fetch share data from storage
         fortunes = {}
         pixelated_image = None
         storage = get_share_storage()
@@ -324,23 +275,24 @@ async def subscribe_background(email: str, name: str, share_id: str):
                 fortunes = share_data.get("fortunes") or {}
                 pixelated_image = share_data.get("pixelated_image")
 
-        # Step 3: Generate deep analysis via multiple models in parallel
+        # Step 2: Generate deep analysis via multiple models in parallel
         multi_results = await generate_multi_model_analysis(fortunes)
 
-        # Step 4: Build and send email
+        # Step 3: Build and send email
         if multi_results:
             html = build_email_html(
                 name=name,
                 pixelated_image=pixelated_image,
                 multi_model_results=multi_results,
+                email=email,
             )
         else:
             # Fallback: if all models failed, try single-model
             deep_analysis = await generate_deep_analysis(fortunes)
-            html = build_email_html(deep_analysis, name, pixelated_image)
+            html = build_email_html(deep_analysis, name, pixelated_image, email=email)
         email_id = await asyncio.to_thread(send_resend_email, email, html)
 
-        # Step 5: Update Firestore with subscription info
+        # Step 4: Update storage with subscription info
         if storage.is_available() and email_id:
             update_data = {"subscribed_email": email}
             server_ts = storage.server_timestamp()

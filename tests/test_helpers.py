@@ -119,8 +119,8 @@ class TestBuildEmailHtml:
 
     def test_community_section(self):
         html = build_email_html("内容")
-        assert "设置登录密码" in html
-        assert "login.circle.so" in html
+        assert "公开内容" in html
+        assert "signup.superlinear.academy" in html
 
     def test_dark_mode_css(self):
         html = build_email_html("内容")

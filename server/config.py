@@ -28,13 +28,9 @@ DEEP_MODELS = {
 # ── Pixelation ──────────────────────────────────────────────────────────────
 PIXEL_SIZE = 64      # downscale target for pixel art (frontend upscales via CSS)
 
-# ── Email / Circle / Resend ────────────────────────────────────────────────
+# ── Email / Resend ────────────────────────────────────────────────────────
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-CIRCLE_V2_TOKEN = os.getenv("CIRCLE_V2_TOKEN", "")
-CIRCLE_SPACE_IDS = [
-    int(s.strip()) for s in os.getenv("CIRCLE_SPACE_IDS", "").split(",") if s.strip()
-]
-COMMUNITY_URL = "https://login.circle.so/users/password/new?post_login_redirect=https%3A%2F%2Fwww.superlinear.academy%2F&request_host=www.superlinear.academy"
+COMMUNITY_URL = "https://signup.superlinear.academy/"
 
 # ── Logging ────────────────────────────────────────────────────────────────
 logger = logging.getLogger("fortune-teller")
