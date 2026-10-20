@@ -69,7 +69,7 @@ async def test_health(client):
     assert data["status"] == "ok"
     assert data["token_configured"] is True
     assert data["email_configured"] is True
-    assert data["circle_configured"] is True
+    assert "circle_configured" not in data
 
 
 # ── POST /api/fortune ────────────────────────────────────────────────────────

@@ -48,8 +48,6 @@ def _patch_env(monkeypatch, request):
     monkeypatch.setattr(config, "AI_TOKEN", "test-token")
     monkeypatch.setattr(config, "AI_API_BASE", "https://test.api.com/v1")
     monkeypatch.setattr(config, "RESEND_API_KEY", "test-resend-key")
-    monkeypatch.setattr(config, "CIRCLE_V2_TOKEN", "test-circle-token")
-    monkeypatch.setattr(config, "CIRCLE_SPACE_IDS", [111, 222])
     # Firestore disabled by default; individual tests opt in
     monkeypatch.setattr(firebase, "_firestore_db", None)
     monkeypatch.setattr(firebase, "_firestore_mod", None)

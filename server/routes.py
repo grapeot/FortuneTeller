@@ -461,7 +461,6 @@ async def health():
         "token_configured": bool(config.AI_TOKEN),
         "firestore_configured": get_share_storage().is_available(),
         "email_configured": bool(config.RESEND_API_KEY),
-        "circle_configured": bool(config.CIRCLE_V2_TOKEN),
     }
 
 
