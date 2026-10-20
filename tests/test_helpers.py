@@ -300,9 +300,9 @@ class TestCallDeepModel:
             side_effect=[httpx.TimeoutException("timeout"), ok_resp],
         ) as post_mock:
             with patch("asyncio.sleep", return_value=None):
-                name, text = await _call_deep_model("Gemini 3 Flash", "gemini", "u")
+                name, text = await _call_deep_model("Gemini", "gemini-3.8-flash", "u")
 
-        assert name == "Gemini 3 Flash"
+        assert name == "Gemini"
         assert text == "deep analysis ok"
         assert post_mock.call_count == 2
 
@@ -314,7 +314,7 @@ class TestCallDeepModel:
 
         with patch("httpx.AsyncClient.post", side_effect=err) as post_mock:
             with patch("asyncio.sleep", return_value=None) as sleep_mock:
-                name, text = await _call_deep_model("DeepSeek", "deepseek", "u")
+                name, text = await _call_deep_model("DeepSeek", "deepseek-flash", "u")
 
         assert name == "DeepSeek"
         assert text is None
@@ -329,9 +329,9 @@ class TestCallDeepModel:
 
         with patch("httpx.AsyncClient.post", side_effect=[empty_resp] * 6) as post_mock:
             with patch("asyncio.sleep", return_value=None) as sleep_mock:
-                name, text = await _call_deep_model("Kimi K2.5", "kimi", "u")
+                name, text = await _call_deep_model("Kimi", "kimi-k3", "u")
 
-        assert name == "Kimi K2.5"
+        assert name == "Kimi"
         assert text is None
         assert post_mock.call_count == 6
         assert sleep_mock.call_count == 5

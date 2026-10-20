@@ -146,7 +146,7 @@ describe('SharePage', () => {
       expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
     })
     expect(screen.getByPlaceholderText('姓名/昵称（选填）')).toBeInTheDocument()
-    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('留下邮箱查看 Gemini 3 Flash'))).toBeInTheDocument()
+    expect(screen.getByText((_, el) => el.tagName === 'H3' && el.textContent.includes('留下邮箱查看 Gemini'))).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /留邮箱获取三模型完整解读/ })).toBeInTheDocument()
   })
 
@@ -164,7 +164,7 @@ describe('SharePage', () => {
     render(<SharePage shareId="test123" />)
 
     await waitFor(() => {
-      expect(screen.getByText('Gemini 3 分析')).toBeInTheDocument()
+      expect(screen.getByText('Gemini 分析')).toBeInTheDocument()
       expect(screen.getByText('证据摘要')).toBeInTheDocument()
       expect(screen.getByText(/第一条/)).toBeInTheDocument()
     })

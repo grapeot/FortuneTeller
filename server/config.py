@@ -14,15 +14,15 @@ AI_API_BASE = os.getenv("AI_API_BASE_URL", "https://space.ai-builders.com/backen
 AI_TOKEN = os.getenv("AI_BUILDER_TOKEN") or os.getenv("VITE_AI_API_TOKEN", "")
 
 MODELS = {
-    "gemini": os.getenv("AI_MODEL_GEMINI", "gemini-3-flash-preview"),
+    "gemini": os.getenv("AI_MODEL_GEMINI", "gemini-3.8-flash"),
     "grok": os.getenv("AI_MODEL_GROK", "grok-4-fast"),
 }
 
 # Models used for deep analysis email (parallel multi-model)
 DEEP_MODELS = {
-    "Gemini 3 Flash": os.getenv("AI_MODEL_GEMINI", "gemini-3-flash-preview"),
+    "Gemini": os.getenv("AI_MODEL_GEMINI", "gemini-3.8-flash"),
     "DeepSeek": os.getenv("AI_MODEL_DEEPSEEK", "deepseek"),
-    "Kimi K2.5": os.getenv("AI_MODEL_KIMI", "kimi-k2.5"),
+    "Kimi": os.getenv("AI_MODEL_KIMI", "kimi-k3"),
 }
 
 # ── Pixelation ──────────────────────────────────────────────────────────────

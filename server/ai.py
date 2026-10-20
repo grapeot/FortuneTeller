@@ -129,7 +129,7 @@ async def _call_deep_model(
                             {"role": "user", "content": user_msg},
                         ],
                         "temperature": 1.0,
-                        "max_tokens": 4000,
+                        "max_tokens": 8000,
                     },
                 )
                 resp.raise_for_status()
